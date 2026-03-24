@@ -1,0 +1,41 @@
+{
+  "name": "",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "react-router build",
+    "dev": "react-router dev",
+    "start": "react-router-serve ./build/server/index.js",
+    "typecheck": "react-router typegen && tsc",
+    "gen:api": "openapi-typescript ${API_BASE_URL:-http://127.0.0.1:8000}/openapi.json -o app/types/api.generated.ts"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@react-router/node": "7.13.2",
+    "@react-router/serve": "7.13.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^12.38.0",
+    "isbot": "^5.1.36",
+    "lucide-react": "^1.0.1",
+    "openapi-typescript": "^7.13.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router": "7.13.2",
+    "tailwind-merge": "^3.5.0"
+  },
+  "devDependencies": {
+    "@react-router/dev": "7.13.2",
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/node": "^22",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.7",
+    "vite-tsconfig-paths": "^5.1.4"
+  }
+}
