@@ -2,16 +2,13 @@
 
 import { useState } from "react"
 import { useFetcher, useLoaderData } from "react-router"
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  CalendarDays,
   Clock,
   Trash2,
-  LogOut,
 } from "lucide-react"
 import {
   format,
@@ -41,10 +38,11 @@ import {
 } from "~/components/ui/dialog"
 import { getEvents, createEvent, deleteEvent, extractToken } from "~/lib/api"
 import type { Event } from "~/lib/api"
+import type { Route } from "./+types/app.calendar"
 
 // ─── Loader ────────────────────────────────────────────────────────────────
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
   const token = extractToken(request.headers.get("Cookie") || "")
   const events = await getEvents(token)
   return { events }
@@ -52,7 +50,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 // ─── Action ────────────────────────────────────────────────────────────────
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
   const token = extractToken(request.headers.get("Cookie") || "")
   const formData = await request.formData()
   const intent = formData.get("intent")
@@ -79,8 +77,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
 // ─── Meta ──────────────────────────────────────────────────────────────────
 
-export function meta() {
-  return [{ title: "Rooster — Planwijs" }]
+export function meta(_: Route.MetaArgs) {
+  return [{ title: "Kalender — Planwijs" }]
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -96,7 +94,7 @@ function toDateString(d: Date): string {
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
-export default function Dashboard() {
+export default function CalendarPage() {
   const { events } = useLoaderData<typeof loader>()
   const fetcher = useFetcher()
 
@@ -131,35 +129,13 @@ export default function Dashboard() {
   const WEEKDAYS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"]
 
   return (
-    <div className="min-h-screen bg-[#f5f0e8] flex flex-col">
-      {/* ── Navigatie ── */}
-      <header className="h-14 border-b-2 border-black bg-[#fdf4c4] flex items-center px-6 gap-4 sticky top-0 z-30">
-        <div className="flex items-center gap-2.5 flex-1">
-          <div className="w-7 h-7 flex items-center justify-center">
-            <CalendarDays className="w-4 h-4 text-black" />
-          </div>
-          <span className="font-bold text-base tracking-tight">Planwijs</span>
-        </div>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-2"
-          asChild
-        >
-          <a href="/auth/logout">
-            <LogOut className="w-4 h-4" />
-            Uitloggen
-          </a>
-        </Button>
-      </header>
-
+    <div className="flex flex-col h-screen">
       {/* ── Hoofdinhoud ── */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] w-full">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] overflow-hidden">
         {/* ── Kalender ── */}
-        <div className="bg-[#c5d9f5] border-b-2 lg:border-b-0 border-r-0 lg:border-r-2 border-black">
+        <div className="bg-[#c5d9f5] border-b-2 lg:border-b-0 border-r-0 lg:border-r-2 border-black overflow-y-auto">
           {/* Maandkoptekst */}
-          <div className="flex items-center justify-between px-6 py-4 border-b-2 border-black bg-white">
+          <div className="flex items-center justify-between px-6 py-4 border-b-2 border-black bg-white sticky top-0 z-10">
             <h2 className="text-lg font-black capitalize">
               {format(currentMonth, "MMMM yyyy", { locale: nl })}
             </h2>
@@ -192,7 +168,7 @@ export default function Dashboard() {
           </div>
 
           {/* Weekdagen */}
-          <div className="grid grid-cols-7 border-b-2 border-black bg-white">
+          <div className="grid grid-cols-7 border-b-2 border-black bg-white sticky top-[57px] z-10">
             {WEEKDAYS.map((d) => (
               <div
                 key={d}
@@ -262,9 +238,9 @@ export default function Dashboard() {
         </div>
 
         {/* ── Lespaneel ── */}
-        <div className="flex flex-col">
+        <div className="flex flex-col overflow-hidden">
           {/* Datumkoptekst */}
-          <div className="bg-[#f9d5d3] border-b-2 border-black p-5">
+          <div className="bg-[#f9d5d3] border-b-2 border-black p-5 flex-shrink-0">
             <div className="flex items-center justify-between mb-1">
               <p className="text-xs font-bold uppercase tracking-widest text-black/50">
                 {isToday(selectedDate)
@@ -286,7 +262,7 @@ export default function Dashboard() {
           </div>
 
           {/* Lessentelling */}
-          <div className="px-5 py-3 border-b-2 border-black bg-white">
+          <div className="px-5 py-3 border-b-2 border-black bg-white flex-shrink-0">
             <p className="text-xs font-bold uppercase tracking-widest">
               {selectedEvents.length === 0
                 ? "Geen lessen"
@@ -295,38 +271,36 @@ export default function Dashboard() {
           </div>
 
           {/* Lessenlijst */}
-          <div className="flex-1 bg-[#f5f0e8] overflow-hidden">
-            <div className="overflow-y-auto max-h-[calc(100vh-280px)]">
-              <AnimatePresence mode="popLayout">
-                {selectedEvents.length === 0 ? (
-                  <motion.div
-                    key="empty"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.15 }}
-                    className="flex flex-col items-center justify-center py-10 gap-3"
-                  >
-                    <div className="w-10 h-10 border-2 border-black bg-white flex items-center justify-center">
-                      <Clock className="w-5 h-5 text-black" />
-                    </div>
-                    <p className="text-sm text-black/60 text-center">
-                      Geen lessen ingepland.
-                      <br />
-                      <button
-                        onClick={() => openCreate()}
-                        className="font-bold underline underline-offset-2 cursor-pointer text-black mt-0.5 inline-block"
-                      >
-                        Plan er een in?
-                      </button>
-                    </p>
-                  </motion.div>
-                ) : (
-                  selectedEvents.map((event) => (
-                    <EventCard key={event.id} event={event} fetcher={fetcher} />
-                  ))
-                )}
-              </AnimatePresence>
-            </div>
+          <div className="flex-1 bg-[#f5f0e8] overflow-y-auto">
+            <AnimatePresence mode="popLayout">
+              {selectedEvents.length === 0 ? (
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.15 }}
+                  className="flex flex-col items-center justify-center py-10 gap-3"
+                >
+                  <div className="w-10 h-10 border-2 border-black bg-white flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-black" />
+                  </div>
+                  <p className="text-sm text-black/60 text-center">
+                    Geen lessen ingepland.
+                    <br />
+                    <button
+                      onClick={() => openCreate()}
+                      className="font-bold underline underline-offset-2 cursor-pointer text-black mt-0.5 inline-block"
+                    >
+                      Plan er een in?
+                    </button>
+                  </p>
+                </motion.div>
+              ) : (
+                selectedEvents.map((event) => (
+                  <EventCard key={event.id} event={event} fetcher={fetcher} />
+                ))
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

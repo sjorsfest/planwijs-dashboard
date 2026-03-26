@@ -112,14 +112,441 @@ export interface paths {
         patch: operations["update_event_events__event_id__patch"];
         trace?: never;
     };
+    "/methods/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Methods */
+        get: operations["list_methods_methods__get"];
+        put?: never;
+        /** Create Method */
+        post: operations["create_method_methods__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/methods/{method_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Method */
+        get: operations["get_method_methods__method_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Method */
+        delete: operations["delete_method_methods__method_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Method */
+        patch: operations["update_method_methods__method_id__patch"];
+        trace?: never;
+    };
+    "/books/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Books */
+        get: operations["list_books_books__get"];
+        put?: never;
+        /** Create Book */
+        post: operations["create_book_books__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/books/{book_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Book */
+        get: operations["get_book_books__book_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Book */
+        delete: operations["delete_book_books__book_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Book */
+        patch: operations["update_book_books__book_id__patch"];
+        trace?: never;
+    };
+    "/classes/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Classes */
+        get: operations["list_classes_classes__get"];
+        put?: never;
+        /** Create Class */
+        post: operations["create_class_classes__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/classes/{class_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Class */
+        get: operations["get_class_classes__class_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Class */
+        delete: operations["delete_class_classes__class_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Class */
+        patch: operations["update_class_classes__class_id__patch"];
+        trace?: never;
+    };
+    "/subjects/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Subjects */
+        get: operations["list_subjects_subjects__get"];
+        put?: never;
+        /** Create Subject */
+        post: operations["create_subject_subjects__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subjects/{subject_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Subject */
+        get: operations["get_subject_subjects__subject_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Subject */
+        delete: operations["delete_subject_subjects__subject_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Subject */
+        patch: operations["update_subject_subjects__subject_id__patch"];
+        trace?: never;
+    };
+    "/lesplan/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Lespannen */
+        get: operations["list_lespannen_lesplan__get"];
+        put?: never;
+        /** Create Lesplan */
+        post: operations["create_lesplan_lesplan__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lesplan/{request_id}/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Feedback */
+        post: operations["submit_feedback_lesplan__request_id__feedback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lesplan/{request_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Lesplan */
+        post: operations["approve_lesplan_lesplan__request_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lesplan/{request_id}/stream-overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stream Overview Endpoint */
+        get: operations["stream_overview_endpoint_lesplan__request_id__stream_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lesplan/{request_id}/stream-revision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stream Revision Endpoint */
+        get: operations["stream_revision_endpoint_lesplan__request_id__stream_revision_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lesplan/{request_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Lesplan */
+        get: operations["get_lesplan_lesplan__request_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Book */
+        "Book-Input": {
+            /** Id */
+            id?: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+            /** Book Id */
+            book_id?: number | null;
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /** Subject Id */
+            subject_id?: string | null;
+            /** Method Id */
+            method_id?: string | null;
+            /** Edition */
+            edition?: string | null;
+            /** School Years */
+            school_years?: components["schemas"]["SchoolYear"][];
+            /** Levels */
+            levels?: components["schemas"]["Level"][];
+            /** Cover Path */
+            cover_path?: string | null;
+            /** Url */
+            url: string;
+        };
+        /** Book */
+        "Book-Output": {
+            /** Id */
+            id?: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+            /** Book Id */
+            book_id?: number | null;
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /** Subject Id */
+            subject_id?: string | null;
+            /** Method Id */
+            method_id?: string | null;
+            /** Edition */
+            edition?: string | null;
+            /** School Years */
+            school_years?: components["schemas"]["SchoolYear"][];
+            /** Levels */
+            levels?: components["schemas"]["Level"][];
+            /** Cover Path */
+            cover_path?: string | null;
+            /** Url */
+            url: string;
+            /** Cover Url */
+            readonly cover_url: string | null;
+        };
+        /** BookDetailResponse */
+        BookDetailResponse: {
+            /** Id */
+            id: string;
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /** Subject Id */
+            subject_id: string | null;
+            /** Subject Slug */
+            subject_slug: string | null;
+            /** Subject Name */
+            subject_name: string | null;
+            /** Subject Category */
+            subject_category: string | null;
+            /** Method Id */
+            method_id: string | null;
+            /** Edition */
+            edition: string | null;
+            /** School Years */
+            school_years: unknown[];
+            /** Levels */
+            levels: unknown[];
+            /** Cover Url */
+            cover_url: string | null;
+            /** Url */
+            url: string;
+            /** Chapters */
+            chapters: components["schemas"]["ChapterResponse"][];
+        };
+        /** ChapterResponse */
+        ChapterResponse: {
+            /** Id */
+            id: string;
+            /** Index */
+            index: number;
+            /** Title */
+            title: string;
+            /** Paragraphs */
+            paragraphs: components["schemas"]["ParagraphResponse"][];
+        };
+        /** Class */
+        Class: {
+            /** Id */
+            id?: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+            /** User Id */
+            user_id: string;
+            /** @default Unknown */
+            subject: components["schemas"]["app__models__enums__Subject"];
+            /** @default Unknown */
+            level: components["schemas"]["Level"];
+            /** @default Unknown */
+            school_year: components["schemas"]["SchoolYear"];
+            /** Size */
+            size: number;
+            /** @description Verkeerslichtmodel. Groen = goed hanteerbaar; Oranje = vraagt extra aandacht; Rood = uitdagend / intensieve begeleiding nodig. */
+            difficulty?: components["schemas"]["ClassDifficulty"] | null;
+        };
+        /**
+         * ClassDifficulty
+         * @description Verkeerslichtmodel voor klassenmoeilijkheid.
+         *
+         *     Groen: goed hanteerbaar.
+         *     Oranje: vraagt extra aandacht.
+         *     Rood: uitdagend, intensieve begeleiding nodig.
+         * @enum {string}
+         */
+        ClassDifficulty: "Groen" | "Oranje" | "Rood";
+        /** CreateLesplanRequest */
+        CreateLesplanRequest: {
+            /** User Id */
+            user_id: string;
+            /** Class Id */
+            class_id: string;
+            /** Book Id */
+            book_id: string;
+            /** Selected Paragraph Ids */
+            selected_paragraph_ids: string[];
+            /** Num Lessons */
+            num_lessons: number;
+            /** Lesson Duration Minutes */
+            lesson_duration_minutes: number;
+        };
         /** Event */
         Event: {
             /** Id */
             id?: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
             /** Name */
             name: string;
             /** Description */
@@ -130,15 +557,210 @@ export interface components {
              */
             planned_date: string;
         };
+        /** EventCreate */
+        EventCreate: {
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /**
+             * Planned Date
+             * Format: date
+             */
+            planned_date: string;
+        };
+        /** FeedbackMessageResponse */
+        FeedbackMessageResponse: {
+            /** Id */
+            id: string;
+            /** Role */
+            role: string;
+            /** Content */
+            content: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** FeedbackRequest */
+        FeedbackRequest: {
+            /** Message */
+            message: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** LesplanOverviewResponse */
+        LesplanOverviewResponse: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Learning Goals */
+            learning_goals: string;
+            /** Key Knowledge */
+            key_knowledge: string[];
+            /** Recommended Approach */
+            recommended_approach: string;
+            /** Learning Progression */
+            learning_progression: string;
+            /** Lesson Outline */
+            lesson_outline: components["schemas"]["LessonOutlineItemResponse"][];
+            /** Didactic Approach */
+            didactic_approach: string;
+            /** Lessons */
+            lessons: components["schemas"]["LessonPlanResponse"][];
+        };
+        /** LesplanResponse */
+        LesplanResponse: {
+            /** Id */
+            id: string;
+            /** User Id */
+            user_id: string;
+            /** Class Id */
+            class_id: string;
+            /** Book Id */
+            book_id: string;
+            /** Selected Paragraph Ids */
+            selected_paragraph_ids: string[];
+            /** Num Lessons */
+            num_lessons: number;
+            /** Lesson Duration Minutes */
+            lesson_duration_minutes: number;
+            status: components["schemas"]["LesplanStatus"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            overview: components["schemas"]["LesplanOverviewResponse"] | null;
+            /** Feedback Messages */
+            feedback_messages: components["schemas"]["FeedbackMessageResponse"][];
+        };
+        /**
+         * LesplanStatus
+         * @enum {string}
+         */
+        LesplanStatus: "pending" | "generating_overview" | "overview_ready" | "revising_overview" | "generating_lessons" | "completed" | "failed";
+        /** LessonOutlineItemResponse */
+        LessonOutlineItemResponse: {
+            /** Lesson Number */
+            lesson_number: number;
+            /** Subject Focus */
+            subject_focus: string;
+            /** Description */
+            description: string;
+            /** Builds On */
+            builds_on: string;
+        };
+        /** LessonPlanResponse */
+        LessonPlanResponse: {
+            /** Id */
+            id: string;
+            /** Lesson Number */
+            lesson_number: number;
+            /** Title */
+            title: string;
+            /** Learning Objectives */
+            learning_objectives: string[];
+            /** Time Sections */
+            time_sections: components["schemas"]["TimeSectionResponse"][];
+            /** Required Materials */
+            required_materials: string[];
+            /** Covered Paragraph Ids */
+            covered_paragraph_ids: string[];
+            /** Teacher Notes */
+            teacher_notes: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * Level
+         * @enum {string}
+         */
+        Level: "Havo" | "Vwo" | "Gymnasium" | "Vmbo-b" | "Vmbo-k" | "Vmbo-g" | "Vmbo-t" | "Unknown";
+        /** Method */
+        Method: {
+            /** Id */
+            id?: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /** @default Unknown */
+            subject: components["schemas"]["app__models__enums__Subject"];
+            /** Url */
+            url: string;
+        };
+        /** ParagraphResponse */
+        ParagraphResponse: {
+            /** Id */
+            id: string;
+            /** Index */
+            index: number;
+            /** Title */
+            title: string;
+            /** Synopsis */
+            synopsis: string | null;
+        };
+        /**
+         * SchoolYear
+         * @enum {string}
+         */
+        SchoolYear: "1e jaar" | "2e jaar" | "3e jaar" | "4e jaar" | "5e jaar" | "6e jaar" | "Unknown";
+        /**
+         * SubjectCategory
+         * @enum {string}
+         */
+        SubjectCategory: "Talen" | "Exacte vakken" | "Mens- en maatschappijvakken" | "Economie en bedrijf";
+        /** TimeSectionResponse */
+        TimeSectionResponse: {
+            /** Start Min */
+            start_min: number;
+            /** End Min */
+            end_min: number;
+            /** Activity */
+            activity: string;
+            /** Description */
+            description: string;
+            /** Activity Type */
+            activity_type: string;
+        };
         /** User */
         User: {
             /** Id */
             id?: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
             /** Name */
             name: string;
             /** Email */
@@ -158,6 +780,31 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * Subject
+         * @enum {string}
+         */
+        app__models__enums__Subject: "Aardrijkskunde" | "Bedrijfseconomie" | "Biologie" | "Duits" | "Economie" | "Engels" | "Frans" | "Geschiedenis" | "Grieks" | "Latijn" | "Levens beschouwing" | "Maatschappijleer" | "MAW" | "Mens & Maatschappij" | "Nask/Science" | "Natuurkunde" | "Nederlands" | "Scheikunde" | "Spaans" | "Wiskunde" | "Wiskunde A" | "Wiskunde B" | "Unknown";
+        /** Subject */
+        app__models__subject__Subject: {
+            /** Id */
+            id?: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+            category: components["schemas"]["SubjectCategory"];
         };
     };
     responses: never;
@@ -409,7 +1056,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Event"];
+                "application/json": components["schemas"]["EventCreate"];
             };
         };
         responses: {
@@ -515,6 +1162,872 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Event"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_methods_methods__get: {
+        parameters: {
+            query?: {
+                subject?: components["schemas"]["app__models__enums__Subject"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Method"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_method_methods__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Method"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Method"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_method_methods__method_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                method_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Method"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_method_methods__method_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                method_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_method_methods__method_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                method_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Method"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Method"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_books_books__get: {
+        parameters: {
+            query?: {
+                method_id?: string | null;
+                subject_id?: string | null;
+                level?: components["schemas"]["Level"] | null;
+                school_year?: components["schemas"]["SchoolYear"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Book-Output"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_book_books__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Book-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Book-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_book_books__book_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_book_books__book_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_book_books__book_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Book-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Book-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_classes_classes__get: {
+        parameters: {
+            query?: {
+                user_id?: string | null;
+                subject?: components["schemas"]["app__models__enums__Subject"] | null;
+                level?: components["schemas"]["Level"] | null;
+                school_year?: components["schemas"]["SchoolYear"] | null;
+                difficulty?: components["schemas"]["ClassDifficulty"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Class"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_class_classes__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Class"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Class"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_class_classes__class_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                class_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Class"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_class_classes__class_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                class_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_class_classes__class_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                class_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Class"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Class"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_subjects_subjects__get: {
+        parameters: {
+            query?: {
+                category?: components["schemas"]["SubjectCategory"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__models__subject__Subject"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_subject_subjects__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["app__models__subject__Subject"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__models__subject__Subject"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_subject_subjects__subject_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                subject_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__models__subject__Subject"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_subject_subjects__subject_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                subject_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_subject_subjects__subject_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                subject_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["app__models__subject__Subject"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__models__subject__Subject"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_lespannen_lesplan__get: {
+        parameters: {
+            query?: {
+                user_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LesplanResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_lesplan_lesplan__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLesplanRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LesplanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_feedback_lesplan__request_id__feedback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LesplanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_lesplan_lesplan__request_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LesplanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stream_overview_endpoint_lesplan__request_id__stream_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stream_revision_endpoint_lesplan__request_id__stream_revision_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_lesplan_lesplan__request_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LesplanResponse"];
                 };
             };
             /** @description Validation Error */

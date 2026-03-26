@@ -21,7 +21,7 @@ export default function LoginPage() {
   const { apiUrl, redirectUri } = useLoaderData<typeof loader>()
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[1fr_3fr]">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[0.9fr_3.1fr]">
 
       {/* ── Left: branding bento ── */}
       <div className="hidden lg:flex flex-col border-r-2 border-black min-h-screen">
