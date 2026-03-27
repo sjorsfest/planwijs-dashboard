@@ -600,7 +600,7 @@ export interface components {
             /** Title */
             title: string;
             /** Learning Goals */
-            learning_goals: string;
+            learning_goals: string[];
             /** Key Knowledge */
             key_knowledge: string[];
             /** Recommended Approach */
@@ -679,6 +679,28 @@ export interface components {
             covered_paragraph_ids: string[];
             /** Teacher Notes */
             teacher_notes: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Preparation Todos */
+            preparation_todos: components["schemas"]["LessonPreparationTodoResponse"][];
+        };
+        /** LessonPreparationTodoResponse */
+        LessonPreparationTodoResponse: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Why */
+            why: string;
+            /** Status */
+            status: string;
+            /** Due Date */
+            due_date: string | null;
             /**
              * Created At
              * Format: date-time

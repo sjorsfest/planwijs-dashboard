@@ -18,5 +18,6 @@ export default [
     route("plans/new", "routes/app.plans.new.tsx"),
     route("lesplan/new", "routes/app.lesplan.new.tsx"),
     route("lesplan/:requestId", "routes/app.lesplan.$requestId.tsx"),
+    route("lesplan/:requestId/les/:lessonId", "routes/app.lesplan.$requestId.les.$lessonId.tsx"),
   ]),
 ] satisfies RouteConfig

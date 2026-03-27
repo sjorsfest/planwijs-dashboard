@@ -27,7 +27,7 @@ export type LessonOutlineItem = {
 
 export type LesplanOverviewState = {
   title?: string
-  learning_goals?: string
+  learning_goals?: string[]
   key_knowledge?: string[]
   recommended_approach?: string
   learning_progression?: string
@@ -49,7 +49,7 @@ export type LesplanDoneEvent = {
   status: LesplanStatus
   overview: {
     title?: string
-    learning_goals?: string
+    learning_goals?: string[]
     key_knowledge?: string[]
     recommended_approach?: string
     learning_progression?: string

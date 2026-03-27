@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react"
 import { data, Link, useFetcher, useLoaderData, useRevalidator } from "react-router"
+import { motion } from "framer-motion"
 import {
   AlertTriangle,
   ArrowLeft,
-  BookOpen,
   CheckCircle2,
   ChevronRight,
   Lightbulb,
@@ -24,7 +24,6 @@ import {
 import { requireAuthContext } from "~/lib/auth.server"
 import { openEventSource } from "~/lib/sse"
 import { Button } from "~/components/ui/button"
-import { Badge } from "~/components/ui/badge"
 import { Textarea } from "~/components/ui/textarea"
 import {
   mapFeedbackMessages,
@@ -87,6 +86,8 @@ const STATUS_COPY: Record<LesplanPageState["status"], { label: string; color: st
   failed: { label: "Genereren mislukt", color: "bg-red-100 text-red-800" },
 }
 
+const SOFT_EASE = [0.22, 1, 0.36, 1] as const
+
 function normalizeOverview(
   overview: LesplanResponse["overview"] | LesplanDoneEvent["overview"] | null | undefined
 ): LesplanOverviewState {
@@ -116,7 +117,10 @@ function mergeOverview(current: LesplanOverviewState, partial: LesplanOverviewPa
 function mapPartialPayload(partial: Record<string, unknown>): LesplanOverviewPartial {
   const result: LesplanOverviewPartial = {}
   if (typeof partial.title === "string") result.title = partial.title
-  if (typeof partial.learning_goals === "string") result.learning_goals = partial.learning_goals
+  if (Array.isArray(partial.learning_goals)) {
+    result.learning_goals = partial.learning_goals.filter((goal): goal is string => typeof goal === "string")
+  }
+  if (typeof partial.learning_goals === "string") result.learning_goals = [partial.learning_goals]
   if (Array.isArray(partial.key_knowledge)) result.key_knowledge = partial.key_knowledge as string[]
   if (typeof partial.recommended_approach === "string") result.recommended_approach = partial.recommended_approach
   if (typeof partial.learning_progression === "string") result.learning_progression = partial.learning_progression
@@ -488,8 +492,12 @@ export default function LesplanWorkspacePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.requestId, streamTargetMode])
 
+  const shouldPollLessons =
+    state.status === "generating_lessons" ||
+    (state.status === "completed" && state.lessons.length < state.request.numLessons)
+
   useEffect(() => {
-    if (state.status !== "generating_lessons") {
+    if (!shouldPollLessons) {
       pollingStartedAtRef.current = null
       dispatch({ type: "set_polling", active: false })
       return
@@ -512,7 +520,7 @@ export default function LesplanWorkspacePage() {
       cancelled = true
       if (timerId) window.clearTimeout(timerId)
     }
-  }, [state.status, revalidator])
+  }, [shouldPollLessons, revalidator, state.lessons.length, state.request.numLessons])
 
   function handleFeedbackSubmit() {
     const message = feedbackText.trim()
@@ -586,10 +594,22 @@ export default function LesplanWorkspacePage() {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-10 space-y-12">
+      <ChapterNav showFeedback={state.feedbackMessages.length > 0 || canReview || isGeneratingLessons || isCompleted} />
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: SOFT_EASE }}
+        className="max-w-3xl mx-auto px-6 py-10 space-y-12"
+      >
         {/* Error banner */}
         {state.ui.lastError && (
-          <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm">
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22, ease: SOFT_EASE }}
+            className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm"
+          >
             <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
             <p className="text-red-700 font-medium flex-1">{state.ui.lastError}</p>
             <button
@@ -598,7 +618,7 @@ export default function LesplanWorkspacePage() {
             >
               Sluiten
             </button>
-          </div>
+          </motion.div>
         )}
 
         {/* Overview document */}
@@ -607,6 +627,7 @@ export default function LesplanWorkspacePage() {
           isStreaming={isStreaming}
           streamConnected={state.ui.streamConnected}
           lessons={state.lessons}
+          requestId={state.requestId}
           isGeneratingLessons={isGeneratingLessons}
           isFailed={isFailed}
         />
@@ -614,6 +635,7 @@ export default function LesplanWorkspacePage() {
         {/* Feedback thread */}
         {(state.feedbackMessages.length > 0 || canReview || isGeneratingLessons || isCompleted) && (
           <FeedbackSection
+            id="feedback"
             messages={state.feedbackMessages}
             value={feedbackText}
             onChange={setFeedbackText}
@@ -623,12 +645,7 @@ export default function LesplanWorkspacePage() {
             sending={feedbackFetcher.state !== "idle" || state.ui.sendingFeedback}
           />
         )}
-
-        {/* Completed lessons */}
-        {isCompleted && state.lessons.length > 0 && (
-          <CompletedLessonPlans lessons={state.lessons} context={state.sourceContext} />
-        )}
-      </div>
+      </motion.div>
     </div>
   )
 }
@@ -642,6 +659,7 @@ function OverviewDocument({
   isStreaming,
   streamConnected,
   lessons,
+  requestId,
   isGeneratingLessons,
   isFailed,
 }: {
@@ -649,32 +667,43 @@ function OverviewDocument({
   isStreaming: boolean
   streamConnected: boolean
   lessons: LesplanPageState["lessons"]
+  requestId: string
   isGeneratingLessons: boolean
   isFailed: boolean
 }) {
   const isEmpty = !overview
 
   return (
-    <div className="space-y-8">
+    <motion.div layout className="space-y-10">
       {/* Title */}
-      <div>
+      <motion.div layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, ease: SOFT_EASE }}>
         {overview?.title ? (
           <h1 className="text-4xl font-black tracking-tight text-black leading-tight">{overview.title}</h1>
         ) : (
           <div className={`h-10 w-2/3 rounded-lg ${isStreaming ? "bg-black/8 animate-pulse" : "bg-black/5"}`} />
         )}
-      </div>
+      </motion.div>
 
       {/* Generating / failed states */}
       {isStreaming && !streamConnected && isEmpty && (
-        <div className="flex items-center gap-3 text-sm text-black/50 font-medium">
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22, ease: SOFT_EASE }}
+          className="flex items-center gap-3 text-sm text-black/50 font-medium"
+        >
           <LoaderCircle className="w-4 h-4 animate-spin" />
           Verbinden met stream…
-        </div>
+        </motion.div>
       )}
 
       {isFailed && (
-        <div className="rounded-2xl bg-red-50 border border-red-200 p-6 flex items-start gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.24, ease: SOFT_EASE }}
+          className="rounded-2xl bg-red-50 border border-red-200 p-6 flex items-start gap-4"
+        >
           <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
           <div>
             <p className="font-bold text-red-800">Genereren mislukt</p>
@@ -686,49 +715,104 @@ function OverviewDocument({
               </Link>
             </Button>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {isGeneratingLessons && (
-        <div className="rounded-2xl bg-blue-50 border border-blue-200 p-5 flex items-center gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.24, ease: SOFT_EASE }}
+          className="rounded-2xl bg-blue-50 border border-blue-200 p-5 flex items-center gap-4"
+        >
           <LoaderCircle className="w-5 h-5 text-blue-500 animate-spin shrink-0" />
           <div>
             <p className="font-bold text-blue-900">Lessen worden uitgewerkt</p>
             <p className="text-sm text-blue-600 mt-0.5">De losse lessen worden op de achtergrond opgebouwd. Deze pagina ververst automatisch.</p>
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {/* Learning goals */}
-      <ProseSection
-        label="Wat leren de leerlingen?"
-        value={overview?.learning_goals}
+      {/* Lessenreeks — first: teacher needs the full scope and sequence at a glance */}
+      <motion.section
+        id="lessenreeks"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, ease: SOFT_EASE }}
+        className="space-y-4 scroll-mt-24"
+      >
+        <SectionLabel>Lessenreeks</SectionLabel>
+        {overview?.lesson_outline && overview.lesson_outline.length > 0 ? (
+          <LessonTimeline items={overview.lesson_outline} requestId={requestId} lessons={lessons} />
+        ) : (
+          <SkeletonCards streaming={isStreaming} />
+        )}
+      </motion.section>
+
+      {/* Leerdoelen — what students will achieve */}
+      <GoalsSection
+        id="leerdoelen"
+        label="Leerdoelen"
+        goals={overview?.learning_goals}
         streaming={isStreaming}
       />
 
-      {/* Key knowledge */}
-      <section className="space-y-3">
+      {/* Leerlijn — narrative thread through the series */}
+      <motion.section
+        id="leerlijn"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, ease: SOFT_EASE, delay: 0.03 }}
+        className="space-y-3 scroll-mt-24"
+      >
+        <SectionLabel>Leerlijn</SectionLabel>
+        {overview?.learning_progression ? (
+          <div className="relative pl-5">
+            <div className="absolute left-0 top-2 bottom-2 w-px bg-gradient-to-b from-violet-400 to-violet-200" />
+            <p className="text-sm leading-7 text-black/75 font-medium">{overview.learning_progression}</p>
+          </div>
+        ) : (
+          <SkeletonLines streaming={isStreaming} lines={3} />
+        )}
+      </motion.section>
+
+      {/* Kernkennis — key vocabulary and concepts */}
+      <motion.section
+        id="kernkennis"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, ease: SOFT_EASE, delay: 0.05 }}
+        className="space-y-3 scroll-mt-24"
+      >
         <SectionLabel>Kernkennis</SectionLabel>
         {overview?.key_knowledge && overview.key_knowledge.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {overview.key_knowledge.map((item, i) => (
-              <span
+              <motion.span
                 key={i}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, ease: SOFT_EASE, delay: i * 0.03 }}
                 className="inline-block bg-white border border-black/12 rounded-full px-3.5 py-1.5 text-sm font-medium text-black/80 shadow-sm"
-                style={{ animationDelay: `${i * 40}ms` }}
               >
                 {item}
-              </span>
+              </motion.span>
             ))}
           </div>
         ) : (
           <SkeletonTags streaming={isStreaming} />
         )}
-      </section>
+      </motion.section>
 
-      {/* Recommended approach */}
-      <section className="space-y-3">
-        <SectionLabel>Aanbevolen didactische aanpak</SectionLabel>
+      {/* Aanbevolen aanpak */}
+      <motion.section
+        id="aanpak"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, ease: SOFT_EASE, delay: 0.07 }}
+        className="space-y-3 scroll-mt-24"
+      >
+        <SectionLabel>Aanbevolen aanpak voor dit lesmateriaal</SectionLabel>
         {overview?.recommended_approach ? (
           <div className="flex gap-4 border-l-4 border-amber-400 pl-5 py-1">
             <div className="shrink-0 mt-0.5">
@@ -739,46 +823,16 @@ function OverviewDocument({
         ) : (
           <SkeletonLines streaming={isStreaming} lines={4} indent />
         )}
-      </section>
+      </motion.section>
 
-      {/* Learning progression */}
-      <section className="space-y-3">
-        <SectionLabel>Leerlijn</SectionLabel>
-        {overview?.learning_progression ? (
-          <div className="relative pl-5">
-            <div className="absolute left-0 top-2 bottom-2 w-px bg-gradient-to-b from-violet-400 to-violet-200" />
-            <p className="text-sm leading-7 text-black/75 font-medium">{overview.learning_progression}</p>
-          </div>
-        ) : (
-          <SkeletonLines streaming={isStreaming} lines={3} />
-        )}
-      </section>
-
-      {/* Lesson outline */}
-      <section className="space-y-4">
-        <SectionLabel>Lessenreeks</SectionLabel>
-        {overview?.lesson_outline && overview.lesson_outline.length > 0 ? (
-          <div className="space-y-3">
-            {overview.lesson_outline.map((item, i) => (
-              <LessonOutlineCard
-                key={i}
-                item={item}
-                linkedLesson={lessons.find((l) => l.lesson_number === item.lesson_number)}
-              />
-            ))}
-          </div>
-        ) : (
-          <SkeletonCards streaming={isStreaming} />
-        )}
-      </section>
-
-      {/* Didactic approach */}
+      {/* Didactische aanpak */}
       <ProseSection
+        id="didactiek"
         label="Didactische aanpak"
         value={overview?.didactic_approach}
         streaming={isStreaming}
       />
-    </div>
+    </motion.div>
   )
 }
 
@@ -788,52 +842,140 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function ProseSection({ label, value, streaming }: { label: string; value?: string; streaming: boolean }) {
+function ProseSection({ label, value, streaming, id }: { label: string; value?: string | string[]; streaming: boolean; id?: string }) {
+  const hasValue = Array.isArray(value) ? value.length > 0 : Boolean(value)
+
   return (
-    <section className="space-y-3">
+    <motion.section
+      id={id}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: SOFT_EASE }}
+      className="space-y-3 scroll-mt-24"
+    >
       <SectionLabel>{label}</SectionLabel>
-      {value ? (
-        <p className="text-sm leading-7 text-black/75 font-medium">{value}</p>
+      {hasValue ? (
+        Array.isArray(value) ? (
+          <ul className="space-y-1.5 pl-5 list-disc">
+            {value.map((item, index) => (
+              <motion.li
+                key={`${item}-${index}`}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2, ease: SOFT_EASE, delay: index * 0.03 }}
+                className="text-sm leading-7 text-black/75 font-medium"
+              >
+                {item}
+              </motion.li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm leading-7 text-black/75 font-medium">{value}</p>
+        )
       ) : (
         <SkeletonLines streaming={streaming} lines={3} />
       )}
-    </section>
+    </motion.section>
+  )
+}
+
+function LessonTimeline({
+  items,
+  requestId,
+  lessons,
+}: {
+  items: { lesson_number: number; subject_focus: string; description: string; builds_on: string }[]
+  requestId: string
+  lessons: LesplanPageState["lessons"]
+}) {
+  return (
+    <div>
+      {items.map((item, i) => {
+        const linkedLesson = lessons.find((l) => l.lesson_number === item.lesson_number)
+        return (
+          <div key={i} className="relative flex gap-4 pb-3 last:pb-0">
+            {i < items.length - 1 && (
+              <div className="absolute left-[17px] top-9 bottom-0 w-0.5 bg-gradient-to-b from-black/15 to-black/5" />
+            )}
+            <div className="relative z-10 shrink-0 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-black">
+              {item.lesson_number}
+            </div>
+            <LessonOutlineCard item={item} requestId={requestId} linkedLesson={linkedLesson} />
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
 function LessonOutlineCard({
   item,
+  requestId,
   linkedLesson,
 }: {
   item: { lesson_number: number; subject_focus: string; description: string; builds_on: string }
+  requestId: string
   linkedLesson?: { id: string; lesson_number: number }
 }) {
   return (
-    <div className="group flex gap-4 bg-white rounded-2xl border border-black/8 p-5 shadow-sm hover:shadow-md transition-shadow">
-      <div className="shrink-0 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-black">
-        {item.lesson_number}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-3">
-          <p className="font-bold text-black text-sm">{item.subject_focus}</p>
-          {linkedLesson && (
-            <a
-              href={`#lesson-${linkedLesson.lesson_number}`}
-              className="shrink-0 flex items-center gap-1 text-xs font-semibold text-black/40 hover:text-black transition-colors"
-            >
-              Bekijk les
-              <ChevronRight className="w-3 h-3" />
-            </a>
-          )}
-        </div>
-        <p className="mt-1.5 text-sm text-black/60 leading-6">{item.description}</p>
-        {item.builds_on && (
-          <p className="mt-2.5 text-xs text-black/40 font-medium">
-            <span className="font-bold">Bouwt voort op:</span> {item.builds_on}
-          </p>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.24, ease: SOFT_EASE }}
+      whileHover={{ y: -1 }}
+      className="flex-1 min-w-0 bg-white rounded-2xl border border-black/8 p-5 shadow-sm hover:shadow-md transition-shadow"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className="font-bold text-black text-sm leading-snug">{item.subject_focus}</p>
+        {linkedLesson && (
+          <Link
+            to={`/lesplan/${requestId}/les/${linkedLesson.id}`}
+            className="shrink-0 flex items-center gap-1 text-xs font-semibold text-black/40 hover:text-black transition-colors"
+          >
+            Bekijk les
+            <ChevronRight className="w-3 h-3" />
+          </Link>
         )}
       </div>
-    </div>
+      <p className="mt-1.5 text-sm text-black/60 leading-6">{item.description}</p>
+      {item.builds_on && (
+        <p className="mt-2.5 text-xs text-black/40 font-medium">
+          <span className="font-bold">Bouwt voort op:</span> {item.builds_on}
+        </p>
+      )}
+    </motion.div>
+  )
+}
+
+function GoalsSection({ label, goals, streaming, id }: { label: string; goals?: string[]; streaming: boolean; id?: string }) {
+  return (
+    <motion.section
+      id={id}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: SOFT_EASE }}
+      className="space-y-3 scroll-mt-24"
+    >
+      <SectionLabel>{label}</SectionLabel>
+      {goals && goals.length > 0 ? (
+        <ul className="space-y-2.5">
+          {goals.map((goal, i) => (
+            <motion.li
+              key={`${goal}-${i}`}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2, ease: SOFT_EASE, delay: i * 0.03 }}
+              className="flex items-start gap-3"
+            >
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+              <span className="text-sm leading-6 text-black/75 font-medium">{goal}</span>
+            </motion.li>
+          ))}
+        </ul>
+      ) : (
+        <SkeletonLines streaming={streaming} lines={4} />
+      )}
+    </motion.section>
   )
 }
 
@@ -893,6 +1035,7 @@ function FeedbackSection({
   disabled,
   readOnly,
   sending,
+  id,
 }: {
   messages: LesplanThreadMessage[]
   value: string
@@ -901,6 +1044,7 @@ function FeedbackSection({
   disabled: boolean
   readOnly: boolean
   sending: boolean
+  id?: string
 }) {
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
@@ -910,14 +1054,24 @@ function FeedbackSection({
   }
 
   return (
-    <div className="space-y-4">
+    <motion.div
+      id={id}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.26, ease: SOFT_EASE }}
+      className="space-y-4 scroll-mt-24"
+    >
       <SectionLabel>Gesprek & feedback</SectionLabel>
 
       {messages.length > 0 && (
         <div className="space-y-3">
           {messages.map((message) => (
-            <div
+            <motion.div
               key={message.id}
+              layout
+              initial={{ opacity: 0, x: message.role === "teacher" ? 16 : -16, y: 4 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={{ duration: 0.22, ease: SOFT_EASE }}
               className={[
                 "max-w-[85%] rounded-2xl px-4 py-3",
                 message.role === "teacher"
@@ -936,13 +1090,18 @@ function FeedbackSection({
               ) : (
                 <p className="text-sm leading-6 font-medium whitespace-pre-wrap">{message.content}</p>
               )}
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
 
       {!readOnly && (
-        <div className="bg-white rounded-2xl border border-black/10 overflow-hidden shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.24, ease: SOFT_EASE }}
+          className="bg-white rounded-2xl border border-black/10 overflow-hidden shadow-sm"
+        >
           <Textarea
             value={value}
             onChange={(e) => onChange(e.target.value)}
@@ -969,135 +1128,74 @@ function FeedbackSection({
               Verstuur
             </Button>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {readOnly && messages.length === 0 && (
         <p className="text-sm text-black/40 font-medium">Geen feedback gesprek.</p>
       )}
-    </div>
+    </motion.div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// Completed lesson plans
+// Chapter navigator
 // ---------------------------------------------------------------------------
 
-function CompletedLessonPlans({ lessons, context }: { lessons: LesplanPageState["lessons"]; context: SourceContext }) {
-  const paragraphsById = new Map((context.selectedParagraphs ?? []).map((p) => [p.id, p.title]))
+const CHAPTERS = [
+  { id: "lessenreeks", label: "Lessenreeks" },
+  { id: "leerdoelen", label: "Leerdoelen" },
+  { id: "leerlijn", label: "Leerlijn" },
+  { id: "kernkennis", label: "Kernkennis" },
+  { id: "aanpak", label: "Aanpak" },
+  { id: "didactiek", label: "Didactiek" },
+  { id: "feedback", label: "Feedback" },
+] as const
+
+type ChapterId = (typeof CHAPTERS)[number]["id"]
+
+function ChapterNav({ showFeedback }: { showFeedback: boolean }) {
+  const [activeId, setActiveId] = useState<ChapterId>("lessenreeks")
+
+  useEffect(() => {
+    const visible = showFeedback ? CHAPTERS : CHAPTERS.filter((c) => c.id !== "feedback")
+    const observers: IntersectionObserver[] = []
+
+    visible.forEach(({ id }) => {
+      const el = document.getElementById(id)
+      if (!el) return
+      const observer = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveId(id) },
+        { rootMargin: "-30% 0px -65% 0px" }
+      )
+      observer.observe(el)
+      observers.push(observer)
+    })
+
+    return () => observers.forEach((o) => o.disconnect())
+  }, [showFeedback])
+
+  const visible = showFeedback ? CHAPTERS : CHAPTERS.filter((c) => c.id !== "feedback")
 
   return (
-    <div className="space-y-6">
-      <SectionLabel>Uitgewerkte lessen</SectionLabel>
-
-      {/* Jump links */}
-      <div className="flex flex-wrap gap-2">
-        {lessons.map((lesson) => (
-          <a
-            key={lesson.id}
-            href={`#lesson-${lesson.lesson_number}`}
-            className="inline-flex items-center gap-1.5 bg-white border border-black/12 rounded-full px-3.5 py-1.5 text-sm font-semibold hover:bg-black hover:text-white transition-colors"
+    <div className="sticky top-[57px] z-10 bg-[#f7f5f0]/90 backdrop-blur-sm border-b border-black/8">
+      <div className="max-w-3xl mx-auto px-6 py-2 flex gap-0.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+        {visible.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className={[
+              "shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all duration-150 whitespace-nowrap",
+              activeId === id
+                ? "bg-black/90 text-white"
+                : "text-black/40 hover:text-black/70 hover:bg-black/6",
+            ].join(" ")}
           >
-            <BookOpen className="w-3.5 h-3.5" />
-            Les {lesson.lesson_number}
-          </a>
+            {label}
+          </button>
         ))}
       </div>
-
-      {lessons.map((lesson) => (
-        <div key={lesson.id} id={`lesson-${lesson.lesson_number}`} className="bg-white rounded-2xl border border-black/10 overflow-hidden shadow-sm scroll-mt-20">
-          <div className="px-6 py-5 border-b border-black/8 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center text-sm font-black shrink-0">
-              {lesson.lesson_number}
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-black/35 mb-0.5">Les {lesson.lesson_number}</p>
-              <h2 className="text-lg font-black text-black">{lesson.title}</h2>
-            </div>
-          </div>
-
-          <div className="px-6 py-5 space-y-6">
-            {/* Learning objectives */}
-            <div>
-              <SectionLabel>Leerdoelen</SectionLabel>
-              <ul className="mt-3 space-y-2">
-                {lesson.learning_objectives.map((obj, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-sm text-black/75 font-medium">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                    {obj}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Time sections */}
-            <div>
-              <SectionLabel>Tijdschema</SectionLabel>
-              <div className="mt-3 overflow-x-auto rounded-xl border border-black/10">
-                <table className="w-full min-w-[560px] text-sm">
-                  <thead className="bg-black/4 border-b border-black/10">
-                    <tr>
-                      {["Tijd", "Activiteit", "Beschrijving", "Type"].map((h) => (
-                        <th key={h} className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-[0.18em] text-black/40">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lesson.time_sections.map((section, i) => (
-                      <tr key={i} className="border-b border-black/6 last:border-b-0">
-                        <td className="px-4 py-3 font-bold text-black/60 whitespace-nowrap">{section.start_min}–{section.end_min} min</td>
-                        <td className="px-4 py-3 font-semibold text-black">{section.activity}</td>
-                        <td className="px-4 py-3 text-black/65">{section.description}</td>
-                        <td className="px-4 py-3">
-                          <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-[0.12em]">
-                            {section.activity_type}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Materials */}
-              <div>
-                <SectionLabel>Benodigdheden</SectionLabel>
-                <ul className="mt-3 space-y-1.5">
-                  {lesson.required_materials.map((mat, i) => (
-                    <li key={i} className="text-sm text-black/65 font-medium flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-black/25 shrink-0" />
-                      {mat}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Covered paragraphs */}
-              <div>
-                <SectionLabel>Behandelde paragrafen</SectionLabel>
-                <ul className="mt-3 space-y-1.5">
-                  {lesson.covered_paragraph_ids.map((id) => (
-                    <li key={id} className="text-sm text-black/65 font-medium flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0" />
-                      {paragraphsById.get(id) ?? id}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* Teacher notes */}
-            <div>
-              <SectionLabel>Aantekeningen voor de docent</SectionLabel>
-              <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
-                <p className="text-sm leading-6 text-amber-900 font-medium whitespace-pre-wrap">{lesson.teacher_notes}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
     </div>
   )
 }
+
