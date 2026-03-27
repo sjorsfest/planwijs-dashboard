@@ -1,6 +1,7 @@
 import { useLoaderData } from "react-router"
-import { CalendarDays, BookOpen, ListChecks, LayoutGrid, Sparkles } from "lucide-react"
+import { CalendarDays, BookOpen, LayoutDashboard, ListTodo } from "lucide-react"
 import { Button } from "~/components/ui/button"
+import { LesLabLogo } from "~/components/branding/leslab-logo"
 import { getApiUrl } from "~/lib/api"
 import type { Route } from "./+types/login"
 
@@ -27,11 +28,8 @@ export default function LoginPage() {
       <div className="hidden lg:flex flex-col min-h-screen bg-gradient-to-br from-[#2a14b4] via-[#3a22c4] to-[#4338ca]">
 
         {/* Logo bar */}
-        <div className="flex items-center gap-3 px-8 h-16 flex-shrink-0">
-          <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-bold text-sm text-white">Planwijs</span>
+        <div className="flex items-center px-8 h-16 flex-shrink-0">
+          <LesLabLogo tone="dark" />
         </div>
 
         {/* Hero text */}
@@ -53,10 +51,10 @@ export default function LoginPage() {
         {/* Feature list */}
         <div className="p-6 flex flex-col gap-3 flex-shrink-0">
           {[
-            { icon: CalendarDays, label: "Kalenderoverzicht" },
-            { icon: BookOpen, label: "Lesplannen aanmaken" },
-            { icon: ListChecks, label: "Dagelijks overzicht" },
-            { icon: LayoutGrid, label: "Rustige omgeving" },
+            { icon: LayoutDashboard, label: "Dashboard" },
+            { icon: BookOpen, label: "Lessen" },
+            { icon: ListTodo, label: "To Do's" },
+            { icon: CalendarDays, label: "Kalender" },
           ].map(({ icon: Icon, label }, i) => (
             <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-sm">
               <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
@@ -72,11 +70,8 @@ export default function LoginPage() {
       <div className="flex flex-col min-h-screen bg-white">
 
         {/* Mobile logo */}
-        <div className="lg:hidden flex items-center gap-3 px-6 h-16">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#2a14b4] to-[#4338ca] flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-bold text-sm text-[#0b1c30]">Planwijs</span>
+        <div className="lg:hidden flex items-center px-6 h-16">
+          <LesLabLogo showSubtitle={false} className="origin-left scale-[0.95]" />
         </div>
 
         {/* Form */}

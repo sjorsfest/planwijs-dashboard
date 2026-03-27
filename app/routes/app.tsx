@@ -5,8 +5,8 @@ import {
   BookOpen,
   ListTodo,
   LogOut,
-  Sparkles,
 } from "lucide-react"
+import { LesLabLogo } from "~/components/branding/leslab-logo"
 
 const navItems = [
   {
@@ -30,7 +30,6 @@ const navItems = [
     icon: CalendarDays,
   },
 ]
-
 export default function AppLayout() {
   return (
     <div className="min-h-screen bg-[#f8f9ff] grid grid-cols-1 lg:grid-cols-[260px_1fr]">
@@ -39,12 +38,7 @@ export default function AppLayout() {
 
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 h-16 flex-shrink-0">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#2a14b4] to-[#4338ca] flex items-center justify-center shadow-[0px_4px_12px_rgba(42,20,180,0.3)]">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-bold text-sm text-[#0b1c30]">
-            Planwijs
-          </span>
+          <LesLabLogo />
         </div>
 
         {/* Navigatie */}
