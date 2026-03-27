@@ -13,6 +13,7 @@ export default [
   route("api/lesplan/:requestId/stream-revision", "routes/api.lesplan.$requestId.stream-revision.ts"),
   layout("routes/app.tsx", [
     route("dashboard", "routes/app.dashboard.tsx"),
+    route("todos", "routes/app.todo.tsx"),
     route("calendar", "routes/app.calendar.tsx"),
     route("plans", "routes/app.plans.tsx"),
     route("plans/new", "routes/app.plans.new.tsx"),

@@ -1,6 +1,7 @@
 import { motion, type Variants } from "framer-motion"
 import { ArrowLeft, ArrowRight, BookOpen, LoaderCircle } from "lucide-react"
 import type { Book, BookDetail, Subject } from "~/lib/api"
+import { SubjectBadge } from "~/components/ui/subject-badge"
 import type { ClassDifficulty, Level, Method, SchoolYear } from "./types"
 import { cn } from "~/lib/utils"
 
@@ -35,7 +36,7 @@ const fadeUp: Variants = {
 
 const DIFFICULTY_STYLES: Record<string, { bg: string; dot: string; text: string }> = {
   Groen: { bg: "bg-emerald-50", dot: "bg-emerald-500", text: "text-emerald-700" },
-  Oranje: { bg: "bg-orange-50", dot: "bg-orange-400", text: "text-orange-700" },
+  Oranje: { bg: "bg-[#ffdf9f]/50", dot: "bg-[#f9bd22]", text: "text-[#4c3700]" },
   Rood: { bg: "bg-red-50", dot: "bg-red-400", text: "text-red-700" },
 }
 
@@ -65,9 +66,9 @@ export function PlanSummary({
     .filter((item) => item.selected.length > 0)
 
   const diff = DIFFICULTY_STYLES[classDifficulty as string] ?? {
-    bg: "bg-black/5",
-    dot: "bg-black/30",
-    text: "text-black/70",
+    bg: "bg-[#eff4ff]",
+    dot: "bg-[#5c5378]",
+    text: "text-[#0b1c30]",
   }
 
   return (
@@ -83,41 +84,42 @@ export function PlanSummary({
         transition={{ duration: 0.3, delay: 0.05 }}
         className="mb-6"
       >
-        <p className="text-[10px] font-black uppercase tracking-widest text-black/35 mb-0.5">Overzicht</p>
-        <h1 className="text-3xl font-black">Controleer je lesplan</h1>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#464554]/50 mb-0.5">Overzicht</p>
+        <h1 className="text-3xl font-bold text-[#0b1c30]">Controleer je lesplan</h1>
       </motion.div>
 
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.1 }}
-        className="border-2 border-black bg-white mb-3 flex gap-4 p-4 items-center"
+        className="bg-white rounded-2xl mb-3 flex gap-4 p-4 items-center shadow-[0px_24px_40px_rgba(11,28,48,0.07)]"
       >
         <motion.div
           initial={{ scale: 0.82, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.38, delay: 0.16, ease: [0.34, 1.4, 0.64, 1] }}
-          className="relative flex-shrink-0 w-11 h-15"
+          className="relative flex-shrink-0 w-11"
+          style={{ height: "60px" }}
         >
           {selectedBook.cover_url ? (
             <img
               src={selectedBook.cover_url}
               alt={selectedBook.title}
-              className="w-11 h-15 object-cover border-2 border-black shadow-[2px_2px_0px_#000]"
+              className="w-11 object-cover rounded-lg shadow-[0px_8px_20px_rgba(11,28,48,0.15)]"
               style={{ height: "60px" }}
             />
           ) : (
-            <div className="w-11 bg-[#f5f0e8] border-2 border-black flex items-center justify-center" style={{ height: "60px" }}>
-              <BookOpen className="w-4 h-4 text-black/30" />
+            <div className="w-11 bg-[#eff4ff] rounded-lg flex items-center justify-center" style={{ height: "60px" }}>
+              <BookOpen className="w-4 h-4 text-[#5c5378]" />
             </div>
           )}
         </motion.div>
         <div className="flex-1 min-w-0">
-          <p className="font-black text-base leading-snug">{selectedBook.title}</p>
-          <p className="text-xs text-black/50 mt-0.5">
-            {selectedSubject.name}
-            {selectedBook.edition ? ` · ${selectedBook.edition}` : ""}
-          </p>
+          <p className="font-semibold text-base text-[#0b1c30] leading-snug">{selectedBook.title}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <SubjectBadge subjectName={selectedSubject.name} variant="outline" className="text-[10px] py-0.5" />
+            {selectedBook.edition ? <span className="text-xs text-[#464554]">{selectedBook.edition}</span> : null}
+          </div>
         </div>
       </motion.div>
 
@@ -128,21 +130,21 @@ export function PlanSummary({
         className="grid grid-cols-2 gap-3 mb-3"
       >
         <StatBlock label="Klas" variants={fadeUp}>
-          <p className="text-lg font-black leading-tight">{selectedLevel}</p>
-          <p className="text-xs text-black/50 mt-0.5">{selectedYear} · {classSize} leerlingen</p>
+          <p className="text-lg font-bold text-[#0b1c30] leading-tight">{selectedLevel}</p>
+          <p className="text-xs text-[#464554] mt-0.5">{selectedYear} · {classSize} leerlingen</p>
         </StatBlock>
 
         <StatBlock label="Lessen" variants={fadeUp}>
-          <p className="text-lg font-black leading-tight">{lessonCount}×</p>
-          <p className="text-xs text-black/50 mt-0.5">{lessonDuration} min per les</p>
+          <p className="text-lg font-bold text-[#0b1c30] leading-tight">{lessonCount}×</p>
+          <p className="text-xs text-[#464554] mt-0.5">{lessonDuration} min per les</p>
         </StatBlock>
 
         <StatBlock label="Methode" variants={fadeUp}>
-          <p className="text-sm font-bold leading-snug line-clamp-2">{selectedMethod.title}</p>
+          <p className="text-sm font-semibold text-[#0b1c30] leading-snug line-clamp-2">{selectedMethod.title}</p>
         </StatBlock>
 
         <StatBlock label="Leerniveau" variants={fadeUp}>
-          <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold", diff.bg, diff.text)}>
+          <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full", diff.bg, diff.text)}>
             <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", diff.dot)} />
             {classDifficulty}
           </span>
@@ -153,16 +155,16 @@ export function PlanSummary({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.45 }}
-        className="border-2 border-black bg-white"
+        className="bg-white rounded-2xl shadow-[0px_24px_40px_rgba(11,28,48,0.07)] overflow-hidden"
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b-2 border-black">
-          <p className="text-[10px] font-black uppercase tracking-widest text-black/40">Paragrafen</p>
-          <span className="text-[11px] font-black bg-black text-white px-2 py-0.5">
+        <div className="flex items-center justify-between px-4 py-3 bg-[#eff4ff]">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#464554]/60">Paragrafen</p>
+          <span className="text-[11px] font-semibold bg-[#2a14b4]/10 text-[#2a14b4] px-2.5 py-0.5 rounded-full">
             {selectedParagraphIds.length} geselecteerd
           </span>
         </div>
 
-        <div className="divide-y divide-black/8">
+        <div className="divide-y divide-[#eff4ff]">
           {chapterBreakdown.map(({ chapter, selected }, index) => (
             <motion.div
               key={chapter.id}
@@ -172,14 +174,14 @@ export function PlanSummary({
               className="px-4 py-3 flex items-start justify-between gap-4"
             >
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-black text-black/80">
+                <p className="text-xs font-semibold text-[#0b1c30]">
                   {chapter.index}. {chapter.title}
                 </p>
-                <p className="text-[10px] text-black/40 mt-1 leading-relaxed">
+                <p className="text-[10px] text-[#464554]/60 mt-1 leading-relaxed">
                   {selected.map((paragraph) => `${chapter.index}.${paragraph.index} ${paragraph.title}`).join("  ·  ")}
                 </p>
               </div>
-              <span className="text-[10px] font-black text-black/25 flex-shrink-0 tabular-nums pt-0.5">
+              <span className="text-[10px] font-semibold text-[#464554]/40 flex-shrink-0 tabular-nums pt-0.5">
                 {selected.length}×
               </span>
             </motion.div>
@@ -197,7 +199,7 @@ export function PlanSummary({
           <button
             onClick={onBack}
             disabled={submitting}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-black/60 hover:text-black border-2 border-black/20 hover:border-black bg-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-[#464554] hover:text-[#0b1c30] bg-[#eff4ff] hover:bg-[#dce9ff] rounded-xl transition-colors disabled:opacity-50"
           >
             <ArrowLeft className="w-4 h-4" />
             Terug
@@ -206,7 +208,7 @@ export function PlanSummary({
           <button
             onClick={onConfirm}
             disabled={submitting}
-            className="relative flex items-center gap-2.5 bg-black text-white px-5 py-2.5 font-black text-sm hover:bg-black/85 transition-colors overflow-hidden disabled:opacity-70"
+            className="relative flex items-center gap-2.5 bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white px-5 py-2.5 font-semibold text-sm rounded-xl hover:brightness-110 transition-all shadow-[0px_4px_16px_rgba(42,20,180,0.3)] disabled:opacity-70 disabled:shadow-none"
           >
             {submitting ? (
               <>
@@ -223,7 +225,7 @@ export function PlanSummary({
         </div>
 
         {submitError ? (
-          <p className="mt-3 text-sm font-bold text-[#d63838]">
+          <p className="mt-3 text-sm font-semibold text-[#ba1a1a]">
             {submitError}
           </p>
         ) : null}
@@ -242,8 +244,8 @@ function StatBlock({
   variants: Variants
 }) {
   return (
-    <motion.div variants={variants} className="border-2 border-black bg-white px-4 py-3">
-      <p className="text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5">{label}</p>
+    <motion.div variants={variants} className="bg-white rounded-2xl px-4 py-3 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#464554]/50 mb-1.5">{label}</p>
       {children}
     </motion.div>
   )

@@ -80,7 +80,7 @@ const STATUS_COPY: Record<LesplanPageState["status"], { label: string; color: st
   pending: { label: "Klaar om te starten", color: "bg-amber-100 text-amber-800" },
   generating_overview: { label: "Overzicht wordt opgebouwd…", color: "bg-blue-100 text-blue-800" },
   overview_ready: { label: "Klaar voor review", color: "bg-emerald-100 text-emerald-800" },
-  revising_overview: { label: "Wordt aangepast…", color: "bg-violet-100 text-violet-800" },
+  revising_overview: { label: "Wordt aangepast…", color: "bg-[#eff4ff] text-[#2a14b4]" },
   generating_lessons: { label: "Lessen worden uitgewerkt…", color: "bg-blue-100 text-blue-800" },
   completed: { label: "Lesplan compleet", color: "bg-emerald-100 text-emerald-800" },
   failed: { label: "Genereren mislukt", color: "bg-red-100 text-red-800" },
@@ -553,18 +553,18 @@ export default function LesplanWorkspacePage() {
   const statusCopy = STATUS_COPY[state.status]
 
   return (
-    <div className="min-h-screen bg-[#f7f5f0]">
+    <div className="min-h-screen bg-[#f8f9ff]">
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-black/8 px-6 py-3 flex items-center justify-between gap-4">
+      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-[#e8eeff] px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link
             to="/plans"
-            className="flex items-center gap-1.5 text-sm font-semibold text-black/50 hover:text-black transition-colors"
+            className="flex items-center gap-1.5 text-sm font-semibold text-[#5c5378] hover:text-[#0b1c30] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Plannen
           </Link>
-          <span className="text-black/20">·</span>
+          <span className="text-[#c7c4d7]">·</span>
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${statusCopy.color}`}>
             {isStreaming && <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />}
             {statusCopy.label}
@@ -600,7 +600,7 @@ export default function LesplanWorkspacePage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: SOFT_EASE }}
-        className="max-w-3xl mx-auto px-6 py-10 space-y-12"
+        className="px-8 py-8 max-w-5xl space-y-6"
       >
         {/* Error banner */}
         {state.ui.lastError && (
@@ -630,6 +630,7 @@ export default function LesplanWorkspacePage() {
           requestId={state.requestId}
           isGeneratingLessons={isGeneratingLessons}
           isFailed={isFailed}
+          sourceContext={state.sourceContext}
         />
 
         {/* Feedback thread */}
@@ -662,6 +663,7 @@ function OverviewDocument({
   requestId,
   isGeneratingLessons,
   isFailed,
+  sourceContext,
 }: {
   overview: LesplanOverviewState
   isStreaming: boolean
@@ -670,17 +672,36 @@ function OverviewDocument({
   requestId: string
   isGeneratingLessons: boolean
   isFailed: boolean
+  sourceContext: SourceContext
 }) {
   const isEmpty = !overview
 
   return (
-    <motion.div layout className="space-y-10">
-      {/* Title */}
+    <motion.div layout className="space-y-6">
+      {/* Page header */}
       <motion.div layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, ease: SOFT_EASE }}>
+        {/* Meta pills */}
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {sourceContext.subjectName && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[0.1em] bg-[#eff4ff] text-[#2a14b4]">
+              {sourceContext.subjectName}
+            </span>
+          )}
+          {sourceContext.level && sourceContext.schoolYear && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[0.1em] bg-[#eff4ff] text-[#5c5378]">
+              {sourceContext.level} · {sourceContext.schoolYear}
+            </span>
+          )}
+          {sourceContext.classSize && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[0.1em] bg-[#eff4ff] text-[#5c5378]">
+              {sourceContext.classSize} leerlingen
+            </span>
+          )}
+        </div>
         {overview?.title ? (
-          <h1 className="text-4xl font-black tracking-tight text-black leading-tight">{overview.title}</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-[#0b1c30] leading-tight">{overview.title}</h1>
         ) : (
-          <div className={`h-10 w-2/3 rounded-lg ${isStreaming ? "bg-black/8 animate-pulse" : "bg-black/5"}`} />
+          <div className={`h-10 w-2/3 rounded-xl ${isStreaming ? "bg-[#eff4ff] animate-pulse" : "bg-[#eff4ff]/60"}`} />
         )}
       </motion.div>
 
@@ -690,7 +711,7 @@ function OverviewDocument({
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, ease: SOFT_EASE }}
-          className="flex items-center gap-3 text-sm text-black/50 font-medium"
+          className="flex items-center gap-3 text-sm text-[#5c5378] font-medium"
         >
           <LoaderCircle className="w-4 h-4 animate-spin" />
           Verbinden met stream…
@@ -702,7 +723,7 @@ function OverviewDocument({
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.24, ease: SOFT_EASE }}
-          className="rounded-2xl bg-red-50 border border-red-200 p-6 flex items-start gap-4"
+          className="rounded-2xl bg-red-50 p-6 flex items-start gap-4"
         >
           <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
           <div>
@@ -723,7 +744,7 @@ function OverviewDocument({
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.24, ease: SOFT_EASE }}
-          className="rounded-2xl bg-blue-50 border border-blue-200 p-5 flex items-center gap-4"
+          className="rounded-2xl bg-blue-50 p-5 flex items-center gap-4"
         >
           <LoaderCircle className="w-5 h-5 text-blue-500 animate-spin shrink-0" />
           <div>
@@ -733,13 +754,13 @@ function OverviewDocument({
         </motion.div>
       )}
 
-      {/* Lessenreeks — first: teacher needs the full scope and sequence at a glance */}
+      {/* Lessenreeks */}
       <motion.section
         id="lessenreeks"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28, ease: SOFT_EASE }}
-        className="space-y-4 scroll-mt-24"
+        className="2xl p-6 scroll-mt-24 space-y-4"
       >
         <SectionLabel>Lessenreeks</SectionLabel>
         {overview?.lesson_outline && overview.lesson_outline.length > 0 ? (
@@ -749,58 +770,82 @@ function OverviewDocument({
         )}
       </motion.section>
 
-      {/* Leerdoelen — what students will achieve */}
-      <GoalsSection
-        id="leerdoelen"
-        label="Leerdoelen"
-        goals={overview?.learning_goals}
-        streaming={isStreaming}
-      />
+      {/* Leerdoelen + Kernkennis side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Leerdoelen */}
+        <motion.section
+          id="leerdoelen"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28, ease: SOFT_EASE }}
+          className="bg-white rounded-2xl p-6 shadow-[0px_24px_40px_rgba(11,28,48,0.07)] scroll-mt-24 space-y-4"
+        >
+          <SectionLabel>Leerdoelen</SectionLabel>
+          {overview?.learning_goals && overview.learning_goals.length > 0 ? (
+            <ul className="space-y-2.5">
+              {overview.learning_goals.map((goal, i) => (
+                <motion.li
+                  key={`${goal}-${i}`}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.2, ease: SOFT_EASE, delay: i * 0.03 }}
+                  className="flex items-start gap-3"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span className="text-sm leading-6 text-[#464554] font-medium">{goal}</span>
+                </motion.li>
+              ))}
+            </ul>
+          ) : (
+            <SkeletonLines streaming={isStreaming} lines={4} />
+          )}
+        </motion.section>
 
-      {/* Leerlijn — narrative thread through the series */}
+        {/* Kernkennis */}
+        <motion.section
+          id="kernkennis"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28, ease: SOFT_EASE, delay: 0.05 }}
+          className="bg-white rounded-2xl p-6 shadow-[0px_24px_40px_rgba(11,28,48,0.07)] scroll-mt-24 space-y-4"
+        >
+          <SectionLabel>Kernkennis</SectionLabel>
+          {overview?.key_knowledge && overview.key_knowledge.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {overview.key_knowledge.map((item, i) => (
+                <motion.span
+                  key={i}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, ease: SOFT_EASE, delay: i * 0.03 }}
+                  className="inline-block bg-[#eff4ff] rounded-full px-3.5 py-1.5 text-sm font-medium text-[#0b1c30]"
+                >
+                  {item}
+                </motion.span>
+              ))}
+            </div>
+          ) : (
+            <SkeletonTags streaming={isStreaming} />
+          )}
+        </motion.section>
+      </div>
+
+      {/* Leerlijn */}
       <motion.section
         id="leerlijn"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28, ease: SOFT_EASE, delay: 0.03 }}
-        className="space-y-3 scroll-mt-24"
+        className="bg-white rounded-2xl p-6 shadow-[0px_24px_40px_rgba(11,28,48,0.07)] scroll-mt-24 space-y-4"
       >
         <SectionLabel>Leerlijn</SectionLabel>
         {overview?.learning_progression ? (
           <div className="relative pl-5">
-            <div className="absolute left-0 top-2 bottom-2 w-px bg-gradient-to-b from-violet-400 to-violet-200" />
-            <p className="text-sm leading-7 text-black/75 font-medium">{overview.learning_progression}</p>
+            <div className="absolute left-0 top-2 bottom-2 w-px bg-gradient-to-b from-[#2a14b4]/50 to-[#ab8ffe]/30" />
+            <p className="text-sm leading-7 text-[#464554] font-medium">{overview.learning_progression}</p>
           </div>
         ) : (
           <SkeletonLines streaming={isStreaming} lines={3} />
-        )}
-      </motion.section>
-
-      {/* Kernkennis — key vocabulary and concepts */}
-      <motion.section
-        id="kernkennis"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.28, ease: SOFT_EASE, delay: 0.05 }}
-        className="space-y-3 scroll-mt-24"
-      >
-        <SectionLabel>Kernkennis</SectionLabel>
-        {overview?.key_knowledge && overview.key_knowledge.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {overview.key_knowledge.map((item, i) => (
-              <motion.span
-                key={i}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, ease: SOFT_EASE, delay: i * 0.03 }}
-                className="inline-block bg-white border border-black/12 rounded-full px-3.5 py-1.5 text-sm font-medium text-black/80 shadow-sm"
-              >
-                {item}
-              </motion.span>
-            ))}
-          </div>
-        ) : (
-          <SkeletonTags streaming={isStreaming} />
         )}
       </motion.section>
 
@@ -810,74 +855,44 @@ function OverviewDocument({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28, ease: SOFT_EASE, delay: 0.07 }}
-        className="space-y-3 scroll-mt-24"
+        className="rounded-2xl p-6 bg-[#ffdf9f]/30 border-l-4 border-[#f9bd22] scroll-mt-24 space-y-4"
       >
         <SectionLabel>Aanbevolen aanpak voor dit lesmateriaal</SectionLabel>
         {overview?.recommended_approach ? (
-          <div className="flex gap-4 border-l-4 border-amber-400 pl-5 py-1">
-            <div className="shrink-0 mt-0.5">
-              <Lightbulb className="w-4 h-4 text-amber-500" />
-            </div>
-            <p className="text-sm leading-7 text-black/75 font-medium">{overview.recommended_approach}</p>
+          <div className="flex gap-3">
+            <Lightbulb className="w-4 h-4 text-[#4c3700] shrink-0 mt-0.5" />
+            <p className="text-sm leading-7 text-[#464554] font-medium">{overview.recommended_approach}</p>
           </div>
         ) : (
-          <SkeletonLines streaming={isStreaming} lines={4} indent />
+          <SkeletonLines streaming={isStreaming} lines={4} />
         )}
       </motion.section>
 
       {/* Didactische aanpak */}
-      <ProseSection
+      <motion.section
         id="didactiek"
-        label="Didactische aanpak"
-        value={overview?.didactic_approach}
-        streaming={isStreaming}
-      />
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, ease: SOFT_EASE }}
+        className="bg-white rounded-2xl p-6 shadow-[0px_24px_40px_rgba(11,28,48,0.07)] scroll-mt-24 space-y-4"
+      >
+        <SectionLabel>Didactische aanpak</SectionLabel>
+        {overview?.didactic_approach ? (
+          <p className="text-sm leading-7 text-[#464554] font-medium">{overview.didactic_approach}</p>
+        ) : (
+          <SkeletonLines streaming={isStreaming} lines={3} />
+        )}
+      </motion.section>
     </motion.div>
   )
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black/35">{children}</p>
+    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]/70">{children}</p>
   )
 }
 
-function ProseSection({ label, value, streaming, id }: { label: string; value?: string | string[]; streaming: boolean; id?: string }) {
-  const hasValue = Array.isArray(value) ? value.length > 0 : Boolean(value)
-
-  return (
-    <motion.section
-      id={id}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: SOFT_EASE }}
-      className="space-y-3 scroll-mt-24"
-    >
-      <SectionLabel>{label}</SectionLabel>
-      {hasValue ? (
-        Array.isArray(value) ? (
-          <ul className="space-y-1.5 pl-5 list-disc">
-            {value.map((item, index) => (
-              <motion.li
-                key={`${item}-${index}`}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.2, ease: SOFT_EASE, delay: index * 0.03 }}
-                className="text-sm leading-7 text-black/75 font-medium"
-              >
-                {item}
-              </motion.li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm leading-7 text-black/75 font-medium">{value}</p>
-        )
-      ) : (
-        <SkeletonLines streaming={streaming} lines={3} />
-      )}
-    </motion.section>
-  )
-}
 
 function LessonTimeline({
   items,
@@ -895,9 +910,9 @@ function LessonTimeline({
         return (
           <div key={i} className="relative flex gap-4 pb-3 last:pb-0">
             {i < items.length - 1 && (
-              <div className="absolute left-[17px] top-9 bottom-0 w-0.5 bg-gradient-to-b from-black/15 to-black/5" />
+              <div className="absolute left-[17px] top-9 bottom-0 w-0.5 bg-gradient-to-b from-[#2a14b4]/20 to-[#2a14b4]/5" />
             )}
-            <div className="relative z-10 shrink-0 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-black">
+            <div className="relative z-10 shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white flex items-center justify-center text-sm font-bold shadow-[0px_4px_12px_rgba(42,20,180,0.25)]">
               {item.lesson_number}
             </div>
             <LessonOutlineCard item={item} requestId={requestId} linkedLesson={linkedLesson} />
@@ -923,61 +938,30 @@ function LessonOutlineCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.24, ease: SOFT_EASE }}
       whileHover={{ y: -1 }}
-      className="flex-1 min-w-0 bg-white rounded-2xl border border-black/8 p-5 shadow-sm hover:shadow-md transition-shadow"
+      className="flex-1 min-w-0 bg-white rounded-2xl p-5 shadow-[0px_8px_24px_rgba(11,28,48,0.07)] hover:shadow-[0px_12px_32px_rgba(11,28,48,0.11)] transition-all hover:-translate-y-0.5"
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="font-bold text-black text-sm leading-snug">{item.subject_focus}</p>
+        <p className="font-bold text-[#0b1c30] text-sm leading-snug">{item.subject_focus}</p>
         {linkedLesson && (
           <Link
             to={`/lesplan/${requestId}/les/${linkedLesson.id}`}
-            className="shrink-0 flex items-center gap-1 text-xs font-semibold text-black/40 hover:text-black transition-colors"
+            className="shrink-0 flex items-center gap-1 text-xs font-semibold text-[#5c5378]/60 hover:text-[#2a14b4] transition-colors"
           >
             Bekijk les
             <ChevronRight className="w-3 h-3" />
           </Link>
         )}
       </div>
-      <p className="mt-1.5 text-sm text-black/60 leading-6">{item.description}</p>
+      <p className="mt-1.5 text-sm text-[#464554] leading-6">{item.description}</p>
       {item.builds_on && (
-        <p className="mt-2.5 text-xs text-black/40 font-medium">
-          <span className="font-bold">Bouwt voort op:</span> {item.builds_on}
+        <p className="mt-2.5 text-xs text-[#5c5378]/70 font-medium">
+          <span className="font-semibold text-[#5c5378]">Bouwt voort op:</span> {item.builds_on}
         </p>
       )}
     </motion.div>
   )
 }
 
-function GoalsSection({ label, goals, streaming, id }: { label: string; goals?: string[]; streaming: boolean; id?: string }) {
-  return (
-    <motion.section
-      id={id}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: SOFT_EASE }}
-      className="space-y-3 scroll-mt-24"
-    >
-      <SectionLabel>{label}</SectionLabel>
-      {goals && goals.length > 0 ? (
-        <ul className="space-y-2.5">
-          {goals.map((goal, i) => (
-            <motion.li
-              key={`${goal}-${i}`}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.2, ease: SOFT_EASE, delay: i * 0.03 }}
-              className="flex items-start gap-3"
-            >
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-              <span className="text-sm leading-6 text-black/75 font-medium">{goal}</span>
-            </motion.li>
-          ))}
-        </ul>
-      ) : (
-        <SkeletonLines streaming={streaming} lines={4} />
-      )}
-    </motion.section>
-  )
-}
 
 // ---------------------------------------------------------------------------
 // Skeleton states
@@ -988,7 +972,7 @@ function SkeletonLines({ streaming, lines = 3, indent }: { streaming: boolean; l
   return (
     <div className={`space-y-2 animate-pulse ${indent ? "pl-5" : ""}`}>
       {Array.from({ length: lines }).map((_, i) => (
-        <div key={i} className={`h-3.5 bg-black/8 rounded ${i === lines - 1 ? "w-3/5" : i % 2 === 0 ? "w-full" : "w-5/6"}`} />
+        <div key={i} className={`h-3.5 bg-[#eff4ff] rounded-full ${i === lines - 1 ? "w-3/5" : i % 2 === 0 ? "w-full" : "w-5/6"}`} />
       ))}
     </div>
   )
@@ -999,7 +983,7 @@ function SkeletonTags({ streaming }: { streaming: boolean }) {
   return (
     <div className="flex flex-wrap gap-2 animate-pulse">
       {[90, 110, 75, 130, 95, 115].map((w, i) => (
-        <div key={i} className="h-8 bg-black/8 rounded-full" style={{ width: `${w}px` }} />
+        <div key={i} className="h-8 bg-[#eff4ff] rounded-full" style={{ width: `${w}px` }} />
       ))}
     </div>
   )
@@ -1010,12 +994,12 @@ function SkeletonCards({ streaming }: { streaming: boolean }) {
   return (
     <div className="space-y-3 animate-pulse">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="bg-white rounded-2xl border border-black/8 p-5 flex gap-4">
-          <div className="w-9 h-9 rounded-full bg-black/10 shrink-0" />
+        <div key={i} className="bg-white rounded-2xl p-5 flex gap-4 shadow-[0px_8px_24px_rgba(11,28,48,0.05)]">
+          <div className="w-9 h-9 rounded-full bg-[#dce9ff] shrink-0" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 bg-black/10 rounded w-2/5" />
-            <div className="h-3 bg-black/8 rounded w-full" />
-            <div className="h-3 bg-black/8 rounded w-3/4" />
+            <div className="h-4 bg-[#dce9ff] rounded-full w-2/5" />
+            <div className="h-3 bg-[#eff4ff] rounded-full w-full" />
+            <div className="h-3 bg-[#eff4ff] rounded-full w-3/4" />
           </div>
         </div>
       ))}
@@ -1075,11 +1059,11 @@ function FeedbackSection({
               className={[
                 "max-w-[85%] rounded-2xl px-4 py-3",
                 message.role === "teacher"
-                  ? "ml-auto bg-black text-white"
-                  : "mr-auto bg-white border border-black/10 text-black",
+                  ? "ml-auto bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_4px_16px_rgba(42,20,180,0.2)]"
+                  : "mr-auto bg-[#eff4ff] text-[#0b1c30]",
               ].join(" ")}
             >
-              <p className={`text-[10px] font-black uppercase tracking-[0.18em] mb-1.5 ${message.role === "teacher" ? "text-white/50" : "text-black/35"}`}>
+              <p className={`text-[10px] font-semibold uppercase tracking-[0.14em] mb-1.5 ${message.role === "teacher" ? "text-white/60" : "text-[#5c5378]/60"}`}>
                 {message.role === "teacher" ? "Docent" : "Assistent"}
               </p>
               {message.pending ? (
@@ -1100,7 +1084,7 @@ function FeedbackSection({
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.24, ease: SOFT_EASE }}
-          className="bg-white rounded-2xl border border-black/10 overflow-hidden shadow-sm"
+          className="bg-white rounded-2xl overflow-hidden shadow-[0px_8px_28px_rgba(11,28,48,0.08)]"
         >
           <Textarea
             value={value}
@@ -1114,8 +1098,8 @@ function FeedbackSection({
             }
             className="min-h-24 border-0 focus-visible:ring-0 resize-none rounded-none bg-transparent text-sm"
           />
-          <div className="flex items-center justify-between px-4 py-3 border-t border-black/8">
-            <p className="text-xs text-black/40 font-medium">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-[#eff4ff]">
+            <p className="text-xs text-[#5c5378]/70 font-medium">
               {disabled ? "Wacht tot het overzicht gereed is." : "Je feedback triggert een revisie van het overzicht."}
             </p>
             <Button
@@ -1132,7 +1116,7 @@ function FeedbackSection({
       )}
 
       {readOnly && messages.length === 0 && (
-        <p className="text-sm text-black/40 font-medium">Geen feedback gesprek.</p>
+        <p className="text-sm text-[#5c5378]/70 font-medium">Geen feedback gesprek.</p>
       )}
     </motion.div>
   )
@@ -1178,7 +1162,7 @@ function ChapterNav({ showFeedback }: { showFeedback: boolean }) {
   const visible = showFeedback ? CHAPTERS : CHAPTERS.filter((c) => c.id !== "feedback")
 
   return (
-    <div className="sticky top-[57px] z-10 bg-[#f7f5f0]/90 backdrop-blur-sm border-b border-black/8">
+    <div className="sticky top-[57px] z-10 bg-[#f8f9ff]/90 backdrop-blur-sm border-b border-[#e8eeff]">
       <div className="max-w-3xl mx-auto px-6 py-2 flex gap-0.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
         {visible.map(({ id, label }) => (
           <button
@@ -1187,8 +1171,8 @@ function ChapterNav({ showFeedback }: { showFeedback: boolean }) {
             className={[
               "shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all duration-150 whitespace-nowrap",
               activeId === id
-                ? "bg-black/90 text-white"
-                : "text-black/40 hover:text-black/70 hover:bg-black/6",
+                ? "bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_2px_8px_rgba(42,20,180,0.2)]"
+                : "text-[#5c5378] hover:text-[#0b1c30] hover:bg-[#eff4ff]",
             ].join(" ")}
           >
             {label}

@@ -1,13 +1,22 @@
 import { useEffect, useState } from "react"
-import { data, Link, redirect, useActionData, useFetcher, useNavigation, useSubmit } from "react-router"
+import { data, Link, redirect, useActionData, useFetcher, useLoaderData, useNavigation, useSubmit } from "react-router"
 import { ArrowLeft } from "lucide-react"
-import { createClass, createLesplan, ApiRequestError, type Book, type BookDetail, type Subject } from "~/lib/api"
+import {
+  createClass,
+  createLesplan,
+  getClasses,
+  listLespannen,
+  ApiRequestError,
+  type Book,
+  type BookDetail,
+  type Class,
+  type LesplanResponse,
+  type Subject,
+} from "~/lib/api"
 import { requireAuthContext } from "~/lib/auth.server"
-import { Step1ClassSetup } from "~/components/new-plan/step1-class-setup"
+import { SUBJECT_VALUES } from "~/lib/subject-metadata"
+import { Step1ClassSetup, type ExistingClassOption } from "~/components/new-plan/step1-class-setup"
 import { Step2Subject } from "~/components/new-plan/step2-subject"
-import { Step3ClassDetails } from "~/components/new-plan/step3-class-details"
-import { Step4Method } from "~/components/new-plan/step4-method"
-import { Step5Book } from "~/components/new-plan/step5-book"
 import { Step6Paragraphs } from "~/components/new-plan/step6-paragraphs"
 import { PlanSummary } from "~/components/new-plan/plan-summary"
 import {
@@ -25,14 +34,18 @@ type ActionData = {
 }
 
 type SavedPlanState = {
+  classSelectionMode: "choose" | "create"
+  selectedExistingClassId: string | null
   selectedLevel: Level | null
   selectedYear: SchoolYear | null
+  selectedCategory: string | null
   selectedSubject: Subject | null
   lessonCount: number | null
   lessonDuration: number | null
   classSize: number | null
   classDifficulty: ClassDifficulty | null
-  classDetailsConfirmed: boolean
+  classSetupConfirmed: boolean
+  curriculumConfirmed: boolean
   selectedMethod: Method | null
   selectedBook: Book | null
   selectedParagraphIds: string[]
@@ -40,6 +53,7 @@ type SavedPlanState = {
 }
 
 type SubmittedPlanPayload = {
+  selectedExistingClassId: string | null
   selectedLevel: Level
   selectedYear: SchoolYear
   selectedSubject: Subject
@@ -51,32 +65,17 @@ type SubmittedPlanPayload = {
   selectedParagraphIds: string[]
 }
 
+type ExistingClassData = ExistingClassOption & {
+  latestLesplanBookId: string | null
+  latestLesplanLessonDuration: number | null
+  latestLesplanNumLessons: number | null
+}
+
+type LoaderData = {
+  existingClasses: ExistingClassData[]
+}
+
 const PLAN_STATE_KEY = "planwijs_new_plan"
-const SUBJECT_VALUES = new Set([
-  "Aardrijkskunde",
-  "Bedrijfseconomie",
-  "Biologie",
-  "Duits",
-  "Economie",
-  "Engels",
-  "Frans",
-  "Geschiedenis",
-  "Grieks",
-  "Latijn",
-  "Levens beschouwing",
-  "Maatschappijleer",
-  "MAW",
-  "Mens & Maatschappij",
-  "Nask/Science",
-  "Natuurkunde",
-  "Nederlands",
-  "Scheikunde",
-  "Spaans",
-  "Wiskunde",
-  "Wiskunde A",
-  "Wiskunde B",
-  "Unknown",
-])
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value)
@@ -170,14 +169,23 @@ function loadPlanState(): SavedPlanState | null {
     const parsed = JSON.parse(raw) as Record<string, unknown>
 
     return {
+      classSelectionMode: parsed.classSelectionMode === "create" ? "create" : "choose",
+      selectedExistingClassId:
+        typeof parsed.selectedExistingClassId === "string" && parsed.selectedExistingClassId.length > 0
+          ? parsed.selectedExistingClassId
+          : null,
       selectedLevel: typeof parsed.selectedLevel === "string" ? (parsed.selectedLevel as Level) : null,
       selectedYear: typeof parsed.selectedYear === "string" ? (parsed.selectedYear as SchoolYear) : null,
+      selectedCategory: typeof parsed.selectedCategory === "string" ? parsed.selectedCategory : null,
       selectedSubject: parseSavedSubject(parsed.selectedSubject),
       lessonCount: typeof parsed.lessonCount === "number" ? parsed.lessonCount : null,
       lessonDuration: typeof parsed.lessonDuration === "number" ? parsed.lessonDuration : null,
       classSize: typeof parsed.classSize === "number" ? parsed.classSize : null,
       classDifficulty: typeof parsed.classDifficulty === "string" ? (parsed.classDifficulty as ClassDifficulty) : null,
-      classDetailsConfirmed: parsed.classDetailsConfirmed === true,
+      classSetupConfirmed:
+        parsed.classSetupConfirmed === true ||
+        parsed.classDetailsConfirmed === true,
+      curriculumConfirmed: parsed.curriculumConfirmed === true,
       selectedMethod: parseSavedMethod(parsed.selectedMethod),
       selectedBook: parseSavedBook(parsed.selectedBook),
       selectedParagraphIds: isStringArray(parsed.selectedParagraphIds) ? parsed.selectedParagraphIds : [],
@@ -209,6 +217,10 @@ function parseSubmittedPayload(value: unknown): SubmittedPlanPayload | null {
   }
 
   return {
+    selectedExistingClassId:
+      typeof value.selectedExistingClassId === "string" && value.selectedExistingClassId.length > 0
+        ? value.selectedExistingClassId
+        : null,
     selectedLevel: value.selectedLevel as Level,
     selectedYear: value.selectedYear as SchoolYear,
     selectedSubject: subject,
@@ -225,9 +237,66 @@ export function meta() {
   return [{ title: "Nieuw lesplan — Planwijs" }]
 }
 
+function hasClassId(classroom: Class): classroom is Class & { id: string } {
+  return typeof classroom.id === "string" && classroom.id.length > 0
+}
+
+function getLatestLesplanByClassId(lespannen: LesplanResponse[]): Map<string, LesplanResponse> {
+  const latest = new Map<string, LesplanResponse>()
+
+  for (const lesplan of lespannen) {
+    const current = latest.get(lesplan.class_id)
+    if (!current) {
+      latest.set(lesplan.class_id, lesplan)
+      continue
+    }
+
+    const currentTs = new Date(current.updated_at).getTime()
+    const nextTs = new Date(lesplan.updated_at).getTime()
+    if (Number.isNaN(currentTs) || nextTs > currentTs) {
+      latest.set(lesplan.class_id, lesplan)
+    }
+  }
+
+  return latest
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
-  requireAuthContext(request)
-  return null
+  const { token, userId } = requireAuthContext(request)
+
+  const [classes, lespannen] = await Promise.all([
+    getClasses(token, { userId }),
+    listLespannen(token, userId),
+  ])
+
+  const latestByClassId = getLatestLesplanByClassId(lespannen)
+
+  const existingClasses: ExistingClassData[] = classes
+    .filter(hasClassId)
+    .map((classroom) => {
+      const latestLesplan = latestByClassId.get(classroom.id) ?? null
+
+      return {
+        id: classroom.id,
+        subject: classroom.subject,
+        level: classroom.level,
+        schoolYear: classroom.school_year,
+        size: classroom.size,
+        difficulty: classroom.difficulty ?? null,
+        latestLesplanUpdatedAt: latestLesplan?.updated_at ?? null,
+        latestLesplanBookId: latestLesplan?.book_id ?? null,
+        latestLesplanLessonDuration: latestLesplan?.lesson_duration_minutes ?? null,
+        latestLesplanNumLessons: latestLesplan?.num_lessons ?? null,
+      }
+    })
+    .sort((a, b) => {
+      const left = a.latestLesplanUpdatedAt ? new Date(a.latestLesplanUpdatedAt).getTime() : 0
+      const right = b.latestLesplanUpdatedAt ? new Date(b.latestLesplanUpdatedAt).getTime() : 0
+      if (right !== left) return right - left
+      return a.subject.localeCompare(b.subject, "nl")
+    })
+
+  return data<LoaderData>({ existingClasses })
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -252,26 +321,32 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   try {
-    const classroom = await createClass(
-      {
-        user_id: userId,
-        subject: payload.selectedSubject.name as Method["subject"],
-        level: payload.selectedLevel,
-        school_year: payload.selectedYear,
-        size: payload.classSize,
-        difficulty: payload.classDifficulty,
-      },
-      token
-    )
+    let classId = payload.selectedExistingClassId
 
-    if (!classroom.id) {
-      return data<ActionData>({ error: "De klas kon niet worden opgeslagen." }, { status: 500 })
+    if (!classId) {
+      const classroom = await createClass(
+        {
+          user_id: userId,
+          subject: payload.selectedSubject.name as Method["subject"],
+          level: payload.selectedLevel,
+          school_year: payload.selectedYear,
+          size: payload.classSize,
+          difficulty: payload.classDifficulty,
+        },
+        token
+      )
+
+      if (!classroom.id) {
+        return data<ActionData>({ error: "De klas kon niet worden opgeslagen." }, { status: 500 })
+      }
+
+      classId = classroom.id
     }
 
     const lesplan = await createLesplan(
       {
         user_id: userId,
-        class_id: classroom.id,
+        class_id: classId,
         book_id: payload.selectedBookId,
         selected_paragraph_ids: payload.selectedParagraphIds,
         num_lessons: payload.lessonCount,
@@ -291,21 +366,28 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function NewLesplanPage() {
+  const { existingClasses } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>() as ActionData | undefined
   const navigation = useNavigation()
   const submit = useSubmit()
 
+  const hasExistingClasses = existingClasses.length > 0
+  const [classSelectionMode, setClassSelectionMode] = useState<"choose" | "create">(
+    hasExistingClasses ? "choose" : "create"
+  )
+  const [selectedExistingClassId, setSelectedExistingClassId] = useState<string | null>(null)
+  const [existingClassPrefillBookId, setExistingClassPrefillBookId] = useState<string | null>(null)
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null)
   const [selectedYear, setSelectedYear] = useState<SchoolYear | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null)
-  const [classDetailsConfirmed, setClassDetailsConfirmed] = useState(false)
+  const [classSetupConfirmed, setClassSetupConfirmed] = useState(false)
+  const [curriculumConfirmed, setCurriculumConfirmed] = useState(false)
   const [lessonCount, setLessonCount] = useState<number | null>(null)
   const [lessonDuration, setLessonDuration] = useState<number | null>(null)
   const [classSize, setClassSize] = useState<number | null>(null)
   const [classDifficulty, setClassDifficulty] = useState<ClassDifficulty | null>(null)
   const [selectedMethod, setSelectedMethod] = useState<Method | null>(null)
-  const [yearFilters, setYearFilters] = useState<SchoolYear[]>([])
-  const [levelFilters, setLevelFilters] = useState<Level[]>([])
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [openChapters, setOpenChapters] = useState<string[]>([])
   const [comboQuery, setComboQuery] = useState("")
@@ -318,13 +400,19 @@ export default function NewLesplanPage() {
   const methodsFetcher = useFetcher<Method[]>()
   const booksFetcher = useFetcher<Book[]>()
   const bookDetailFetcher = useFetcher<BookDetail>()
+  const existingClassBookFetcher = useFetcher<BookDetail>()
 
   const subjects = subjectsFetcher.data ?? []
   const methods = methodsFetcher.data ?? []
   const books = booksFetcher.data ?? []
   const bookDetail = bookDetailFetcher.data ?? null
+  const existingClassBook = existingClassBookFetcher.data ?? null
+  const showCreateClassForm = !hasExistingClasses || classSelectionMode === "create"
+  const selectedExistingClass = selectedExistingClassId
+    ? existingClasses.find((item) => item.id === selectedExistingClassId) ?? null
+    : null
   const selectedSubjectName = selectedSubject?.name ?? ""
-  const shouldHaveSubjects = selectedLevel !== null && selectedYear !== null
+  const shouldHaveSubjects = classSetupConfirmed
   const isSubmitting = navigation.state !== "idle"
 
   const subjectsLoading =
@@ -344,57 +432,89 @@ export default function NewLesplanPage() {
     (selectedBook !== null && bookDetailFetcher.data === undefined)
 
   const filteredBooks = books.filter((book) => {
-    const yearOk = yearFilters.length === 0 || (book.school_years ?? []).some((year) => yearFilters.includes(year))
-    const levelOk = levelFilters.length === 0 || (book.levels ?? []).some((level) => levelFilters.includes(level))
+    const yearOk =
+      !selectedYear ||
+      (book.school_years ?? []).length === 0 ||
+      (book.school_years ?? []).includes(selectedYear) ||
+      (book.school_years ?? []).includes("Unknown")
+    const levelOk =
+      !selectedLevel ||
+      (book.levels ?? []).length === 0 ||
+      (book.levels ?? []).includes(selectedLevel) ||
+      (book.levels ?? []).includes("Unknown")
     return yearOk && levelOk
   })
 
-  const classDetailsValid =
-    lessonCount !== null &&
-    lessonCount > 0 &&
+  const classSetupValid =
+    selectedLevel !== null &&
+    selectedYear !== null &&
     lessonDuration !== null &&
     lessonDuration > 0 &&
     classSize !== null &&
     classSize > 0 &&
     classDifficulty !== null
 
-  const step =
-    !selectedLevel || !selectedYear ? 1
-    : !selectedSubject ? 2
-    : !classDetailsConfirmed ? 3
-    : !selectedMethod ? 4
-    : !selectedBook ? 5
-    : 6
+  const curriculumValid =
+    selectedSubject !== null &&
+    selectedMethod !== null &&
+    selectedBook !== null
+
+  const contentValid =
+    lessonCount !== null &&
+    lessonCount > 0 &&
+    selectedParagraphIds.length > 0
+
+  const step = !classSetupConfirmed ? 1 : !curriculumConfirmed ? 2 : 3
 
   useEffect(() => {
     const saved = loadPlanState()
     if (!saved) {
+      if (!hasExistingClasses) setClassSelectionMode("create")
       setDraftHydrated(true)
       return
     }
 
+    setClassSelectionMode(!hasExistingClasses ? "create" : saved.classSelectionMode)
+
+    const savedExistingClassId = saved.selectedExistingClassId
+    if (savedExistingClassId && existingClasses.some((item) => item.id === savedExistingClassId)) {
+      setSelectedExistingClassId(savedExistingClassId)
+      const matchingClass = existingClasses.find((item) => item.id === savedExistingClassId)
+      setExistingClassPrefillBookId(matchingClass?.latestLesplanBookId ?? null)
+    } else {
+      setSelectedExistingClassId(null)
+      setExistingClassPrefillBookId(null)
+    }
+
     setSelectedLevel(saved.selectedLevel)
     setSelectedYear(saved.selectedYear)
+    setSelectedCategory(saved.selectedCategory)
     setSelectedSubject(saved.selectedSubject)
-    setClassDetailsConfirmed(saved.classDetailsConfirmed)
+    setClassSetupConfirmed(saved.classSetupConfirmed)
+    setCurriculumConfirmed(saved.curriculumConfirmed)
     setLessonCount(saved.lessonCount)
     setLessonDuration(saved.lessonDuration)
     setClassSize(saved.classSize)
     setClassDifficulty(saved.classDifficulty)
     setSelectedMethod(saved.selectedMethod)
-    setYearFilters(saved.selectedYear ? [saved.selectedYear] : [])
-    setLevelFilters(saved.selectedLevel ? [saved.selectedLevel] : [])
     setSelectedBook(saved.selectedBook)
     setSelectedParagraphIds(saved.selectedParagraphIds)
     setShowSummary(saved.showSummary)
     setDraftHydrated(true)
-  }, [])
+  }, [existingClasses, hasExistingClasses])
 
   useEffect(() => {
-    if (step < 2) return
+    if (!selectedExistingClassId) return
+    if (existingClasses.some((item) => item.id === selectedExistingClassId)) return
+    setSelectedExistingClassId(null)
+    setExistingClassPrefillBookId(null)
+  }, [selectedExistingClassId, existingClasses])
+
+  useEffect(() => {
+    if (!classSetupConfirmed) return
     if (subjectsFetcher.data !== undefined || subjectsFetcher.state !== "idle") return
     subjectsFetcher.load("/api/subjects")
-  }, [step, subjectsFetcher.data, subjectsFetcher.state])
+  }, [classSetupConfirmed, subjectsFetcher.data, subjectsFetcher.state])
 
   useEffect(() => {
     if (!selectedSubject || methodsFetcher.data !== undefined || methodsFetcher.state !== "idle") return
@@ -416,18 +536,114 @@ export default function NewLesplanPage() {
   }, [selectedBook, bookDetailFetcher.data, bookDetailFetcher.state])
 
   useEffect(() => {
+    if (!selectedExistingClassId || !classSetupConfirmed || subjects.length === 0 || selectedSubject) return
+
+    const prefillBookData =
+      existingClassBook &&
+      existingClassPrefillBookId &&
+      existingClassBook.id === existingClassPrefillBookId
+        ? existingClassBook
+        : null
+
+    const subjectFromBook = prefillBookData?.subject_id
+      ? subjects.find((subject) => subject.id === prefillBookData.subject_id)
+      : null
+    const subjectFromClass = selectedExistingClass
+      ? subjects.find((subject) => subject.name === selectedExistingClass.subject)
+      : null
+
+    const prefilledSubject = subjectFromBook ?? subjectFromClass
+    if (!prefilledSubject) return
+
+    handleSubjectSelect(prefilledSubject)
+  }, [
+    selectedExistingClassId,
+    classSetupConfirmed,
+    subjects,
+    selectedSubject,
+    selectedExistingClass,
+    existingClassBook,
+    existingClassPrefillBookId,
+  ])
+
+  useEffect(() => {
+    const methodId =
+      existingClassBook &&
+      existingClassPrefillBookId &&
+      existingClassBook.id === existingClassPrefillBookId
+        ? existingClassBook.method_id
+        : null
+    if (!selectedExistingClassId || !methodId || methods.length === 0) return
+    if (selectedMethod !== null) return
+
+    const prefilledMethod = methods.find((method) => method.id === methodId)
+    if (!prefilledMethod) return
+
+    handleMethodSelect(prefilledMethod)
+  }, [selectedExistingClassId, existingClassBook, existingClassPrefillBookId, methods, selectedMethod])
+
+  useEffect(() => {
+    const prefillBookId = existingClassPrefillBookId
+    if (!selectedExistingClassId || !selectedMethod || !prefillBookId || filteredBooks.length === 0) return
+    if (selectedBook !== null) return
+
+    const prefilledBook = filteredBooks.find((book) => book.id === prefillBookId)
+    if (!prefilledBook) return
+
+    handleBookSelect(prefilledBook)
+  }, [selectedExistingClassId, existingClassPrefillBookId, selectedMethod, filteredBooks, selectedBook])
+
+  useEffect(() => {
+    if (subjects.length === 0) return
+
+    if (selectedSubject?.category && selectedCategory === null) {
+      setSelectedCategory(selectedSubject.category)
+      return
+    }
+
+    const categories = Array.from(new Set(subjects.map((subject) => subject.category?.trim() || "Overig")))
+      .sort((a, b) => a.localeCompare(b, "nl"))
+
+    if (!selectedCategory || !categories.includes(selectedCategory)) {
+      setSelectedCategory(categories[0] ?? null)
+    }
+  }, [subjects, selectedSubject, selectedCategory])
+
+  useEffect(() => {
+    if (!classSetupValid && classSetupConfirmed) {
+      setClassSetupConfirmed(false)
+    }
+  }, [classSetupValid, classSetupConfirmed])
+
+  useEffect(() => {
+    if (!curriculumValid && curriculumConfirmed) {
+      setCurriculumConfirmed(false)
+    }
+  }, [curriculumValid, curriculumConfirmed])
+
+  useEffect(() => {
+    if (showSummary && !contentValid) {
+      setShowSummary(false)
+    }
+  }, [showSummary, contentValid])
+
+  useEffect(() => {
     if (typeof window === "undefined") return
     if (!draftHydrated) return
 
     const draft: SavedPlanState = {
+      classSelectionMode,
+      selectedExistingClassId,
       selectedLevel,
       selectedYear,
+      selectedCategory,
       selectedSubject,
       lessonCount,
       lessonDuration,
       classSize,
       classDifficulty,
-      classDetailsConfirmed,
+      classSetupConfirmed,
+      curriculumConfirmed,
       selectedMethod,
       selectedBook,
       selectedParagraphIds,
@@ -436,14 +652,18 @@ export default function NewLesplanPage() {
 
     window.localStorage.setItem(PLAN_STATE_KEY, JSON.stringify(draft))
   }, [
+    classSelectionMode,
+    selectedExistingClassId,
     selectedLevel,
     selectedYear,
+    selectedCategory,
     selectedSubject,
     lessonCount,
     lessonDuration,
     classSize,
     classDifficulty,
-    classDetailsConfirmed,
+    classSetupConfirmed,
+    curriculumConfirmed,
     selectedMethod,
     selectedBook,
     selectedParagraphIds,
@@ -458,9 +678,85 @@ export default function NewLesplanPage() {
   }, [navigation.location?.pathname])
 
   function handleLevelSelect(level: Level) {
+    setSelectedExistingClassId(null)
+    setExistingClassPrefillBookId(null)
+    setClassSelectionMode("create")
     setSelectedLevel(level)
+    setClassSetupConfirmed(false)
+    setCurriculumConfirmed(false)
+    setShowSummary(false)
+
     if (selectedYear && getDisabledYears(level).includes(selectedYear)) {
       setSelectedYear(null)
+    }
+
+    setSelectedBook(null)
+    setSelectedParagraphIds([])
+    setOpenChapters([])
+    setComboQuery("")
+    setComboOpen(false)
+  }
+
+  function handleYearSelect(year: SchoolYear) {
+    setSelectedExistingClassId(null)
+    setExistingClassPrefillBookId(null)
+    setClassSelectionMode("create")
+    setSelectedYear(year)
+    setClassSetupConfirmed(false)
+    setCurriculumConfirmed(false)
+    setShowSummary(false)
+    setSelectedBook(null)
+    setSelectedParagraphIds([])
+    setOpenChapters([])
+    setComboQuery("")
+    setComboOpen(false)
+  }
+
+  function handleCreateNewClass() {
+    setSelectedExistingClassId(null)
+    setExistingClassPrefillBookId(null)
+    setClassSelectionMode("create")
+    setClassSetupConfirmed(false)
+    setCurriculumConfirmed(false)
+    setSelectedCategory(null)
+    setSelectedSubject(null)
+    setSelectedMethod(null)
+    setSelectedBook(null)
+    setSelectedParagraphIds([])
+    setOpenChapters([])
+    setComboQuery("")
+    setComboOpen(false)
+    setShowSummary(false)
+  }
+
+  function handleExistingClassSelect(classId: string) {
+    const existingClass = existingClasses.find((item) => item.id === classId)
+    if (!existingClass) return
+
+    setSelectedExistingClassId(existingClass.id)
+    setExistingClassPrefillBookId(existingClass.latestLesplanBookId)
+    setClassSelectionMode("choose")
+    setSelectedLevel(existingClass.level)
+    setSelectedYear(existingClass.schoolYear)
+    setClassSize(existingClass.size)
+    setClassDifficulty(existingClass.difficulty ?? "Groen")
+    setLessonDuration(existingClass.latestLesplanLessonDuration ?? 50)
+    setLessonCount(existingClass.latestLesplanNumLessons ?? null)
+
+    setClassSetupConfirmed(true)
+    setCurriculumConfirmed(false)
+    setSelectedCategory(null)
+    setSelectedSubject(null)
+    setSelectedMethod(null)
+    setSelectedBook(null)
+    setSelectedParagraphIds([])
+    setOpenChapters([])
+    setComboQuery("")
+    setComboOpen(false)
+    setShowSummary(false)
+
+    if (existingClass.latestLesplanBookId) {
+      existingClassBookFetcher.load(`/api/book/${existingClass.latestLesplanBookId}`)
     }
   }
 
@@ -470,31 +766,62 @@ export default function NewLesplanPage() {
       return
     }
 
-    if (step === 6) {
-      setSelectedBook(null)
-      setOpenChapters([])
-      setComboQuery("")
-      setComboOpen(false)
-      setSelectedParagraphIds([])
-    } else if (step === 5) {
-      setSelectedMethod(null)
-      setYearFilters(selectedYear ? [selectedYear] : [])
-      setLevelFilters(selectedLevel ? [selectedLevel] : [])
-    } else if (step === 4) {
-      setClassDetailsConfirmed(false)
-    } else if (step === 3) {
+    if (step === 3) {
+      setCurriculumConfirmed(false)
+      setShowSummary(false)
+    } else if (step === 2) {
+      setClassSetupConfirmed(false)
+      setCurriculumConfirmed(false)
+      if (selectedExistingClassId) {
+        setSelectedExistingClassId(null)
+        setExistingClassPrefillBookId(null)
+        setClassSelectionMode(hasExistingClasses ? "choose" : "create")
+        setSelectedCategory(null)
+        setSelectedSubject(null)
+        setSelectedMethod(null)
+        setSelectedBook(null)
+      }
+    } else if (step === 1) {
+      setSelectedExistingClassId(null)
+      setExistingClassPrefillBookId(null)
+      setClassSelectionMode(hasExistingClasses ? "choose" : "create")
       setSelectedSubject(null)
-    } else {
       setSelectedLevel(null)
       setSelectedYear(null)
+      setClassSetupConfirmed(false)
+      setCurriculumConfirmed(false)
+      setShowSummary(false)
     }
   }
 
+  function handleCategorySelect(category: string) {
+    setSelectedCategory(category)
+
+    if ((selectedSubject?.category ?? "Overig") === category) {
+      return
+    }
+
+    setSelectedSubject(null)
+    setSelectedMethod(null)
+    setSelectedBook(null)
+    setCurriculumConfirmed(false)
+    setSelectedParagraphIds([])
+    setOpenChapters([])
+    setComboQuery("")
+    setComboOpen(false)
+    setShowSummary(false)
+  }
+
   function handleSubjectSelect(subject: Subject) {
+    setSelectedCategory(subject.category ?? "Overig")
     setSelectedSubject(subject)
     setSelectedMethod(null)
     setSelectedBook(null)
+    setCurriculumConfirmed(false)
     setSelectedParagraphIds([])
+    setOpenChapters([])
+    setComboQuery("")
+    setComboOpen(false)
     setShowSummary(false)
 
     const params = new URLSearchParams({ subject_id: subject.id, subject_name: subject.name })
@@ -504,10 +831,12 @@ export default function NewLesplanPage() {
   function handleMethodSelect(method: Method) {
     setSelectedMethod(method)
     setSelectedBook(null)
+    setCurriculumConfirmed(false)
     setSelectedParagraphIds([])
+    setOpenChapters([])
+    setComboQuery("")
+    setComboOpen(false)
     setShowSummary(false)
-    setYearFilters(selectedYear ? [selectedYear] : [])
-    setLevelFilters(selectedLevel ? [selectedLevel] : [])
 
     const params = new URLSearchParams()
     if (method.id) params.set("method_id", method.id)
@@ -517,19 +846,13 @@ export default function NewLesplanPage() {
 
   function handleBookSelect(book: Book) {
     setSelectedBook(book)
+    setCurriculumConfirmed(false)
     setOpenChapters([])
     setSelectedParagraphIds([])
     setComboQuery("")
+    setComboOpen(false)
     setShowSummary(false)
     if (book.id) bookDetailFetcher.load(`/api/book/${book.id}`)
-  }
-
-  function toggleYear(year: SchoolYear) {
-    setYearFilters((prev) => prev.includes(year) ? prev.filter((item) => item !== year) : [...prev, year])
-  }
-
-  function toggleLevel(level: Level) {
-    setLevelFilters((prev) => prev.includes(level) ? prev.filter((item) => item !== level) : [...prev, level])
   }
 
   function toggleAccordion(id: string) {
@@ -582,6 +905,7 @@ export default function NewLesplanPage() {
     formData.set(
       "payload",
       JSON.stringify({
+        selectedExistingClassId,
         selectedLevel,
         selectedYear,
         selectedSubject,
@@ -606,7 +930,7 @@ export default function NewLesplanPage() {
             className="flex items-center gap-2 text-sm font-bold text-black/60 hover:text-black transition-colors w-fit"
           >
             <ArrowLeft className="w-4 h-4" />
-            Plannen
+            Lessen
           </Link>
         ) : (
           <button
@@ -621,10 +945,22 @@ export default function NewLesplanPage() {
 
       {step === 1 && (
         <Step1ClassSetup
+          existingClasses={existingClasses}
+          showCreateForm={showCreateClassForm}
           selectedLevel={selectedLevel}
           selectedYear={selectedYear}
+          classSize={classSize}
+          lessonDuration={lessonDuration}
+          classDifficulty={classDifficulty}
+          onCreateNew={handleCreateNewClass}
+          onExistingClassSelect={handleExistingClassSelect}
           onLevelSelect={handleLevelSelect}
-          onYearSelect={setSelectedYear}
+          onYearSelect={handleYearSelect}
+          onClassSizeChange={setClassSize}
+          onLessonDurationChange={setLessonDuration}
+          onClassDifficultyChange={setClassDifficulty}
+          onConfirm={() => setClassSetupConfirmed(true)}
+          canContinue={classSetupValid}
         />
       )}
 
@@ -632,56 +968,30 @@ export default function NewLesplanPage() {
         <Step2Subject
           selectedLevel={selectedLevel}
           selectedYear={selectedYear}
+          selectedCategory={selectedCategory}
+          selectedSubject={selectedSubject}
+          selectedMethod={selectedMethod}
+          selectedBook={selectedBook}
           subjects={subjects}
           subjectsLoading={subjectsLoading}
-          onSubjectSelect={handleSubjectSelect}
-        />
-      )}
-
-      {step === 3 && (
-        <Step3ClassDetails
-          selectedSubjectName={selectedSubjectName}
-          lessonCount={lessonCount}
-          lessonDuration={lessonDuration}
-          classSize={classSize}
-          classDifficulty={classDifficulty}
-          classDetailsValid={classDetailsValid}
-          onLessonCountChange={setLessonCount}
-          onLessonDurationChange={setLessonDuration}
-          onClassSizeChange={setClassSize}
-          onClassDifficultyChange={setClassDifficulty}
-          onConfirm={() => setClassDetailsConfirmed(true)}
-        />
-      )}
-
-      {step === 4 && (
-        <Step4Method
-          selectedSubjectName={selectedSubjectName}
           methods={methods}
           methodsLoading={methodsLoading}
-          onMethodSelect={handleMethodSelect}
-        />
-      )}
-
-      {step === 5 && selectedMethod && (
-        <Step5Book
-          selectedSubjectName={selectedSubjectName}
-          selectedMethod={selectedMethod}
-          books={books}
           filteredBooks={filteredBooks}
           booksLoading={booksLoading}
-          yearFilters={yearFilters}
-          levelFilters={levelFilters}
-          onToggleYear={toggleYear}
-          onToggleLevel={toggleLevel}
+          onCategorySelect={handleCategorySelect}
+          onSubjectSelect={handleSubjectSelect}
+          onMethodSelect={handleMethodSelect}
           onBookSelect={handleBookSelect}
+          onConfirm={() => setCurriculumConfirmed(true)}
+          canContinue={curriculumValid}
         />
       )}
 
-      {step === 6 && selectedBook && !showSummary && (
+      {step === 3 && selectedBook && !showSummary && (
         <Step6Paragraphs
           selectedSubjectName={selectedSubjectName}
           selectedBook={selectedBook}
+          lessonCount={lessonCount}
           bookDetail={bookDetail}
           bookDetailLoading={bookDetailLoading}
           openChapters={openChapters}
@@ -696,7 +1006,8 @@ export default function NewLesplanPage() {
           isParagraphSelected={isParagraphSelected}
           isChapterFullySelected={isChapterFullySelected}
           isChapterPartiallySelected={isChapterPartiallySelected}
-          onCreatePlan={() => setShowSummary(true)}
+          onLessonCountChange={setLessonCount}
+          onContinueToSummary={() => setShowSummary(true)}
         />
       )}
 

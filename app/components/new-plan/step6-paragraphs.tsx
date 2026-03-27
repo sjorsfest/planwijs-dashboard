@@ -1,14 +1,16 @@
 import { useRef, useEffect } from "react"
-import { ArrowRight, BookOpen, ChevronDown, ChevronRight } from "lucide-react"
+import { ArrowRight, BookOpen, Check, ChevronDown, ChevronRight } from "lucide-react"
 import type { Book, BookDetail } from "~/lib/api"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
+import { SubjectBadge } from "~/components/ui/subject-badge"
 import { cn } from "~/lib/utils"
 import type { Chapter, Paragraph } from "./types"
 
 interface Props {
   selectedSubjectName: string
   selectedBook: Book
+  lessonCount: number | null
   bookDetail: BookDetail | null
   bookDetailLoading: boolean
   openChapters: string[]
@@ -23,12 +25,16 @@ interface Props {
   isParagraphSelected: (id: string) => boolean
   isChapterFullySelected: (chapter: Chapter) => boolean
   isChapterPartiallySelected: (chapter: Chapter) => boolean
-  onCreatePlan: () => void
+  onLessonCountChange: (value: number | null) => void
+  onContinueToSummary: () => void
 }
+
+const LESSON_COUNT_OPTIONS = [2, 3, 4, 6, 8]
 
 export function Step6Paragraphs({
   selectedSubjectName,
   selectedBook,
+  lessonCount,
   bookDetail,
   bookDetailLoading,
   openChapters,
@@ -43,7 +49,8 @@ export function Step6Paragraphs({
   isParagraphSelected,
   isChapterFullySelected,
   isChapterPartiallySelected,
-  onCreatePlan,
+  onLessonCountChange,
+  onContinueToSummary,
 }: Props) {
   const comboRef = useRef<HTMLDivElement>(null)
 
@@ -83,35 +90,70 @@ export function Step6Paragraphs({
   return (
     <>
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-1">
-          <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest">
-            Stap 6 van 6
+        <div className="flex items-center gap-2 mb-3">
+          <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-widest">
+            Stap 3 van 3
           </Badge>
-          <Badge className="text-[10px] font-black uppercase tracking-widest bg-black text-white">
-            {selectedSubjectName}
-          </Badge>
+          <SubjectBadge
+            subjectName={selectedSubjectName}
+            variant="default"
+            className="text-[10px] font-semibold uppercase tracking-widest"
+          />
         </div>
-        <h1 className="text-4xl font-black mb-1">Kies je paragrafen</h1>
-        <p className="text-sm text-black/60 font-medium mb-3">Selecteer de paragrafen die je wil behandelen.</p>
+        <h1 className="text-4xl font-bold mb-1.5 text-[#0b1c30]">Inhoud en lesaantal</h1>
+        <p className="text-sm text-[#464554] mb-3">
+          Selecteer de paragrafen die je wil behandelen en geef aan hoeveel lessen je nodig hebt.
+        </p>
 
         <div className="flex items-center gap-2">
           {selectedBook.cover_url ? (
-            <img src={selectedBook.cover_url} alt={selectedBook.title} className="w-5 h-7 object-cover border border-black/20 flex-shrink-0" />
+            <img src={selectedBook.cover_url} alt={selectedBook.title} className="w-5 h-7 object-cover rounded flex-shrink-0" />
           ) : (
-            <BookOpen className="w-4 h-4 text-black/30 flex-shrink-0" />
+            <BookOpen className="w-4 h-4 text-[#5c5378] flex-shrink-0" />
           )}
-          <span className="text-xs font-bold text-black/50">
+          <span className="text-xs font-medium text-[#464554]">
             {selectedBook.title}
             {selectedBook.edition ? <span className="font-normal"> · {selectedBook.edition}</span> : null}
           </span>
         </div>
       </div>
 
+      <div className="mb-6 bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-3">Aantal lessen</p>
+        <div className="flex flex-wrap gap-2">
+          {LESSON_COUNT_OPTIONS.map((count) => (
+            <button
+              key={count}
+              onClick={() => onLessonCountChange(count)}
+              className={cn(
+                "px-3 py-2 text-sm font-semibold rounded-lg transition-all",
+                lessonCount === count
+                  ? "bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_4px_12px_rgba(42,20,180,0.25)]"
+                  : "bg-[#eff4ff] text-[#0b1c30] hover:bg-[#dce9ff]"
+              )}
+            >
+              {count} lessen
+            </button>
+          ))}
+          <input
+            type="number"
+            min={1}
+            max={99}
+            value={lessonCount !== null && !LESSON_COUNT_OPTIONS.includes(lessonCount) ? lessonCount : ""}
+            onChange={(e) =>
+              onLessonCountChange(e.target.value === "" ? null : Math.max(1, parseInt(e.target.value, 10) || 1))
+            }
+            placeholder="Anders"
+            className="w-24 h-10 rounded-lg bg-[#dce9ff] px-3 text-sm font-semibold text-[#0b1c30] outline-none focus:ring-2 focus:ring-[#2a14b4]/35"
+          />
+        </div>
+      </div>
+
       {bookDetailLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="border-2 border-black bg-white p-4 animate-pulse">
-              <div className="h-4 bg-black/10 w-1/3" />
+            <div key={i} className="bg-[#eff4ff] rounded-2xl p-4 animate-pulse">
+              <div className="h-4 bg-[#0b1c30]/10 w-1/3 rounded" />
             </div>
           ))}
         </div>
@@ -121,35 +163,35 @@ export function Step6Paragraphs({
         <>
           {/* Combo select */}
           <div className="mb-6" ref={comboRef}>
-            <p className="text-xs font-black uppercase tracking-widest mb-2">Snel zoeken</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#464554]/60 mb-2">Snel zoeken</p>
             <div className="relative">
               <button
                 type="button"
                 onClick={() => onComboOpenChange(!comboOpen)}
-                className="w-full border-2 border-black bg-white px-3 py-2.5 text-sm font-medium text-left flex items-center justify-between hover:bg-[#fdf4c4] transition-colors"
+                className="w-full bg-[#dce9ff] rounded-2xl px-4 py-2.5 text-sm font-medium text-left flex items-center justify-between hover:bg-[#d3e4fe] transition-colors"
               >
-                <span className={selectedParagraphIds.length > 0 ? "text-black" : "text-black/40"}>
+                <span className={selectedParagraphIds.length > 0 ? "text-[#0b1c30]" : "text-[#464554]/60"}>
                   {selectedParagraphIds.length === 0
                     ? "Zoek een hoofdstuk of paragraaf…"
                     : `${selectedParagraphIds.length} paragraaf${selectedParagraphIds.length !== 1 ? "en" : ""} geselecteerd`}
                 </span>
-                <ChevronDown className={cn("w-4 h-4 text-black/50 transition-transform", comboOpen && "rotate-180")} />
+                <ChevronDown className={cn("w-4 h-4 text-[#5c5378] transition-transform", comboOpen && "rotate-180")} />
               </button>
 
               {comboOpen && (
-                <div className="absolute top-full left-0 right-0 z-30 border-2 border-t-0 border-black bg-white shadow-[4px_4px_0px_#000]">
-                  <div className="border-b-2 border-black px-3 py-2">
+                <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-white rounded-2xl shadow-[0px_24px_40px_rgba(11,28,48,0.15)] overflow-hidden">
+                  <div className="px-4 py-2.5 bg-[#eff4ff]">
                     <input
                       autoFocus
                       value={comboQuery}
                       onChange={(e) => onComboQueryChange(e.target.value)}
                       placeholder="Zoek op titel of hoofdstuk…"
-                      className="w-full text-sm font-medium outline-none bg-transparent placeholder:text-black/30"
+                      className="w-full text-sm font-medium outline-none bg-transparent placeholder:text-[#464554]/50 text-[#0b1c30]"
                     />
                   </div>
                   <div className="max-h-72 overflow-y-auto">
                     {comboGroups.length === 0 ? (
-                      <p className="px-3 py-3 text-sm text-black/40 font-medium">Niets gevonden.</p>
+                      <p className="px-4 py-3 text-sm text-[#464554] font-medium">Niets gevonden.</p>
                     ) : (
                       comboGroups.map(({ chapter, paragraphs }) => {
                         const chapterFull = isChapterFullySelected(chapter)
@@ -165,15 +207,15 @@ export function Step6Paragraphs({
                                 }
                               }}
                               className={cn(
-                                "w-full text-left px-3 py-1.5 flex items-center justify-between border-b border-black/10 transition-colors",
-                                chapterFull ? "bg-[#c5d9f5] text-black" : "bg-black/5 hover:bg-[#fdf4c4]"
+                                "w-full text-left px-4 py-2 flex items-center justify-between transition-colors",
+                                chapterFull ? "bg-[#dce9ff] text-[#0b1c30]" : "bg-[#f8f9ff] hover:bg-[#eff4ff]"
                               )}
                             >
-                              <span className={cn("text-[10px] font-black uppercase tracking-widest", chapterFull ? "text-black/60" : "text-black/40")}>
+                              <span className={cn("text-[10px] font-semibold uppercase tracking-widest", chapterFull ? "text-[#2a14b4]" : "text-[#464554]/60")}>
                                 Hfst {chapter.index}: {chapter.title}
                               </span>
                               {(chapterFull || chapterPartial) && (
-                                <span className={cn("text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5", chapterFull ? "bg-black/10 text-black/70" : "bg-black/20 text-black/60")}>
+                                <span className={cn("text-[9px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full", chapterFull ? "bg-[#2a14b4]/10 text-[#2a14b4]" : "bg-[#ffdf9f] text-[#4c3700]")}>
                                   {chapterFull ? "Alles" : "Deels"}
                                 </span>
                               )}
@@ -191,14 +233,19 @@ export function Step6Paragraphs({
                                     }
                                   }}
                                   className={cn(
-                                    "w-full text-left pl-6 pr-3 py-2 text-sm font-medium border-b border-black/10 last:border-b-0 transition-colors",
-                                    selected ? "bg-[#f9d5d3] text-black" : "bg-white hover:bg-[#fdf4c4]"
+                                    "w-full text-left pl-8 pr-4 py-2 text-sm font-medium transition-colors border-l-4 flex items-center justify-between gap-2",
+                                    selected
+                                      ? "border-l-[#2a14b4] bg-[#e3ecff] text-[#2a14b4]"
+                                      : "border-l-transparent bg-white hover:bg-[#f8f9ff]"
                                   )}
                                 >
-                                  <span className={cn("mr-1.5", selected ? "text-black/55" : "text-black/40")}>
-                                    {chapter.index}.{paragraph.index}
+                                  <span>
+                                    <span className={cn("mr-1.5 text-xs", selected ? "text-[#2a14b4]/75" : "text-[#464554]/50")}>
+                                      {chapter.index}.{paragraph.index}
+                                    </span>
+                                    {paragraph.title}
                                   </span>
-                                  {paragraph.title}
+                                  {selected && <Check className="w-3.5 h-3.5 text-[#2a14b4] flex-shrink-0" aria-hidden />}
                                 </button>
                               )
                             })}
@@ -213,36 +260,39 @@ export function Step6Paragraphs({
           </div>
 
           {/* Accordion */}
-          <div className="space-y-1">
+          <div className="space-y-2">
             {bookDetail.chapters.map((chapter) => {
               const isOpen = openChapters.includes(chapter.id)
               const chapterFull = isChapterFullySelected(chapter)
               const chapterPartial = isChapterPartiallySelected(chapter)
               return (
-                <div key={chapter.id} className="border-2 border-black">
+                <div key={chapter.id} className={cn(
+                  "rounded-2xl overflow-hidden",
+                  chapterFull ? "shadow-[0px_8px_20px_rgba(42,20,180,0.12)]" : "shadow-[0px_4px_12px_rgba(11,28,48,0.06)]"
+                )}>
                   <div className={cn(
                     "flex items-stretch",
-                    chapterFull ? "bg-[#c5d9f5] text-black" : chapterPartial ? "bg-[#fdf4c4]" : "bg-white"
+                    chapterFull ? "bg-[#dce9ff]" : chapterPartial ? "bg-[#ffdf9f]/30" : "bg-white"
                   )}>
                     <button
                       type="button"
                       onClick={() => onToggleChapter(chapter)}
                       className={cn(
-                        "flex items-center justify-center w-10 flex-shrink-0 border-r-2 border-black transition-colors",
-                        chapterFull ? "hover:bg-[#b8cced]" : "hover:bg-black/10"
+                        "flex items-center justify-center w-11 flex-shrink-0 transition-colors",
+                        chapterFull ? "hover:bg-[#2a14b4]/10" : "hover:bg-[#0b1c30]/5"
                       )}
                       title={chapterFull ? "Deselecteer hoofdstuk" : "Selecteer heel hoofdstuk"}
                     >
                       <div className={cn(
-                        "w-3.5 h-3.5 border-2 flex items-center justify-center flex-shrink-0",
+                        "w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-all",
                         chapterFull
-                          ? "border-black bg-black"
+                          ? "bg-gradient-to-br from-[#2a14b4] to-[#4338ca]"
                           : chapterPartial
-                          ? "border-black bg-black/20"
-                          : "border-black/40"
+                          ? "bg-[#ffdf9f] border-2 border-[#f9bd22]"
+                          : "border-2 border-[#c7c4d7]"
                       )}>
-                        {chapterFull && <div className="w-1.5 h-1.5 bg-white" />}
-                        {chapterPartial && <div className="w-1.5 h-0.5 bg-black/70" />}
+                        {chapterFull && <div className="w-1.5 h-1.5 bg-white rounded-sm" />}
+                        {chapterPartial && <div className="w-2 h-0.5 bg-[#4c3700] rounded" />}
                       </div>
                     </button>
 
@@ -252,11 +302,11 @@ export function Step6Paragraphs({
                       className="flex-1 flex items-center justify-between px-4 py-3 text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <span className={cn("text-xs font-black w-6 flex-shrink-0", chapterFull ? "text-black/60" : "text-black/30")}>
+                        <span className={cn("text-xs font-semibold w-6 flex-shrink-0", chapterFull ? "text-[#2a14b4]/60" : "text-[#464554]/40")}>
                           {chapter.index}
                         </span>
-                        <span className="font-black text-sm text-black">{chapter.title}</span>
-                        <span className={cn("text-xs font-medium", chapterFull ? "text-black/60" : chapterPartial ? "text-black/60" : "text-black/40")}>
+                        <span className="font-semibold text-sm text-[#0b1c30]">{chapter.title}</span>
+                        <span className={cn("text-xs", chapterFull ? "text-[#2a14b4]/70" : chapterPartial ? "text-[#4c3700]" : "text-[#464554]/50")}>
                           {chapterFull
                             ? "Alles geselecteerd"
                             : chapterPartial
@@ -265,14 +315,14 @@ export function Step6Paragraphs({
                         </span>
                       </div>
                       {isOpen
-                        ? <ChevronDown className={cn("w-4 h-4 flex-shrink-0", chapterFull ? "text-black/60" : "text-black/40")} />
-                        : <ChevronRight className={cn("w-4 h-4 flex-shrink-0", chapterFull ? "text-black/60" : "text-black/40")} />
+                        ? <ChevronDown className={cn("w-4 h-4 flex-shrink-0", chapterFull ? "text-[#2a14b4]/60" : "text-[#464554]/40")} />
+                        : <ChevronRight className={cn("w-4 h-4 flex-shrink-0", chapterFull ? "text-[#2a14b4]/60" : "text-[#464554]/40")} />
                       }
                     </button>
                   </div>
 
                   {isOpen && (
-                    <div className="border-t-2 border-black">
+                    <div>
                       {chapter.paragraphs.map((paragraph) => {
                         const isSelected = isParagraphSelected(paragraph.id)
                         return (
@@ -281,21 +331,37 @@ export function Step6Paragraphs({
                             type="button"
                             onClick={() => onToggleParagraph(paragraph.id)}
                             className={cn(
-                              "w-full flex items-start gap-3 px-4 py-3 text-left border-b border-black/10 last:border-b-0 transition-colors",
-                              isSelected ? "bg-[#f9d5d3] text-black" : "bg-white hover:bg-[#fdf4c4]"
+                              "group w-full flex items-start gap-3 px-4 py-3 text-left transition-colors border-l-4 border-b border-[#edf0f8]",
+                              isSelected
+                                ? "border-l-[#2a14b4] bg-[#dde8ff] shadow-[inset_0_0_0_1px_rgba(42,20,180,0.22)]"
+                                : "border-l-transparent bg-white hover:bg-[#f6f8ff]"
                             )}
                           >
-                            <span className={cn("text-xs font-black w-8 flex-shrink-0 mt-0.5", isSelected ? "text-black/55" : "text-black/30")}>
+                            <span className={cn(
+                              "text-xs font-semibold w-8 flex-shrink-0 mt-0.5",
+                              isSelected ? "text-[#2a14b4]/80" : "text-[#464554]/55"
+                            )}>
                               {chapter.index}.{paragraph.index}
                             </span>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-bold leading-tight">{paragraph.title}</p>
+                              <p className={cn("text-sm font-medium leading-tight", isSelected ? "text-[#1f1491] font-semibold" : "text-[#0b1c30]")}>{paragraph.title}</p>
                               {paragraph.synopsis && (
-                                <p className={cn("text-xs mt-0.5 line-clamp-2", isSelected ? "text-black/65" : "text-black/50")}>
+                                <p className={cn("text-xs mt-0.5 line-clamp-2", isSelected ? "text-[#1f1491]/70" : "text-[#464554]/65")}>
                                   {paragraph.synopsis}
                                 </p>
                               )}
                             </div>
+                            <span
+                              className={cn(
+                                "mt-0.5 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
+                                isSelected
+                                  ? "bg-[#2a14b4] text-white"
+                                  : "border border-[#c6cbe0] text-transparent group-hover:text-[#8b93b8]"
+                              )}
+                              aria-hidden
+                            >
+                              <Check className="w-3 h-3" />
+                            </span>
                           </button>
                         )
                       })}
@@ -307,8 +373,12 @@ export function Step6Paragraphs({
           </div>
 
           <div className="mt-8">
-            <Button disabled={selectedParagraphIds.length === 0} className="gap-2" onClick={onCreatePlan}>
-              Maak lesplan
+            <Button
+              disabled={selectedParagraphIds.length === 0 || lessonCount === null || lessonCount < 1}
+              className="gap-2"
+              onClick={onContinueToSummary}
+            >
+              Bekijk overzicht
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
@@ -320,13 +390,13 @@ export function Step6Paragraphs({
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="border-2 border-black border-dashed bg-white p-10 flex flex-col items-center gap-3 text-center">
-      <div className="w-10 h-10 border-2 border-black bg-[#f5f0e8] flex items-center justify-center">
-        <BookOpen className="w-5 h-5" />
+    <div className="bg-white rounded-2xl p-10 flex flex-col items-center gap-3 text-center shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
+      <div className="w-10 h-10 rounded-2xl bg-[#eff4ff] flex items-center justify-center">
+        <BookOpen className="w-5 h-5 text-[#5c5378]" />
       </div>
       <div>
-        <p className="font-black text-sm">Niets gevonden</p>
-        <p className="text-xs text-black/60 mt-0.5">{message}</p>
+        <p className="font-semibold text-sm text-[#0b1c30]">Niets gevonden</p>
+        <p className="text-xs text-[#464554] mt-0.5">{message}</p>
       </div>
     </div>
   )

@@ -11,6 +11,8 @@ export type Level = components["schemas"]["Level"]
 export type LesplanStatus = components["schemas"]["LesplanStatus"]
 export type FeedbackMessageResponse = components["schemas"]["FeedbackMessageResponse"]
 export type LessonPlanResponse = components["schemas"]["LessonPlanResponse"]
+export type LessonPreparationTodoResponse = components["schemas"]["LessonPreparationTodoResponse"]
+export type LessonPreparationStatus = components["schemas"]["LessonPreparationStatus"]
 export type LesplanOverviewResponse = components["schemas"]["LesplanOverviewResponse"]
 export type LesplanResponse = components["schemas"]["LesplanResponse"]
 export type CreateLesplanRequest = components["schemas"]["CreateLesplanRequest"]
@@ -258,6 +260,24 @@ export async function createClass(
   })
 }
 
+export async function getClasses(
+  token: string | null,
+  filters?: { userId?: string }
+): Promise<Class[]> {
+  try {
+    const url = new URL(`${API_URL}/classes/`)
+    if (filters?.userId) url.searchParams.set("user_id", filters.userId)
+
+    const res = await fetch(url.toString(), {
+      headers: { "Content-Type": "application/json", ...authHeader(token) },
+    })
+    if (!res.ok) return []
+    return res.json()
+  } catch {
+    return []
+  }
+}
+
 export async function getClass(token: string | null, classId: string): Promise<Class | null> {
   try {
     const res = await fetch(`${API_URL}/classes/${classId}`, {
@@ -320,5 +340,17 @@ export async function approveLesplan(token: string | null, requestId: string): P
   return requestJson<LesplanResponse>(`${API_URL}/lesplan/${requestId}/approve`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeader(token) },
+  })
+}
+
+export async function updatePreparationTodo(
+  token: string | null,
+  todoId: string,
+  data: components["schemas"]["UpdateLessonPreparationTodoRequest"]
+): Promise<LessonPreparationTodoResponse> {
+  return requestJson<LessonPreparationTodoResponse>(`${API_URL}/lesplan/preparation-todos/${todoId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeader(token) },
+    body: JSON.stringify(data),
   })
 }

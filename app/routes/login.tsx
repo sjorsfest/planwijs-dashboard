@@ -1,5 +1,5 @@
 import { useLoaderData } from "react-router"
-import { CalendarDays, BookOpen, ListChecks, LayoutGrid } from "lucide-react"
+import { CalendarDays, BookOpen, ListChecks, LayoutGrid, Sparkles } from "lucide-react"
 import { Button } from "~/components/ui/button"
 import { getApiUrl } from "~/lib/api"
 import type { Route } from "./+types/login"
@@ -21,75 +21,76 @@ export default function LoginPage() {
   const { apiUrl, redirectUri } = useLoaderData<typeof loader>()
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[0.9fr_3.1fr]">
+    <div className="min-h-screen bg-[#f8f9ff] grid grid-cols-1 lg:grid-cols-[1fr_1.4fr]">
 
-      {/* ── Left: branding bento ── */}
-      <div className="hidden lg:flex flex-col border-r-2 border-black min-h-screen">
+      {/* ── Left: branding ── */}
+      <div className="hidden lg:flex flex-col min-h-screen bg-gradient-to-br from-[#2a14b4] via-[#3a22c4] to-[#4338ca]">
 
         {/* Logo bar */}
-        <div className="flex items-center gap-3 px-6 h-16 border-b-2 border-black bg-white flex-shrink-0">
-          <div className="w-7 h-7 flex items-center justify-center">
-            <CalendarDays className="w-6 h-6 text-black" />
+        <div className="flex items-center gap-3 px-8 h-16 flex-shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-sm tracking-tight">Planwijs</span>
+          <span className="font-bold text-sm text-white">Planwijs</span>
         </div>
 
-        {/* Hero — pink, headline anchored to bottom */}
-        <div className="flex-1 flex flex-col justify-end p-6 bg-[#f9d5d3]">
-          <h1 className="text-3xl font-black leading-[1.05] text-black">
+        {/* Hero text */}
+        <div className="flex-1 flex flex-col justify-end p-10">
+          <p className="text-[10px] font-semibold text-white/50 uppercase tracking-widest mb-4">Digitaal atelier</p>
+          <h1 className="text-4xl font-bold leading-tight text-white mb-4">
             Jouw lessen,<br />altijd<br />overzichtelijk.
           </h1>
-          <p className="mt-3 text-xs text-black/60 leading-relaxed">
-            De lesplannerapp voor docenten.
+          <p className="text-sm text-white/60 leading-relaxed max-w-xs">
+            De AI-lesplannerapp voor moderne docenten.
           </p>
+          {/* Warm yellow accent */}
+          <div className="mt-6 flex gap-1.5">
+            <div className="w-8 h-1.5 rounded-full bg-[#f9bd22]" />
+            <div className="w-3 h-1.5 rounded-full bg-[#f9bd22]/40" />
+          </div>
         </div>
 
-        {/* Feature bars — stacked, full width */}
-        <div className="flex flex-col border-t-2 border-black flex-shrink-0">
+        {/* Feature list */}
+        <div className="p-6 flex flex-col gap-3 flex-shrink-0">
           {[
-            { icon: CalendarDays, label: "Kalenderoverzicht", bg: "#c8ead8" },
-            { icon: BookOpen,     label: "Lesplannen aanmaken", bg: "#c5d9f5" },
-            { icon: ListChecks,   label: "Dagelijks overzicht", bg: "#dcd3f0" },
-            { icon: LayoutGrid,   label: "Rustige omgeving",   bg: "#fdf4c4" },
-          ].map(({ icon: Icon, label, bg }, i, arr) => (
-            <div
-              key={i}
-              className={["flex items-center gap-4 px-6 py-5", i < arr.length - 1 ? "border-b-2 border-black" : ""].join(" ")}
-              style={{ backgroundColor: bg }}
-            >
-              <div className="w-7 h-7 border-2 border-black bg-white flex items-center justify-center flex-shrink-0">
-                <Icon className="w-3.5 h-3.5" />
+            { icon: CalendarDays, label: "Kalenderoverzicht" },
+            { icon: BookOpen, label: "Lesplannen aanmaken" },
+            { icon: ListChecks, label: "Dagelijks overzicht" },
+            { icon: LayoutGrid, label: "Rustige omgeving" },
+          ].map(({ icon: Icon, label }, i) => (
+            <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-sm">
+              <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                <Icon className="w-3.5 h-3.5 text-white" />
               </div>
-              <p className="text-sm font-semibold">{label}</p>
+              <p className="text-sm font-medium text-white">{label}</p>
             </div>
           ))}
         </div>
-
       </div>
 
       {/* ── Right: login ── */}
       <div className="flex flex-col min-h-screen bg-white">
 
         {/* Mobile logo */}
-        <div className="lg:hidden flex items-center gap-2 px-6 h-16 border-b-2 border-black">
-          <div className="w-8 h-8 bg-black flex items-center justify-center">
-            <CalendarDays className="w-5 h-5 text-white" />
+        <div className="lg:hidden flex items-center gap-3 px-6 h-16">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#2a14b4] to-[#4338ca] flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-xl tracking-tight">Planwijs</span>
+          <span className="font-bold text-sm text-[#0b1c30]">Planwijs</span>
         </div>
 
-        {/* Form — vertically centered */}
-        <div className="flex-1 flex items-center justify-center px-12 py-16">
+        {/* Form */}
+        <div className="flex-1 flex items-center justify-center px-10 py-16">
           <div className="w-full max-w-sm">
 
-            <p className="text-xs font-bold uppercase tracking-widest text-black/30 mb-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#464554]/50 mb-8">
               Inloggen
             </p>
 
-            <h2 className="text-5xl font-black leading-[1.0] text-black mb-3">
+            <h2 className="text-4xl font-bold leading-tight text-[#0b1c30] mb-3">
               Welkom<br />terug.
             </h2>
-            <p className="text-sm text-black/50 mb-12 leading-relaxed">
+            <p className="text-sm text-[#464554] mb-10 leading-relaxed">
               Log in om je lesrooster te bekijken en bij te houden.
             </p>
 
@@ -110,19 +111,19 @@ export default function LoginPage() {
               </a>
             </Button>
 
-            <p className="mt-6 text-xs text-black/40 leading-relaxed">
+            <p className="mt-6 text-xs text-[#464554]/60 leading-relaxed">
               Door in te loggen ga je akkoord met onze{" "}
-              <span className="underline underline-offset-2 cursor-pointer hover:text-black">Gebruiksvoorwaarden</span>
+              <span className="underline underline-offset-2 cursor-pointer hover:text-[#2a14b4] transition-colors">Gebruiksvoorwaarden</span>
               {" "}en{" "}
-              <span className="underline underline-offset-2 cursor-pointer hover:text-black">Privacybeleid</span>.
+              <span className="underline underline-offset-2 cursor-pointer hover:text-[#2a14b4] transition-colors">Privacybeleid</span>.
             </p>
 
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-12 py-5 border-t-2 border-black bg-[#f5f0e8] flex-shrink-0">
-          <p className="text-xs text-black/40">© {new Date().getFullYear()} Planwijs</p>
+        <div className="px-10 py-5 bg-[#f8f9ff] flex-shrink-0">
+          <p className="text-xs text-[#464554]/50">© {new Date().getFullYear()} Planwijs</p>
         </div>
 
       </div>

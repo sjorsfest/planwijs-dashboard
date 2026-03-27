@@ -346,6 +346,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/lesplan/lessons/{lesson_id}/preparation-todos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Lesson Preparation Todos */
+        get: operations["list_lesson_preparation_todos_lesplan_lessons__lesson_id__preparation_todos_get"];
+        put?: never;
+        /** Create Lesson Preparation Todo */
+        post: operations["create_lesson_preparation_todo_lesplan_lessons__lesson_id__preparation_todos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lesplan/preparation-todos/{todo_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Lesson Preparation Todo */
+        get: operations["get_lesson_preparation_todo_lesplan_preparation_todos__todo_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Lesson Preparation Todo */
+        delete: operations["delete_lesson_preparation_todo_lesplan_preparation_todos__todo_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Lesson Preparation Todo */
+        patch: operations["update_lesson_preparation_todo_lesplan_preparation_todos__todo_id__patch"];
+        trace?: never;
+    };
     "/lesplan/{request_id}": {
         parameters: {
             query?: never;
@@ -533,6 +570,19 @@ export interface components {
             /** Lesson Duration Minutes */
             lesson_duration_minutes: number;
         };
+        /** CreateLessonPreparationTodoRequest */
+        CreateLessonPreparationTodoRequest: {
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Why */
+            why: string;
+            /** @default pending */
+            status: components["schemas"]["LessonPreparationStatus"];
+            /** Due Date */
+            due_date?: string | null;
+        };
         /** Event */
         Event: {
             /** Id */
@@ -667,6 +717,8 @@ export interface components {
             id: string;
             /** Lesson Number */
             lesson_number: number;
+            /** Planned Date */
+            planned_date: string | null;
             /** Title */
             title: string;
             /** Learning Objectives */
@@ -687,6 +739,11 @@ export interface components {
             /** Preparation Todos */
             preparation_todos: components["schemas"]["LessonPreparationTodoResponse"][];
         };
+        /**
+         * LessonPreparationStatus
+         * @enum {string}
+         */
+        LessonPreparationStatus: "pending" | "done";
         /** LessonPreparationTodoResponse */
         LessonPreparationTodoResponse: {
             /** Id */
@@ -768,6 +825,18 @@ export interface components {
             description: string;
             /** Activity Type */
             activity_type: string;
+        };
+        /** UpdateLessonPreparationTodoRequest */
+        UpdateLessonPreparationTodoRequest: {
+            /** Title */
+            title?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Why */
+            why?: string | null;
+            status?: components["schemas"]["LessonPreparationStatus"] | null;
+            /** Due Date */
+            due_date?: string | null;
         };
         /** User */
         User: {
@@ -2019,6 +2088,167 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_lesson_preparation_todos_lesplan_lessons__lesson_id__preparation_todos_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lesson_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonPreparationTodoResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_lesson_preparation_todo_lesplan_lessons__lesson_id__preparation_todos_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lesson_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLessonPreparationTodoRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonPreparationTodoResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_lesson_preparation_todo_lesplan_preparation_todos__todo_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                todo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonPreparationTodoResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_lesson_preparation_todo_lesplan_preparation_todos__todo_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                todo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_lesson_preparation_todo_lesplan_preparation_todos__todo_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                todo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLessonPreparationTodoRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonPreparationTodoResponse"];
                 };
             };
             /** @description Validation Error */

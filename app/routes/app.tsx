@@ -1,81 +1,79 @@
 import { NavLink, Outlet } from "react-router"
 import {
-  CalendarDays,
   LayoutDashboard,
+  CalendarDays,
   BookOpen,
+  ListTodo,
   LogOut,
+  Sparkles,
 } from "lucide-react"
 
 const navItems = [
   {
     to: "/dashboard",
     label: "Dashboard",
-    description: "Overzicht van vandaag",
     icon: LayoutDashboard,
-    bg: "#dcd3f0",
+  },
+  {
+    to: "/plans",
+    label: "Lessen",
+    icon: BookOpen,
+  },
+  {
+    to: "/todos",
+    label: "To Do's",
+    icon: ListTodo,
   },
   {
     to: "/calendar",
     label: "Kalender",
-    description: "Bekijk je lesweek",
     icon: CalendarDays,
-    bg: "#c8ead8",
-  },
-  {
-    to: "/plans",
-    label: "Plannen",
-    description: "Lesplannen beheren",
-    icon: BookOpen,
-    bg: "#c5d9f5",
   },
 ]
 
 export default function AppLayout() {
   return (
-    <div className="min-h-screen bg-white grid grid-cols-1 lg:grid-cols-[0.9fr_3.1fr]">
+    <div className="min-h-screen bg-[#f8f9ff] grid grid-cols-1 lg:grid-cols-[260px_1fr]">
       {/* ── Zijbalk ── */}
-      <aside className="w-full lg:w-auto flex-shrink-0 border-r-2 border-black bg-white flex flex-col lg:sticky lg:top-0 lg:h-screen">
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-6 h-16 border-b-2 border-black bg-white flex-shrink-0">
-          <div className="w-7 h-7 flex items-center justify-center">
-            <CalendarDays className="w-6 h-6 text-black" />
-          </div>
-          <span className="font-bold text-sm tracking-tight">Planwijs</span>
-        </div>
+      <aside className="w-full lg:w-auto flex-shrink-0 bg-white flex flex-col lg:sticky lg:top-0 lg:h-screen shadow-[1px_0px_0px_rgba(199,196,215,0.5)]">
 
-        {/* Hero */}
-        <div className="flex-1 flex flex-col justify-end p-6 bg-[#f9d5d3] border-b-2 border-black">
-          <h2 className="text-3xl font-black leading-[1.05] text-black">
-            Snel naar<br />je lessen.
-          </h2>
-          <p className="mt-3 text-xs text-black/60 leading-relaxed">
-            Kies een onderdeel en ga direct verder.
-          </p>
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-5 h-16 flex-shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#2a14b4] to-[#4338ca] flex items-center justify-center shadow-[0px_4px_12px_rgba(42,20,180,0.3)]">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-bold text-sm text-[#0b1c30]">
+            Planwijs
+          </span>
         </div>
 
         {/* Navigatie */}
-        <nav className="flex flex-col flex-shrink-0 border-b-2 border-black">
-          {navItems.map(({ to, label, description, icon: Icon, bg }, i, arr) => (
+        <nav className="flex flex-col gap-1 px-3 pt-1 flex-1">
+          {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
-              style={{ backgroundColor: bg }}
               className={({ isActive }) =>
                 [
-                  "group flex items-center gap-4 px-6 py-5 transition-[filter,box-shadow] text-black",
-                  i < arr.length - 1 ? "border-b-2 border-black" : "",
-                  isActive ? "shadow-[inset_5px_0px_0px_#000]" : "hover:brightness-[0.97]",
+                  "group flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all",
+                  isActive
+                    ? "bg-[#2a14b4]/10"
+                    : "text-[#464554] hover:bg-[#eff4ff]",
                 ].join(" ")
               }
             >
               {({ isActive }) => (
                 <>
-                  <div className={["w-7 h-7 border-2 border-black flex items-center justify-center flex-shrink-0 transition-colors", isActive ? "bg-black" : "bg-white"].join(" ")}>
-                    <Icon className={["w-3.5 h-3.5 transition-colors", isActive ? "text-white" : "text-black"].join(" ")} />
+                  <div className={[
+                    "w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all",
+                    isActive
+                      ? "bg-gradient-to-br from-[#2a14b4] to-[#4338ca] shadow-[0px_4px_10px_rgba(42,20,180,0.25)]"
+                      : "bg-[#eff4ff] group-hover:bg-[#dce9ff]",
+                  ].join(" ")}>
+                    <Icon className={["w-4 h-4 transition-colors", isActive ? "text-white" : "text-[#5c5378]"].join(" ")} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold leading-tight">{label}</p>
-                    <p className="text-[11px] text-black/55 leading-tight mt-0.5">{description}</p>
+                    <p className={["text-sm font-semibold leading-tight", isActive ? "text-[#2a14b4]" : "text-[#0b1c30]"].join(" ")}>{label}</p>
                   </div>
                 </>
               )}
@@ -84,15 +82,15 @@ export default function AppLayout() {
         </nav>
 
         {/* Uitloggen */}
-        <div className="p-3 bg-[#f5f0e8] flex-shrink-0">
+        <div className="p-3 flex-shrink-0">
           <a
             href="/auth/logout"
-            className="group flex items-center gap-4 px-3 py-2 text-black hover:bg-white/60 transition-colors w-full"
+            className="group flex items-center gap-3 px-3 py-2.5 rounded-2xl text-[#464554] hover:bg-[#eff4ff] transition-colors w-full"
           >
-            <div className="w-7 h-7 border-2 border-black bg-white flex items-center justify-center flex-shrink-0 transition-colors group-hover:bg-black">
-              <LogOut className="w-3.5 h-3.5 transition-colors group-hover:text-white" />
+            <div className="w-8 h-8 rounded-xl bg-[#eff4ff] group-hover:bg-[#dce9ff] flex items-center justify-center flex-shrink-0 transition-colors">
+              <LogOut className="w-4 h-4 text-[#5c5378]" />
             </div>
-            <span className="text-sm font-semibold">Uitloggen</span>
+            <span className="text-sm font-semibold text-[#0b1c30]">Uitloggen</span>
           </a>
         </div>
       </aside>
