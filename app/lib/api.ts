@@ -368,6 +368,74 @@ export async function approveLesplan(token: string | null, requestId: string): P
   })
 }
 
+export type CalendarLessonItem = {
+  type: "lesson"
+  id: string
+  title: string
+  planned_date: string
+  lesson_number: number
+  learning_objectives: string[]
+  lesplan_id: string
+  lesplan_title: string
+  created_at: string
+}
+
+export type CalendarTodoItem = {
+  type: "preparation_todo"
+  id: string
+  title: string
+  description: string | null
+  due_date: string
+  status: string
+  lesson_id: string
+  lesson_title: string
+  lesplan_id: string
+  lesplan_title: string
+  created_at: string
+}
+
+export type CalendarItem = CalendarLessonItem | CalendarTodoItem
+
+export type CalendarResponse = {
+  start_date: string
+  end_date: string
+  items: CalendarItem[]
+}
+
+export async function getCalendarItems(
+  token: string | null,
+  userId: string,
+  startDate: string,
+  endDate: string
+): Promise<CalendarResponse> {
+  try {
+    const url = new URL(`${API_URL}/calendar/`)
+    url.searchParams.set("user_id", userId)
+    url.searchParams.set("start_date", startDate)
+    url.searchParams.set("end_date", endDate)
+
+    const res = await fetch(url.toString(), {
+      headers: { "Content-Type": "application/json", ...authHeader(token) },
+    })
+    if (!res.ok) return { start_date: startDate, end_date: endDate, items: [] }
+    return res.json()
+  } catch {
+    return { start_date: startDate, end_date: endDate, items: [] }
+  }
+}
+
+export async function updateLessonPlannedDate(
+  token: string | null,
+  lessonId: string,
+  plannedDate: string | null
+): Promise<LessonPlanResponse> {
+  return requestJson<LessonPlanResponse>(`${API_URL}/lesplan/lessons/${lessonId}/planned-date`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeader(token) },
+    body: JSON.stringify({ planned_date: plannedDate }),
+  })
+}
+
 export async function updatePreparationTodo(
   token: string | null,
   todoId: string,

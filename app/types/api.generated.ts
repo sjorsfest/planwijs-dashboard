@@ -346,6 +346,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/lesplan/{request_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Lesplan */
+        get: operations["get_lesplan_lesplan__request_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lesplan/lessons/{lesson_id}/planned-date": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Lesson Planned Date */
+        patch: operations["update_lesson_planned_date_lesplan_lessons__lesson_id__planned_date_patch"];
+        trace?: never;
+    };
     "/lesplan/lessons/{lesson_id}/preparation-todos": {
         parameters: {
             query?: never;
@@ -383,15 +417,15 @@ export interface paths {
         patch: operations["update_lesson_preparation_todo_lesplan_preparation_todos__todo_id__patch"];
         trace?: never;
     };
-    "/lesplan/{request_id}": {
+    "/calendar/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Lesplan */
-        get: operations["get_lesplan_lesplan__request_id__get"];
+        /** Get Calendar */
+        get: operations["get_calendar_calendar__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -523,6 +557,84 @@ export interface components {
             url: string;
             /** Chapters */
             chapters: components["schemas"]["ChapterResponse"][];
+        };
+        /**
+         * CalendarItemType
+         * @enum {string}
+         */
+        CalendarItemType: "lesson" | "preparation_todo";
+        /** CalendarLessonItem */
+        CalendarLessonItem: {
+            /** @default lesson */
+            type: components["schemas"]["CalendarItemType"];
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /**
+             * Planned Date
+             * Format: date
+             */
+            planned_date: string;
+            /** Lesson Number */
+            lesson_number: number;
+            /** Learning Objectives */
+            learning_objectives: string[];
+            /** Lesplan Id */
+            lesplan_id: string;
+            /** Lesplan Title */
+            lesplan_title: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** CalendarResponse */
+        CalendarResponse: {
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /** Items */
+            items: (components["schemas"]["CalendarLessonItem"] | components["schemas"]["CalendarTodoItem"])[];
+        };
+        /** CalendarTodoItem */
+        CalendarTodoItem: {
+            /** @default preparation_todo */
+            type: components["schemas"]["CalendarItemType"];
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /**
+             * Due Date
+             * Format: date
+             */
+            due_date: string;
+            /** Status */
+            status: string;
+            /** Lesson Id */
+            lesson_id: string;
+            /** Lesson Title */
+            lesson_title: string;
+            /** Lesplan Id */
+            lesplan_id: string;
+            /** Lesplan Title */
+            lesplan_title: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** ChapterResponse */
         ChapterResponse: {
@@ -919,6 +1031,11 @@ export interface components {
             description: string;
             /** Activity Type */
             activity_type: string;
+        };
+        /** UpdateLessonPlannedDateRequest */
+        UpdateLessonPlannedDateRequest: {
+            /** Planned Date */
+            planned_date?: string | null;
         };
         /** UpdateLessonPreparationTodoRequest */
         UpdateLessonPreparationTodoRequest: {
@@ -2195,6 +2312,72 @@ export interface operations {
             };
         };
     };
+    get_lesplan_lesplan__request_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LesplanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_lesson_planned_date_lesplan_lessons__lesson_id__planned_date_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lesson_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLessonPlannedDateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonPlanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_lesson_preparation_todos_lesplan_lessons__lesson_id__preparation_todos_get: {
         parameters: {
             query?: never;
@@ -2356,13 +2539,15 @@ export interface operations {
             };
         };
     };
-    get_lesplan_lesplan__request_id__get: {
+    get_calendar_calendar__get: {
         parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                request_id: string;
+            query: {
+                user_id: string;
+                start_date: string;
+                end_date: string;
             };
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -2373,7 +2558,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LesplanResponse"];
+                    "application/json": components["schemas"]["CalendarResponse"];
                 };
             };
             /** @description Validation Error */

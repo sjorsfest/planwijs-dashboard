@@ -1,14 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { useFetcher, useLoaderData } from "react-router"
+import { useLoaderData, Link } from "react-router"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   ChevronLeft,
   ChevronRight,
-  Plus,
   CalendarDays,
-  Trash2,
+  BookOpen,
+  ListChecks,
+  CheckCircle2,
 } from "lucide-react"
 import {
   format,
@@ -23,55 +24,28 @@ import {
 } from "date-fns"
 import { nl } from "date-fns/locale"
 
-import { Button } from "~/components/ui/button"
-import { Input } from "~/components/ui/input"
-import { Label } from "~/components/ui/label"
-import { Textarea } from "~/components/ui/textarea"
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "~/components/ui/dialog"
-import { getEvents, createEvent, deleteEvent, extractToken } from "~/lib/api"
-import type { Event } from "~/lib/api"
+  getCalendarItems,
+  type CalendarItem,
+  type CalendarLessonItem,
+  type CalendarTodoItem,
+} from "~/lib/api"
+import { requireAuthContext } from "~/lib/auth.server"
 import type { Route } from "./+types/app.calendar"
 
 // ─── Loader ────────────────────────────────────────────────────────────────
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const token = extractToken(request.headers.get("Cookie") || "")
-  const events = await getEvents(token)
-  return { events }
-}
+  const { token, userId } = requireAuthContext(request)
 
-// ─── Action ────────────────────────────────────────────────────────────────
+  // Fetch a wide range: 3 months back to 3 months forward
+  const now = new Date()
+  const rangeStart = format(startOfMonth(subMonths(now, 3)), "yyyy-MM-dd")
+  const rangeEnd = format(endOfMonth(addMonths(now, 3)), "yyyy-MM-dd")
 
-export async function action({ request }: Route.ActionArgs) {
-  const token = extractToken(request.headers.get("Cookie") || "")
-  const formData = await request.formData()
-  const intent = formData.get("intent")
+  const calendar = await getCalendarItems(token, userId, rangeStart, rangeEnd)
 
-  if (intent === "create") {
-    const event = await createEvent(
-      {
-        name: formData.get("name") as string,
-        description: (formData.get("description") as string) || null,
-        planned_date: formData.get("planned_date") as string,
-      },
-      token
-    )
-    return { ok: !!event }
-  }
-
-  if (intent === "delete") {
-    await deleteEvent(formData.get("id") as string, token)
-    return { ok: true }
-  }
-
-  return { ok: false }
+  return { calendarItems: calendar.items }
 }
 
 // ─── Meta ──────────────────────────────────────────────────────────────────
@@ -91,41 +65,44 @@ function toDateString(d: Date): string {
   return format(d, "yyyy-MM-dd")
 }
 
+function getItemDate(item: CalendarItem): string {
+  return item.type === "lesson" ? item.planned_date : item.due_date
+}
+
 const SOFT_EASE = [0.22, 1, 0.36, 1] as const
 const WEEKDAYS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"]
+
+// Color constants
+const LESSON_COLOR = "#2a14b4"
+const LESSON_BG = "bg-[#eff4ff]"
+const LESSON_TEXT = "text-[#2a14b4]"
+const TODO_COLOR_PENDING = "#e67e22"
+const TODO_BG_PENDING = "bg-orange-50"
+const TODO_TEXT_PENDING = "text-orange-700"
+const TODO_BG_DONE = "bg-emerald-50"
+const TODO_TEXT_DONE = "text-emerald-700"
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
 export default function CalendarPage() {
-  const { events } = useLoaderData<typeof loader>()
-  const fetcher = useFetcher()
+  const { calendarItems } = useLoaderData<typeof loader>()
 
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [newEventDate, setNewEventDate] = useState(toDateString(new Date()))
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
   const paddingDays = getPaddingDays(currentMonth)
 
-  const eventsForDay = (day: Date) =>
-    events.filter((e) => e.planned_date === toDateString(day))
-
-  const selectedEvents = eventsForDay(selectedDate)
-
-  const isSubmitting =
-    fetcher.state !== "idle" && fetcher.formData?.get("intent") === "create"
-
-  if (fetcher.state === "idle" && fetcher.data?.ok && dialogOpen) {
-    setDialogOpen(false)
+  const itemsForDay = (day: Date) => {
+    const ds = toDateString(day)
+    return calendarItems.filter((item) => getItemDate(item) === ds)
   }
 
-  const openCreate = (day?: Date) => {
-    setNewEventDate(toDateString(day ?? selectedDate))
-    setDialogOpen(true)
-  }
+  const selectedItems = itemsForDay(selectedDate)
+  const selectedLessons = selectedItems.filter((i): i is CalendarLessonItem => i.type === "lesson")
+  const selectedTodos = selectedItems.filter((i): i is CalendarTodoItem => i.type === "preparation_todo")
 
   return (
     <div className="min-h-screen bg-[#f8f9ff] p-8">
@@ -136,16 +113,21 @@ export default function CalendarPage() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]/70 mb-1">Planning</p>
             <h1 className="text-3xl font-bold tracking-tight text-[#0b1c30]">Kalender</h1>
           </div>
-          <Button
-            onClick={() => openCreate()}
-            className="gap-2 bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_4px_12px_rgba(42,20,180,0.25)] hover:shadow-[0px_6px_16px_rgba(42,20,180,0.35)]"
-          >
-            <Plus className="w-4 h-4" />
-            Les inplannen
-          </Button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-xs font-medium text-[#5c5378]">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: LESSON_COLOR }} />
+                Les
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TODO_COLOR_PENDING }} />
+                Taak
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
           {/* ── Calendar card ── */}
           <div className="bg-white rounded-2xl shadow-[0px_24px_40px_rgba(11,28,48,0.07)] overflow-hidden">
             {/* Month nav */}
@@ -194,7 +176,14 @@ export default function CalendarPage() {
               ))}
 
               {days.map((day, i) => {
-                const dayEvents = eventsForDay(day)
+                const dayItems = itemsForDay(day)
+                const hasLessons = dayItems.some((item) => item.type === "lesson")
+                const hasPendingTodos = dayItems.some(
+                  (item) => item.type === "preparation_todo" && item.status === "pending"
+                )
+                const hasDoneTodos = dayItems.some(
+                  (item) => item.type === "preparation_todo" && item.status === "done"
+                )
                 const isSelected = isSameDay(day, selectedDate)
                 const today = isToday(day)
                 const col = (paddingDays + i) % 7
@@ -228,17 +217,25 @@ export default function CalendarPage() {
                       {format(day, "d")}
                     </span>
 
-                    {dayEvents.length > 0 && (
+                    {dayItems.length > 0 && (
                       <div className="flex gap-0.5 flex-wrap justify-center px-1">
-                        {dayEvents.slice(0, 3).map((e) => (
+                        {hasLessons && (
                           <span
-                            key={e.id}
-                            className={[
-                              "w-1.5 h-1.5 rounded-full",
-                              isSelected ? "bg-white/60" : "bg-[#2a14b4]",
-                            ].join(" ")}
+                            className={`w-2 h-2 rounded-full ${isSelected ? "bg-white/70" : ""}`}
+                            style={isSelected ? undefined : { backgroundColor: LESSON_COLOR }}
                           />
-                        ))}
+                        )}
+                        {hasPendingTodos && (
+                          <span
+                            className={`w-2 h-2 rounded-full ${isSelected ? "bg-orange-300" : ""}`}
+                            style={isSelected ? undefined : { backgroundColor: TODO_COLOR_PENDING }}
+                          />
+                        )}
+                        {hasDoneTodos && !hasPendingTodos && (
+                          <span
+                            className={`w-2 h-2 rounded-full ${isSelected ? "bg-emerald-300" : "bg-emerald-500"}`}
+                          />
+                        )}
                       </div>
                     )}
                   </button>
@@ -251,34 +248,25 @@ export default function CalendarPage() {
           <div className="bg-white rounded-2xl shadow-[0px_24px_40px_rgba(11,28,48,0.07)] overflow-hidden">
             {/* Selected date header */}
             <div className="px-5 py-4 border-b border-[#eff4ff]">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]/70">
-                  {isToday(selectedDate)
-                    ? "Vandaag"
-                    : format(selectedDate, "EEEE", { locale: nl })}
-                </p>
-                <button
-                  onClick={() => openCreate()}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-[#5c5378] hover:bg-[#eff4ff] hover:text-[#2a14b4] transition-colors"
-                  title="Les inplannen"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]/70 mb-1">
+                {isToday(selectedDate)
+                  ? "Vandaag"
+                  : format(selectedDate, "EEEE", { locale: nl })}
+              </p>
               <p className="text-xl font-bold text-[#0b1c30] capitalize tracking-tight">
                 {format(selectedDate, "d MMMM yyyy", { locale: nl })}
               </p>
               <p className="text-xs font-medium text-[#5c5378]/70 mt-0.5">
-                {selectedEvents.length === 0
-                  ? "Geen lessen ingepland"
-                  : `${selectedEvents.length} les${selectedEvents.length > 1 ? "sen" : ""} ingepland`}
+                {selectedItems.length === 0
+                  ? "Niets gepland"
+                  : `${selectedLessons.length} les${selectedLessons.length !== 1 ? "sen" : ""}${selectedTodos.length > 0 ? `, ${selectedTodos.length} ta${selectedTodos.length !== 1 ? "ken" : "ak"}` : ""}`}
               </p>
             </div>
 
-            {/* Events */}
+            {/* Items */}
             <div className="overflow-y-auto max-h-[440px]">
               <AnimatePresence mode="popLayout">
-                {selectedEvents.length === 0 ? (
+                {selectedItems.length === 0 ? (
                   <motion.div
                     key="empty"
                     initial={{ opacity: 0 }}
@@ -292,19 +280,13 @@ export default function CalendarPage() {
                     <div>
                       <p className="text-sm font-semibold text-[#5c5378]">Niets gepland</p>
                       <p className="text-xs text-[#5c5378]/60 mt-0.5">
-                        <button
-                          onClick={() => openCreate()}
-                          className="text-[#2a14b4] font-semibold hover:underline"
-                        >
-                          Plan een les in
-                        </button>{" "}
-                        voor deze dag.
+                        Er staan geen lessen of taken op deze dag.
                       </p>
                     </div>
                   </motion.div>
                 ) : (
-                  selectedEvents.map((event) => (
-                    <EventCard key={event.id} event={event} fetcher={fetcher} />
+                  selectedItems.map((item) => (
+                    <CalendarItemCard key={`${item.type}-${item.id}`} item={item} />
                   ))
                 )}
               </AnimatePresence>
@@ -312,114 +294,93 @@ export default function CalendarPage() {
           </div>
         </div>
       </div>
-
-      {/* ── Create dialog ── */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Les inplannen</DialogTitle>
-            <DialogDescription>
-              Voeg een les toe aan je kalender.
-            </DialogDescription>
-          </DialogHeader>
-
-          <fetcher.Form method="post" className="space-y-4">
-            <input type="hidden" name="intent" value="create" />
-
-            <div className="space-y-1.5">
-              <Label htmlFor="name">Naam van de les</Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder="bv. Wiskunde – Pythagoras"
-                required
-                autoFocus
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="planned_date">Datum</Label>
-              <Input
-                id="planned_date"
-                name="planned_date"
-                type="date"
-                defaultValue={newEventDate}
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="description">Toelichting</Label>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="Optionele notities, leerdoelen, benodigdheden…"
-                rows={3}
-              />
-            </div>
-
-            <DialogFooter className="pt-2 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogOpen(false)}
-              >
-                Annuleren
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Aanmaken…" : "Les inplannen"}
-              </Button>
-            </DialogFooter>
-          </fetcher.Form>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
 
-// ─── Event card ─────────────────────────────────────────────────────────────
+// ─── Calendar item card ──────────────────────────────────────────────────────
 
-function EventCard({
-  event,
-  fetcher,
-}: {
-  event: Event
-  fetcher: ReturnType<typeof useFetcher>
-}) {
-  const isDeleting =
-    fetcher.state !== "idle" && fetcher.formData?.get("id") === event.id
+function CalendarItemCard({ item }: { item: CalendarItem }) {
+  if (item.type === "lesson") {
+    return <LessonCard item={item} />
+  }
+  return <TodoCard item={item} />
+}
+
+function LessonCard({ item }: { item: CalendarLessonItem }) {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.97, y: -4 }}
+      transition={{ duration: 0.18, ease: SOFT_EASE }}
+    >
+      <Link
+        to={`/lesplan/${item.lesplan_id}/les/${item.id}`}
+        className="group flex items-start gap-3 px-5 py-4 border-b border-[#eff4ff] last:border-0 hover:bg-[#f8f9ff] transition-colors"
+      >
+        <div className={`w-8 h-8 rounded-lg ${LESSON_BG} flex items-center justify-center shrink-0 mt-0.5`}>
+          <BookOpen className={`w-4 h-4 ${LESSON_TEXT}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className={`text-[10px] font-semibold uppercase tracking-wider ${LESSON_TEXT} px-1.5 py-0.5 rounded ${LESSON_BG}`}>
+              Les {item.lesson_number}
+            </span>
+          </div>
+          <p className="text-sm font-semibold text-[#0b1c30] mt-1 group-hover:text-[#2a14b4] transition-colors truncate">
+            {item.title}
+          </p>
+          <p className="text-xs text-[#5c5378]/70 mt-0.5 truncate">
+            {item.lesplan_title}
+          </p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-[#5c5378]/30 group-hover:text-[#2a14b4] shrink-0 mt-2 transition-colors" />
+      </Link>
+    </motion.div>
+  )
+}
+
+function TodoCard({ item }: { item: CalendarTodoItem }) {
+  const isDone = item.status === "done"
+  const bgClass = isDone ? TODO_BG_DONE : TODO_BG_PENDING
+  const textClass = isDone ? TODO_TEXT_DONE : TODO_TEXT_PENDING
 
   return (
     <motion.div
       layout
       initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: isDeleting ? 0.4 : 1, y: 0 }}
+      animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97, y: -4 }}
       transition={{ duration: 0.18, ease: SOFT_EASE }}
-      className="group flex items-start gap-3 px-5 py-4 border-b border-[#eff4ff] last:border-0 hover:bg-[#f8f9ff] transition-colors"
     >
-      <div className="w-2 h-2 rounded-full bg-[#2a14b4] flex-shrink-0 mt-1.5" />
-
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-[#0b1c30] truncate">{event.name}</p>
-        {event.description && (
-          <p className="text-xs text-[#464554]/70 mt-0.5 line-clamp-2 leading-5">
-            {event.description}
+      <Link
+        to={`/lesplan/${item.lesplan_id}/les/${item.lesson_id}`}
+        className="group flex items-start gap-3 px-5 py-4 border-b border-[#eff4ff] last:border-0 hover:bg-[#f8f9ff] transition-colors"
+      >
+        <div className={`w-8 h-8 rounded-lg ${bgClass} flex items-center justify-center shrink-0 mt-0.5`}>
+          {isDone ? (
+            <CheckCircle2 className={`w-4 h-4 ${textClass}`} />
+          ) : (
+            <ListChecks className={`w-4 h-4 ${textClass}`} />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className={`text-[10px] font-semibold uppercase tracking-wider ${textClass} px-1.5 py-0.5 rounded ${bgClass}`}>
+              {isDone ? "Afgerond" : "Te doen"}
+            </span>
+          </div>
+          <p className={`text-sm font-semibold mt-1 truncate transition-colors ${isDone ? "text-[#5c5378] line-through" : "text-[#0b1c30] group-hover:text-orange-700"}`}>
+            {item.title}
           </p>
-        )}
-      </div>
-
-      <fetcher.Form method="post" className="shrink-0">
-        <input type="hidden" name="intent" value="delete" />
-        <input type="hidden" name="id" value={event.id} />
-        <button
-          type="submit"
-          disabled={isDeleting}
-          className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-[#5c5378]/50 hover:text-red-500 hover:bg-red-50 transition-all disabled:cursor-wait"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      </fetcher.Form>
+          <p className="text-xs text-[#5c5378]/70 mt-0.5 truncate">
+            {item.lesson_title} · {item.lesplan_title}
+          </p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-[#5c5378]/30 group-hover:text-[#5c5378] shrink-0 mt-2 transition-colors" />
+      </Link>
     </motion.div>
   )
 }

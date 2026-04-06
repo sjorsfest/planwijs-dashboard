@@ -1,11 +1,12 @@
-import { useState } from "react"
-import { data, Link, useLoaderData } from "react-router"
-import { ArrowLeft, Calendar, CheckCircle2, Circle } from "lucide-react"
+import { useRef, useState } from "react"
+import { data, Link, useFetcher, useLoaderData } from "react-router"
+import { ArrowLeft, Calendar, CheckCircle2, Circle, Loader2, Pencil, X } from "lucide-react"
 import {
   getBookDetail,
   getClass,
   getLesplan,
   getMethod,
+  updateLessonPlannedDate,
   updatePreparationTodo,
   type LessonPlanResponse,
 } from "~/lib/api"
@@ -72,6 +73,19 @@ export async function action({ request }: Route.ActionArgs) {
     try {
       const updated = await updatePreparationTodo(token, todoId, { status })
       return data({ ok: true, todo: updated })
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Er ging iets mis"
+      return data({ ok: false, error: message })
+    }
+  }
+
+  if (intent === "set-planned-date") {
+    const lessonId = formData.get("lessonId") as string
+    const rawDate = formData.get("plannedDate") as string | null
+    const plannedDate = rawDate || null
+    try {
+      await updateLessonPlannedDate(token, lessonId, plannedDate)
+      return data({ ok: true })
     } catch (e) {
       const message = e instanceof Error ? e.message : "Er ging iets mis"
       return data({ ok: false, error: message })
@@ -157,8 +171,32 @@ function formatPlannedDate(dateStr: string): string {
 }
 
 function LessonHeader({ lesson }: { lesson: LessonPlanResponse }) {
+  const fetcher = useFetcher()
+  const [editing, setEditing] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
   const pendingTodos = lesson.preparation_todos.filter((t) => t.status === "pending").length
   const doneTodos = lesson.preparation_todos.filter((t) => t.status === "done").length
+
+  const isSubmitting = fetcher.state !== "idle"
+  const displayDate = lesson.planned_date
+  const today = new Date().toISOString().slice(0, 10)
+
+  function handleSave(date: string) {
+    if (!date || date < today) return
+    fetcher.submit(
+      { intent: "set-planned-date", lessonId: lesson.id, plannedDate: date },
+      { method: "post" }
+    )
+    setEditing(false)
+  }
+
+  function handleClear() {
+    fetcher.submit(
+      { intent: "set-planned-date", lessonId: lesson.id, plannedDate: "" },
+      { method: "post" }
+    )
+    setEditing(false)
+  }
 
   const stats = [
     { label: "Tijdsduur", value: `${lesson.time_sections.at(-1)?.end_min ?? "?"} min` },
@@ -180,10 +218,70 @@ function LessonHeader({ lesson }: { lesson: LessonPlanResponse }) {
           <h1 className="text-3xl font-bold tracking-tight text-[#0b1c30] leading-tight">{lesson.title}</h1>
           <div className="flex items-center gap-1.5 mt-2">
             <Calendar className="w-3.5 h-3.5 text-[#5c5378]/50" />
-            {lesson.planned_date ? (
-              <span className="text-sm font-semibold text-[#464554]">{formatPlannedDate(lesson.planned_date)}</span>
+            {editing ? (
+              <div className="flex items-center gap-2">
+                <input
+                  ref={(el) => {
+                    inputRef.current = el
+                    if (el) {
+                      try { el.showPicker() } catch { /* unsupported browsers */ }
+                    }
+                  }}
+                  type="date"
+                  defaultValue={displayDate ?? ""}
+                  min={today}
+                  autoFocus
+                  className="text-sm font-semibold text-[#464554] bg-[#f8f9ff] border border-[#e8eeff] rounded-lg px-2 py-1 outline-none focus:border-[#4338ca] transition-colors"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSave(e.currentTarget.value)
+                    if (e.key === "Escape") setEditing(false)
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (inputRef.current?.value) handleSave(inputRef.current.value)
+                    else setEditing(false)
+                  }}
+                  className="text-[10px] font-semibold uppercase tracking-wider text-white bg-[#4338ca] hover:bg-[#2a14b4] rounded-md px-2.5 py-1 transition-colors"
+                >
+                  Opslaan
+                </button>
+                {displayDate && (
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="text-[10px] font-semibold uppercase tracking-wider text-[#5c5378] hover:text-red-600 transition-colors"
+                  >
+                    Wissen
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="text-[#5c5378]/50 hover:text-[#0b1c30] transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : isSubmitting ? (
+              <span className="flex items-center gap-1.5">
+                <Loader2 className="w-3.5 h-3.5 text-[#4338ca] animate-spin" />
+                <span className="text-sm font-medium text-[#5c5378]/50">Opslaan…</span>
+              </span>
             ) : (
-              <span className="text-sm font-medium text-[#5c5378]/50 italic">Nog niet gepland</span>
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="group flex items-center gap-1.5 hover:text-[#4338ca] transition-colors"
+              >
+                {displayDate ? (
+                  <span className="text-sm font-semibold text-[#464554] group-hover:text-[#4338ca]">{formatPlannedDate(displayDate)}</span>
+                ) : (
+                  <span className="text-sm font-medium text-[#5c5378]/50 italic group-hover:text-[#4338ca]">Nog niet gepland</span>
+                )}
+                <Pencil className="w-3 h-3 text-[#5c5378]/40 group-hover:text-[#4338ca] transition-colors" />
+              </button>
             )}
           </div>
         </div>

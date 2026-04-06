@@ -12,17 +12,17 @@ import { LesLabLogo } from "~/components/branding/leslab-logo"
 const navItems = [
   {
     to: "/dashboard",
-    label: "Dashboard",
+    label: "Overzicht",
     icon: LayoutDashboard,
   },
   {
     to: "/classes",
-    label: "Klassen",
+    label: "Lokaal & Klassen",
     icon: Users,
   },
   {
     to: "/plans",
-    label: "Lessen",
+    label: "Mijn Lessen",
     icon: BookOpen,
   },
   {
