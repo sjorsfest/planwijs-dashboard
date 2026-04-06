@@ -1,4 +1,5 @@
-import { data, Link, useFetcher, useLoaderData } from "react-router"
+import { useState } from "react"
+import { data, Link, useLoaderData } from "react-router"
 import { ArrowLeft, Calendar, CheckCircle2, Circle } from "lucide-react"
 import {
   getBookDetail,
@@ -7,8 +8,8 @@ import {
   getMethod,
   updatePreparationTodo,
   type LessonPlanResponse,
-  type LessonPreparationTodoResponse,
 } from "~/lib/api"
+import { TodoCard } from "~/components/todos/todo-card"
 import { requireAuthContext } from "~/lib/auth.server"
 import type { SourceContext } from "~/components/lesplan/types"
 import type { Route } from "./+types/app.lesplan.$requestId.les.$lessonId"
@@ -80,8 +81,18 @@ export async function action({ request }: Route.ActionArgs) {
   return data({ ok: false, error: "Unknown intent" })
 }
 
+const LESSON_TABS = [
+  { id: "overzicht", label: "Overzicht" },
+  { id: "tijdschema", label: "Tijdschema" },
+  { id: "notities", label: "Notities" },
+  { id: "taken", label: "Taken" },
+] as const
+
+type LessonTabId = (typeof LESSON_TABS)[number]["id"]
+
 export default function LessonDetailPage() {
   const { requestId, lesson, sourceContext } = useLoaderData<typeof loader>()
+  const [activeTab, setActiveTab] = useState<LessonTabId>("overzicht")
 
   return (
     <div className="min-h-screen bg-[#f8f9ff]">
@@ -96,12 +107,35 @@ export default function LessonDetailPage() {
         </Link>
         <span className="text-[#c7c4d7]">·</span>
         <span className="text-sm font-semibold text-[#464554]">
-          Les {lesson.lesson_number}
+          Les {lesson.lesson_number}: {lesson.title}
         </span>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-10">
-        <LessonDetail lesson={lesson} sourceContext={sourceContext} />
+      {/* Header card */}
+      <div className="px-8 py-8 max-w-5xl">
+        <LessonHeader lesson={lesson} />
+      </div>
+
+      {/* Tab nav */}
+      <LessonTabNav activeTab={activeTab} onChange={setActiveTab} lesson={lesson} />
+
+      {/* Tab content */}
+      <div className="px-8 py-6 max-w-5xl">
+        <TabPanel id="overzicht" activeTab={activeTab}>
+          <OverviewTab lesson={lesson} sourceContext={sourceContext} />
+        </TabPanel>
+
+        <TabPanel id="tijdschema" activeTab={activeTab}>
+          <TimeschemaTab lesson={lesson} />
+        </TabPanel>
+
+        <TabPanel id="notities" activeTab={activeTab}>
+          <NotesTab lesson={lesson} />
+        </TabPanel>
+
+        <TabPanel id="taken" activeTab={activeTab}>
+          <TakenTab lesson={lesson} />
+        </TabPanel>
       </div>
     </div>
   )
@@ -110,6 +144,201 @@ export default function LessonDetailPage() {
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]/70">{children}</p>
+  )
+}
+
+function formatPlannedDate(dateStr: string): string {
+  const [year, month, day] = dateStr.split("-").map(Number)
+  return new Date(year, month - 1, day).toLocaleDateString("nl-NL", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })
+}
+
+function LessonHeader({ lesson }: { lesson: LessonPlanResponse }) {
+  const pendingTodos = lesson.preparation_todos.filter((t) => t.status === "pending").length
+  const doneTodos = lesson.preparation_todos.filter((t) => t.status === "done").length
+
+  const stats = [
+    { label: "Tijdsduur", value: `${lesson.time_sections.at(-1)?.end_min ?? "?"} min` },
+    { label: "Activiteiten", value: String(lesson.time_sections.length) },
+    { label: "Benodigdheden", value: String(lesson.required_materials.length) },
+    { label: "Taken", value: `${doneTodos}/${lesson.preparation_todos.length}` },
+  ]
+
+  return (
+    <section className="bg-white rounded-3xl p-6 shadow-[0px_18px_36px_rgba(11,28,48,0.08)] border border-[#e8eeff]">
+      <div className="flex items-start gap-4">
+        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white flex items-center justify-center text-xl font-bold shrink-0 shadow-[0px_4px_16px_rgba(42,20,180,0.25)]">
+          {lesson.lesson_number}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]/70 mb-0.5">
+            Les {lesson.lesson_number}
+          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-[#0b1c30] leading-tight">{lesson.title}</h1>
+          <div className="flex items-center gap-1.5 mt-2">
+            <Calendar className="w-3.5 h-3.5 text-[#5c5378]/50" />
+            {lesson.planned_date ? (
+              <span className="text-sm font-semibold text-[#464554]">{formatPlannedDate(lesson.planned_date)}</span>
+            ) : (
+              <span className="text-sm font-medium text-[#5c5378]/50 italic">Nog niet gepland</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="bg-[#f8f9ff] rounded-xl border border-[#e8eeff] px-4 py-3"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5c5378]/70">{stat.label}</p>
+            <p className="text-sm font-semibold text-[#0b1c30] mt-1">{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {pendingTodos > 0 && (
+        <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5 flex items-center gap-2">
+          <Circle className="w-4 h-4 text-amber-500 shrink-0" />
+          <p className="text-sm font-medium text-amber-800">
+            {pendingTodos} voorbereidingstaak{pendingTodos !== 1 ? "en" : ""} nog te doen
+          </p>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function LessonTabNav({
+  activeTab,
+  onChange,
+  lesson,
+}: {
+  activeTab: LessonTabId
+  onChange: (tab: LessonTabId) => void
+  lesson: LessonPlanResponse
+}) {
+  const pendingTodos = lesson.preparation_todos.filter((t) => t.status === "pending").length
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    const currentIndex = LESSON_TABS.findIndex((tab) => tab.id === activeTab)
+    if (currentIndex < 0) return
+
+    let nextIndex = currentIndex
+    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % LESSON_TABS.length
+    if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + LESSON_TABS.length) % LESSON_TABS.length
+    if (event.key === "Home") nextIndex = 0
+    if (event.key === "End") nextIndex = LESSON_TABS.length - 1
+
+    if (nextIndex === currentIndex) return
+    event.preventDefault()
+    const nextTab = LESSON_TABS[nextIndex]
+    onChange(nextTab.id)
+    window.setTimeout(() => document.getElementById(`lesson-tab-${nextTab.id}`)?.focus(), 0)
+  }
+
+  return (
+    <div className="sticky top-[57px] z-10 bg-[#f8f9ff]/90 backdrop-blur-sm border-b border-[#e8eeff]">
+      <div
+        role="tablist"
+        aria-label="Les tabs"
+        onKeyDown={handleKeyDown}
+        className="px-8 py-2 max-w-5xl flex gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]"
+      >
+        {LESSON_TABS.map((tab) => {
+          const isActive = activeTab === tab.id
+          const showBadge = tab.id === "taken" && pendingTodos > 0
+          return (
+            <button
+              key={tab.id}
+              id={`lesson-tab-${tab.id}`}
+              role="tab"
+              type="button"
+              aria-selected={isActive}
+              aria-controls={`lesson-panel-${tab.id}`}
+              tabIndex={isActive ? 0 : -1}
+              onClick={() => onChange(tab.id)}
+              className={[
+                "shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 whitespace-nowrap flex items-center gap-1.5",
+                isActive
+                  ? "bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_2px_8px_rgba(42,20,180,0.2)]"
+                  : "text-[#5c5378] hover:text-[#0b1c30] hover:bg-[#eff4ff]",
+              ].join(" ")}
+            >
+              {tab.label}
+              {showBadge && (
+                <span className={`inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold ${isActive ? "bg-white/20" : "bg-amber-100 text-amber-700"}`}>
+                  {pendingTodos}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function TabPanel({
+  id,
+  activeTab,
+  children,
+}: {
+  id: LessonTabId
+  activeTab: LessonTabId
+  children: React.ReactNode
+}) {
+  return (
+    <section
+      id={`lesson-panel-${id}`}
+      role="tabpanel"
+      aria-labelledby={`lesson-tab-${id}`}
+      hidden={activeTab !== id}
+      className={activeTab === id ? "space-y-5" : "hidden"}
+    >
+      {children}
+    </section>
+  )
+}
+
+function OverviewTab({ lesson, sourceContext }: { lesson: LessonPlanResponse; sourceContext: SourceContext }) {
+  const paragraphsById = new Map((sourceContext.selectedParagraphs ?? []).map((p) => [p.id, p.title]))
+
+  return (
+    <div className="space-y-5">
+      <section className="bg-white rounded-2xl p-6 shadow-[0px_10px_24px_rgba(11,28,48,0.07)] border border-[#e8eeff]">
+        <div className="mb-4">
+          <SectionLabel>Leerdoelen</SectionLabel>
+        </div>
+        <ul className="space-y-2.5">
+          {lesson.learning_objectives.map((obj, i) => (
+            <li key={i} className="flex items-start gap-2.5 text-sm text-[#464554] font-medium">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+              <span>{obj}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {lesson.covered_paragraph_ids.length > 0 && (
+        <section className="bg-white rounded-2xl p-6 shadow-[0px_10px_24px_rgba(11,28,48,0.07)] border border-[#e8eeff]">
+          <div className="mb-4">
+            <SectionLabel>Behandelde paragrafen</SectionLabel>
+          </div>
+          <ul className="space-y-2">
+            {lesson.covered_paragraph_ids.map((id) => (
+              <li key={id} className="rounded-xl border border-[#dce7ff] bg-[#f8fbff] px-3.5 py-2.5 text-sm text-[#394055]">
+                {paragraphsById.get(id) ?? id}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
   )
 }
 
@@ -130,133 +359,21 @@ function ActivityTypeBadge({ type }: { type: string }) {
   )
 }
 
-function formatPlannedDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split("-").map(Number)
-  return new Date(year, month - 1, day).toLocaleDateString("nl-NL", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  })
-}
-
-function TodoCard({ todo }: { todo: LessonPreparationTodoResponse }) {
-  const fetcher = useFetcher()
-
-  const isSubmitting = fetcher.state !== "idle"
-  const optimisticStatus = isSubmitting
-    ? (fetcher.formData?.get("status") as "pending" | "done" | null ?? todo.status)
-    : todo.status
-
-  const isDone = optimisticStatus === "done"
-  const nextStatus = isDone ? "pending" : "done"
-
+function TimeschemaTab({ lesson }: { lesson: LessonPlanResponse }) {
   return (
-    <div className={`bg-white rounded-2xl p-4 shadow-[0px_4px_16px_rgba(11,28,48,0.06)] transition-opacity duration-150 ${isDone ? "opacity-60" : ""}`}>
-      <div className="flex items-start gap-3">
-        <fetcher.Form method="post" className="shrink-0 mt-0.5">
-          <input type="hidden" name="intent" value="toggle-todo" />
-          <input type="hidden" name="todoId" value={todo.id} />
-          <input type="hidden" name="status" value={nextStatus} />
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-5 h-5 rounded-full flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2a14b4]/30 disabled:cursor-wait"
-            aria-label={isDone ? "Markeer als te doen" : "Markeer als gedaan"}
-          >
-            {isDone ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-            ) : (
-              <Circle className="w-5 h-5 text-[#5c5378]/30 hover:text-[#2a14b4]/60 transition-colors" />
-            )}
-          </button>
-        </fetcher.Form>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-3">
-            <p className={`font-semibold text-sm leading-snug ${isDone ? "line-through text-[#5c5378]/50" : "text-[#0b1c30]"}`}>
-              {todo.title}
-            </p>
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.1em] shrink-0 ${
-                isDone
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "bg-[#ffdf9f]/60 text-[#4c3700]"
-              }`}
-            >
-              {isDone ? "Gedaan" : "Te doen"}
-            </span>
-          </div>
-
-          <p className="mt-1.5 text-sm text-[#464554] leading-6">{todo.description}</p>
-
-          {todo.why && (
-            <p className="mt-2 text-xs text-[#5c5378]/70 font-medium">
-              <span className="font-semibold text-[#5c5378]">Waarom:</span> {todo.why}
-            </p>
-          )}
-
-          {todo.due_date && (
-            <p className="mt-1.5 text-xs text-[#5c5378]/70 font-medium flex items-center gap-1">
-              <Calendar className="w-3 h-3 shrink-0" />
-              <span className="font-semibold text-[#5c5378]">Deadline:</span> {formatPlannedDate(todo.due_date)}
-            </p>
-          )}
+    <div className="space-y-5">
+      <section className="bg-white rounded-2xl shadow-[0px_10px_24px_rgba(11,28,48,0.07)] border border-[#e8eeff] overflow-hidden">
+        <div className="px-6 pt-5 pb-4">
+          <SectionLabel>Tijdschema</SectionLabel>
         </div>
-      </div>
-    </div>
-  )
-}
-
-function LessonDetail({ lesson, sourceContext }: { lesson: LessonPlanResponse; sourceContext: SourceContext }) {
-  const paragraphsById = new Map((sourceContext.selectedParagraphs ?? []).map((p) => [p.id, p.title]))
-
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white flex items-center justify-center text-lg font-bold shrink-0 shadow-[0px_4px_16px_rgba(42,20,180,0.25)]">
-          {lesson.lesson_number}
-        </div>
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]/70 mb-0.5">
-            Les {lesson.lesson_number}
-          </p>
-          <h1 className="text-3xl font-bold tracking-tight text-[#0b1c30]">{lesson.title}</h1>
-          <div className="flex items-center gap-1.5 mt-1.5">
-            <Calendar className="w-3.5 h-3.5 text-[#5c5378]/50" />
-            {lesson.planned_date ? (
-              <span className="text-sm font-semibold text-[#464554]">{formatPlannedDate(lesson.planned_date)}</span>
-            ) : (
-              <span className="text-sm font-medium text-[#5c5378]/50 italic">Nog niet gepland</span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Learning objectives */}
-      <section className="space-y-3">
-        <SectionLabel>Leerdoelen</SectionLabel>
-        <ul className="space-y-2">
-          {lesson.learning_objectives.map((obj, i) => (
-            <li key={i} className="flex items-start gap-2.5 text-sm text-[#464554] font-medium">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-              {obj}
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {/* Time sections */}
-      <section className="space-y-3">
-        <SectionLabel>Tijdschema</SectionLabel>
-        <div className="overflow-x-auto rounded-2xl shadow-[0px_8px_24px_rgba(11,28,48,0.07)]">
+        <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] text-sm">
             <thead>
               <tr className="bg-[#eff4ff]">
                 {["Tijd", "Activiteit", "Beschrijving", "Type"].map((h, i, arr) => (
                   <th
                     key={h}
-                    className={`px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5c5378] ${i === 0 ? "rounded-tl-2xl" : ""} ${i === arr.length - 1 ? "rounded-tr-2xl" : ""}`}
+                    className={`px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]`}
                   >
                     {h}
                   </th>
@@ -267,7 +384,7 @@ function LessonDetail({ lesson, sourceContext }: { lesson: LessonPlanResponse; s
               {lesson.time_sections.map((section, i) => (
                 <tr
                   key={i}
-                  className={`border-t border-[#eff4ff] hover:bg-[#f8f9ff] transition-colors ${i === lesson.time_sections.length - 1 ? "last:rounded-b-2xl" : ""}`}
+                  className="border-t border-[#eff4ff] hover:bg-[#f8f9ff] transition-colors"
                 >
                   <td className="px-5 py-4 whitespace-nowrap">
                     <span className="font-bold text-[#0b1c30] tabular-nums">{section.start_min}–{section.end_min}</span>
@@ -284,62 +401,59 @@ function LessonDetail({ lesson, sourceContext }: { lesson: LessonPlanResponse; s
           </table>
         </div>
       </section>
+    </div>
+  )
+}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Materials */}
-        <section className="space-y-3">
-          <SectionLabel>Benodigdheden</SectionLabel>
-          <ul className="space-y-1.5">
+function NotesTab({ lesson }: { lesson: LessonPlanResponse }) {
+  return (
+    <div className="space-y-5">
+      <section className="bg-white rounded-2xl p-6 shadow-[0px_10px_24px_rgba(11,28,48,0.07)] border border-[#e8eeff]">
+        <div className="mb-4">
+          <SectionLabel>Aantekeningen voor de docent</SectionLabel>
+        </div>
+        <div className="bg-[#ffdf9f]/40 rounded-xl p-4 border-l-4 border-[#f9bd22]">
+          <p className="text-sm leading-6 text-[#4c3700] font-medium whitespace-pre-wrap">{lesson.teacher_notes}</p>
+        </div>
+      </section>
+
+      {lesson.required_materials.length > 0 && (
+        <section className="bg-white rounded-2xl p-6 shadow-[0px_10px_24px_rgba(11,28,48,0.07)] border border-[#e8eeff]">
+          <div className="mb-4">
+            <SectionLabel>Benodigdheden</SectionLabel>
+          </div>
+          <ul className="space-y-2">
             {lesson.required_materials.map((mat, i) => (
-              <li key={i} className="text-sm text-[#464554] font-medium flex items-center gap-2">
+              <li key={i} className="flex items-center gap-2.5 text-sm text-[#464554] font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#5c5378]/40 shrink-0" />
                 {mat}
               </li>
             ))}
           </ul>
         </section>
+      )}
+    </div>
+  )
+}
 
-        {/* Covered paragraphs */}
-        <section className="space-y-3">
-          <SectionLabel>Behandelde paragrafen</SectionLabel>
-          <ul className="space-y-1.5">
-            {lesson.covered_paragraph_ids.map((id) => (
-              <li key={id} className="text-sm text-[#464554] font-medium flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#ab8ffe] shrink-0" />
-                {paragraphsById.get(id) ?? id}
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-
-      {/* Teacher notes */}
-      <section className="space-y-3">
-        <SectionLabel>Aantekeningen voor de docent</SectionLabel>
-        <div className="bg-[#ffdf9f]/40 rounded-xl p-4 border-l-4 border-[#f9bd22]">
-          <p className="text-sm leading-6 text-[#4c3700] font-medium whitespace-pre-wrap">{lesson.teacher_notes}</p>
+function TakenTab({ lesson }: { lesson: LessonPlanResponse }) {
+  if (lesson.preparation_todos.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-[0px_10px_24px_rgba(11,28,48,0.07)] border border-[#e8eeff]">
+        <div className="w-12 h-12 rounded-full bg-[#eff4ff] flex items-center justify-center mb-3">
+          <CheckCircle2 className="w-6 h-6 text-[#5c5378]/40" />
         </div>
-      </section>
+        <p className="text-sm font-semibold text-[#5c5378]">Geen voorbereidingstaken</p>
+        <p className="text-xs text-[#5c5378]/60 mt-0.5">Er zijn nog geen taken toegevoegd voor deze les.</p>
+      </div>
+    )
+  }
 
-      {/* Preparation todos */}
-      <section className="space-y-3">
-        <SectionLabel>Voorbereidingstaken</SectionLabel>
-        {lesson.preparation_todos.length === 0 ? (
-          <div className="bg-white rounded-2xl p-6 flex flex-col items-center text-center shadow-[0px_8px_24px_rgba(11,28,48,0.05)]">
-            <div className="w-10 h-10 rounded-full bg-[#eff4ff] flex items-center justify-center mb-3">
-              <CheckCircle2 className="w-5 h-5 text-[#5c5378]/40" />
-            </div>
-            <p className="text-sm font-semibold text-[#5c5378]">Geen voorbereidingstaken</p>
-            <p className="text-xs text-[#5c5378]/60 mt-0.5">Er zijn nog geen taken toegevoegd voor deze les.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {lesson.preparation_todos.map((todo) => (
-              <TodoCard key={todo.id} todo={todo} />
-            ))}
-          </div>
-        )}
-      </section>
+  return (
+    <div className="space-y-3">
+      {lesson.preparation_todos.map((todo) => (
+        <TodoCard key={todo.id} todo={todo} />
+      ))}
     </div>
   )
 }

@@ -13,6 +13,7 @@ export type FeedbackMessageResponse = components["schemas"]["FeedbackMessageResp
 export type LessonPlanResponse = components["schemas"]["LessonPlanResponse"]
 export type LessonPreparationTodoResponse = components["schemas"]["LessonPreparationTodoResponse"]
 export type LessonPreparationStatus = components["schemas"]["LessonPreparationStatus"]
+export type ClassSupportChallenge = components["schemas"]["ClassSupportChallenge"]
 export type LesplanOverviewResponse = components["schemas"]["LesplanOverviewResponse"]
 export type LesplanResponse = components["schemas"]["LesplanResponse"]
 export type CreateLesplanRequest = components["schemas"]["CreateLesplanRequest"]
@@ -287,6 +288,30 @@ export async function getClass(token: string | null, classId: string): Promise<C
     return res.json()
   } catch {
     return null
+  }
+}
+
+export async function updateClass(
+  classId: string,
+  data: Partial<Omit<Class, "id" | "created_at" | "updated_at">>,
+  token: string | null
+): Promise<Class> {
+  return requestJson<Class>(`${API_URL}/classes/${classId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeader(token) },
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteClass(classId: string, token: string | null): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_URL}/classes/${classId}`, {
+      method: "DELETE",
+      headers: authHeader(token),
+    })
+    return res.ok || res.status === 204
+  } catch {
+    return false
   }
 }
 

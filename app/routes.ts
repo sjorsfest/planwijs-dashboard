@@ -16,6 +16,7 @@ export default [
     route("todos", "routes/app.todo.tsx"),
     route("calendar", "routes/app.calendar.tsx"),
     route("plans", "routes/app.plans.tsx"),
+    route("classes", "routes/app.classes.tsx"),
     route("plans/new", "routes/app.plans.new.tsx"),
     route("lesplan/new", "routes/app.lesplan.new.tsx"),
     route("lesplan/:requestId", "routes/app.lesplan.$requestId.tsx"),

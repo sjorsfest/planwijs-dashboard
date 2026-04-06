@@ -76,49 +76,49 @@ export function PlanSummary({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-      className="max-w-lg w-full"
+      className="max-w-xl w-full"
     >
       <motion.div
         initial={{ opacity: 0, x: -6 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3, delay: 0.05 }}
-        className="mb-6"
+        className="mb-7"
       >
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#464554]/50 mb-0.5">Overzicht</p>
-        <h1 className="text-3xl font-bold text-[#0b1c30]">Controleer je lesplan</h1>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-[#464554]/50 mb-1">Overzicht</p>
+        <h1 className="text-4xl font-bold text-[#0b1c30]">Controleer je lesplan</h1>
       </motion.div>
 
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.1 }}
-        className="bg-white rounded-2xl mb-3 flex gap-4 p-4 items-center shadow-[0px_24px_40px_rgba(11,28,48,0.07)]"
+        className="bg-white rounded-2xl mb-4 flex gap-4 p-5 items-center shadow-[0px_24px_40px_rgba(11,28,48,0.07)]"
       >
         <motion.div
           initial={{ scale: 0.82, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.38, delay: 0.16, ease: [0.34, 1.4, 0.64, 1] }}
-          className="relative flex-shrink-0 w-11"
-          style={{ height: "60px" }}
+          className="relative flex-shrink-0 w-12"
+          style={{ height: "66px" }}
         >
           {selectedBook.cover_url ? (
             <img
               src={selectedBook.cover_url}
               alt={selectedBook.title}
-              className="w-11 object-cover rounded-lg shadow-[0px_8px_20px_rgba(11,28,48,0.15)]"
-              style={{ height: "60px" }}
+              className="w-12 object-cover rounded-lg shadow-[0px_8px_20px_rgba(11,28,48,0.15)]"
+              style={{ height: "66px" }}
             />
           ) : (
-            <div className="w-11 bg-[#eff4ff] rounded-lg flex items-center justify-center" style={{ height: "60px" }}>
-              <BookOpen className="w-4 h-4 text-[#5c5378]" />
+            <div className="w-12 bg-[#eff4ff] rounded-lg flex items-center justify-center" style={{ height: "66px" }}>
+              <BookOpen className="w-5 h-5 text-[#5c5378]" />
             </div>
           )}
         </motion.div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-base text-[#0b1c30] leading-snug">{selectedBook.title}</p>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            <SubjectBadge subjectName={selectedSubject.name} variant="outline" className="text-[10px] py-0.5" />
-            {selectedBook.edition ? <span className="text-xs text-[#464554]">{selectedBook.edition}</span> : null}
+          <p className="font-semibold text-lg text-[#0b1c30] leading-snug">{selectedBook.title}</p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <SubjectBadge subjectName={selectedSubject.name} variant="outline" className="text-[11px] py-1" />
+            {selectedBook.edition ? <span className="text-sm text-[#464554]">{selectedBook.edition}</span> : null}
           </div>
         </div>
       </motion.div>
@@ -127,25 +127,25 @@ export function PlanSummary({
         variants={stagger}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 gap-3 mb-3"
+        className="grid grid-cols-2 gap-3.5 mb-4"
       >
         <StatBlock label="Klas" variants={fadeUp}>
-          <p className="text-lg font-bold text-[#0b1c30] leading-tight">{selectedLevel}</p>
-          <p className="text-xs text-[#464554] mt-0.5">{selectedYear} · {classSize} leerlingen</p>
+          <p className="text-xl font-bold text-[#0b1c30] leading-tight">{selectedLevel}</p>
+          <p className="text-sm text-[#464554] mt-1">{selectedYear} · {classSize} leerlingen</p>
         </StatBlock>
 
         <StatBlock label="Lessen" variants={fadeUp}>
-          <p className="text-lg font-bold text-[#0b1c30] leading-tight">{lessonCount}×</p>
-          <p className="text-xs text-[#464554] mt-0.5">{lessonDuration} min per les</p>
+          <p className="text-xl font-bold text-[#0b1c30] leading-tight">{lessonCount}×</p>
+          <p className="text-sm text-[#464554] mt-1">{lessonDuration} min per les</p>
         </StatBlock>
 
         <StatBlock label="Methode" variants={fadeUp}>
-          <p className="text-sm font-semibold text-[#0b1c30] leading-snug line-clamp-2">{selectedMethod.title}</p>
+          <p className="text-base font-semibold text-[#0b1c30] leading-snug line-clamp-2">{selectedMethod.title}</p>
         </StatBlock>
 
         <StatBlock label="Leerniveau" variants={fadeUp}>
-          <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full", diff.bg, diff.text)}>
-            <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", diff.dot)} />
+          <span className={cn("inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold rounded-full", diff.bg, diff.text)}>
+            <span className={cn("w-2 h-2 rounded-full flex-shrink-0", diff.dot)} />
             {classDifficulty}
           </span>
         </StatBlock>
@@ -157,9 +157,9 @@ export function PlanSummary({
         transition={{ duration: 0.3, delay: 0.45 }}
         className="bg-white rounded-2xl shadow-[0px_24px_40px_rgba(11,28,48,0.07)] overflow-hidden"
       >
-        <div className="flex items-center justify-between px-4 py-3 bg-[#eff4ff]">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#464554]/60">Paragrafen</p>
-          <span className="text-[11px] font-semibold bg-[#2a14b4]/10 text-[#2a14b4] px-2.5 py-0.5 rounded-full">
+        <div className="flex items-center justify-between px-5 py-3.5 bg-[#eff4ff]">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#464554]/60">Paragrafen</p>
+          <span className="text-xs font-semibold bg-[#2a14b4]/10 text-[#2a14b4] px-3 py-1 rounded-full">
             {selectedParagraphIds.length} geselecteerd
           </span>
         </div>
@@ -171,17 +171,17 @@ export function PlanSummary({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.48 + index * 0.05 }}
-              className="px-4 py-3 flex items-start justify-between gap-4"
+              className="px-5 py-3.5 flex items-start justify-between gap-4"
             >
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-[#0b1c30]">
+                <p className="text-sm font-semibold text-[#0b1c30]">
                   {chapter.index}. {chapter.title}
                 </p>
-                <p className="text-[10px] text-[#464554]/60 mt-1 leading-relaxed">
+                <p className="text-xs text-[#464554]/60 mt-1.5 leading-relaxed">
                   {selected.map((paragraph) => `${chapter.index}.${paragraph.index} ${paragraph.title}`).join("  ·  ")}
                 </p>
               </div>
-              <span className="text-[10px] font-semibold text-[#464554]/40 flex-shrink-0 tabular-nums pt-0.5">
+              <span className="text-xs font-semibold text-[#464554]/40 flex-shrink-0 tabular-nums pt-0.5">
                 {selected.length}×
               </span>
             </motion.div>
@@ -193,13 +193,13 @@ export function PlanSummary({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.55, duration: 0.28 }}
-        className="mt-5"
+        className="mt-6"
       >
         <div className="flex items-center justify-between gap-3">
           <button
             onClick={onBack}
             disabled={submitting}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-[#464554] hover:text-[#0b1c30] bg-[#eff4ff] hover:bg-[#dce9ff] rounded-xl transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-3 text-base font-semibold text-[#464554] hover:text-[#0b1c30] bg-[#eff4ff] hover:bg-[#dce9ff] rounded-xl transition-colors disabled:opacity-50"
           >
             <ArrowLeft className="w-4 h-4" />
             Terug
@@ -208,24 +208,24 @@ export function PlanSummary({
           <button
             onClick={onConfirm}
             disabled={submitting}
-            className="relative flex items-center gap-2.5 bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white px-5 py-2.5 font-semibold text-sm rounded-xl hover:brightness-110 transition-all shadow-[0px_4px_16px_rgba(42,20,180,0.3)] disabled:opacity-70 disabled:shadow-none"
+            className="relative flex items-center gap-2.5 bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white px-6 py-3 font-semibold text-base rounded-xl hover:brightness-110 transition-all shadow-[0px_4px_16px_rgba(42,20,180,0.3)] disabled:opacity-70 disabled:shadow-none"
           >
             {submitting ? (
               <>
-                <LoaderCircle className="w-4 h-4 animate-spin" />
+                <LoaderCircle className="w-5 h-5 animate-spin" />
                 Lesplan genereren...
               </>
             ) : (
               <>
                 {submitLabel}
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-5 h-5" />
               </>
             )}
           </button>
         </div>
 
         {submitError ? (
-          <p className="mt-3 text-sm font-semibold text-[#ba1a1a]">
+          <p className="mt-3 text-base font-semibold text-[#ba1a1a]">
             {submitError}
           </p>
         ) : null}
@@ -244,8 +244,8 @@ function StatBlock({
   variants: Variants
 }) {
   return (
-    <motion.div variants={variants} className="bg-white rounded-2xl px-4 py-3 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#464554]/50 mb-1.5">{label}</p>
+    <motion.div variants={variants} className="bg-white rounded-2xl px-5 py-4 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-[#464554]/50 mb-2">{label}</p>
       {children}
     </motion.div>
   )

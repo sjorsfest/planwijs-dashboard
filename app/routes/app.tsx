@@ -4,6 +4,7 @@ import {
   CalendarDays,
   BookOpen,
   ListTodo,
+  Users,
   LogOut,
 } from "lucide-react"
 import { LesLabLogo } from "~/components/branding/leslab-logo"
@@ -13,6 +14,11 @@ const navItems = [
     to: "/dashboard",
     label: "Dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    to: "/classes",
+    label: "Klassen",
+    icon: Users,
   },
   {
     to: "/plans",

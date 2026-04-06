@@ -6,6 +6,11 @@ export type Paragraph = components["schemas"]["ParagraphResponse"]
 export type SchoolYear = components["schemas"]["SchoolYear"]
 export type Level = components["schemas"]["Level"]
 export type ClassDifficulty = components["schemas"]["ClassDifficulty"]
+export type ClassSupportChallenge = components["schemas"]["ClassSupportChallenge"]
+
+export const SUPPORT_CHALLENGE_OPTIONS: ClassSupportChallenge[] = [
+  "Meer ondersteuning", "Gebalanceerd", "Meer uitdaging"
+]
 
 export const SCHOOL_YEARS: SchoolYear[] = ["1e jaar", "2e jaar", "3e jaar", "4e jaar", "5e jaar", "6e jaar"]
 export const LEVELS: Level[] = ["Vmbo-b", "Vmbo-k", "Vmbo-g", "Vmbo-t", "Havo", "Vwo", "Gymnasium"]

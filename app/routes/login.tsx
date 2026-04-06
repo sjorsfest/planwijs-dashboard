@@ -51,10 +51,10 @@ export default function LoginPage() {
         {/* Feature list */}
         <div className="p-6 flex flex-col gap-3 flex-shrink-0">
           {[
-            { icon: LayoutDashboard, label: "Dashboard" },
-            { icon: BookOpen, label: "Lessen" },
-            { icon: ListTodo, label: "To Do's" },
-            { icon: CalendarDays, label: "Kalender" },
+            { icon: LayoutDashboard, label: "Alles op één plek" },
+            { icon: BookOpen, label: "Lesplannen? AI doet het zware werk" },
+            { icon: ListTodo, label: "Nooit meer iets vergeten" },
+            { icon: CalendarDays, label: "Je week uitgewerkt in een handomdraai" },
           ].map(({ icon: Icon, label }, i) => (
             <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-sm">
               <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
@@ -86,7 +86,7 @@ export default function LoginPage() {
               Welkom<br />terug.
             </h2>
             <p className="text-sm text-[#464554] mb-10 leading-relaxed">
-              Log in om je lesrooster te bekijken en bij te houden.
+              Log in om te beginnen met het samenstellen van je lessen.
             </p>
 
             <Button

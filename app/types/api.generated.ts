@@ -404,6 +404,23 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ApprovalReadinessResponse */
+        ApprovalReadinessResponse: {
+            /**
+             * Ready For Approval
+             * @default false
+             */
+            ready_for_approval: boolean;
+            /**
+             * Rationale
+             * @default
+             */
+            rationale: string;
+            /** Checklist */
+            checklist?: string[];
+            /** Open Questions */
+            open_questions?: string[];
+        };
         /** Book */
         "Book-Input": {
             /** Id */
@@ -544,6 +561,18 @@ export interface components {
             size: number;
             /** @description Verkeerslichtmodel. Groen = goed hanteerbaar; Oranje = vraagt extra aandacht; Rood = uitdagend / intensieve begeleiding nodig. */
             difficulty?: components["schemas"]["ClassDifficulty"] | null;
+            /**
+             * Attention Span Minutes
+             * @description Geschatte maximale aandachtsspanne in minuten voordat leerlingen een activiteitswisseling nodig hebben.
+             */
+            attention_span_minutes?: number | null;
+            /** @description Meer ondersteuning = meer scaffolding en begeleiding; Gebalanceerd = standaard; Meer uitdaging = complexere taken en meer zelfstandigheid. */
+            support_challenge?: components["schemas"]["ClassSupportChallenge"] | null;
+            /**
+             * Class Notes
+             * @description Vrije notities van de docent over de klas (bijv. bijzonderheden, werkhouding, samenstelling).
+             */
+            class_notes?: string | null;
         };
         /**
          * ClassDifficulty
@@ -555,6 +584,12 @@ export interface components {
          * @enum {string}
          */
         ClassDifficulty: "Groen" | "Oranje" | "Rood";
+        /**
+         * ClassSupportChallenge
+         * @description Hoeveel ondersteuning of uitdaging de klas nodig heeft.
+         * @enum {string}
+         */
+        ClassSupportChallenge: "Meer ondersteuning" | "Gebalanceerd" | "Meer uitdaging";
         /** CreateLesplanRequest */
         CreateLesplanRequest: {
             /** User Id */
@@ -638,10 +673,34 @@ export interface components {
             /** Message */
             message: string;
         };
+        /** GoalCoverageItemResponse */
+        GoalCoverageItemResponse: {
+            /** Goal */
+            goal: string;
+            /** Lesson Numbers */
+            lesson_numbers?: number[];
+            /**
+             * Rationale
+             * @default
+             */
+            rationale: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** KnowledgeCoverageItemResponse */
+        KnowledgeCoverageItemResponse: {
+            /** Knowledge */
+            knowledge: string;
+            /** Lesson Numbers */
+            lesson_numbers?: number[];
+            /**
+             * Rationale
+             * @default
+             */
+            rationale: string;
         };
         /** LesplanOverviewResponse */
         LesplanOverviewResponse: {
@@ -649,6 +708,10 @@ export interface components {
             id: string;
             /** Title */
             title: string;
+            /** Series Summary */
+            series_summary: string;
+            /** Series Themes */
+            series_themes: string[];
             /** Learning Goals */
             learning_goals: string[];
             /** Key Knowledge */
@@ -659,6 +722,11 @@ export interface components {
             learning_progression: string;
             /** Lesson Outline */
             lesson_outline: components["schemas"]["LessonOutlineItemResponse"][];
+            /** Goal Coverage */
+            goal_coverage: components["schemas"]["GoalCoverageItemResponse"][];
+            /** Knowledge Coverage */
+            knowledge_coverage: components["schemas"]["KnowledgeCoverageItemResponse"][];
+            approval_readiness: components["schemas"]["ApprovalReadinessResponse"];
             /** Didactic Approach */
             didactic_approach: string;
             /** Lessons */
@@ -708,8 +776,34 @@ export interface components {
             subject_focus: string;
             /** Description */
             description: string;
+            /**
+             * Teaching Approach Hint
+             * @default
+             */
+            teaching_approach_hint: string;
             /** Builds On */
             builds_on: string;
+            /** Concept Tags */
+            concept_tags?: string[];
+            /**
+             * Lesson Intention
+             * @default
+             */
+            lesson_intention: string;
+            /**
+             * End Understanding
+             * @default
+             */
+            end_understanding: string;
+            /**
+             * Sequence Rationale
+             * @default
+             */
+            sequence_rationale: string;
+            /** Builds On Lessons */
+            builds_on_lessons?: number[];
+            /** Paragraph Indices */
+            paragraph_indices?: number[];
         };
         /** LessonPlanResponse */
         LessonPlanResponse: {

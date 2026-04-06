@@ -77,6 +77,11 @@ type LoaderData = {
 
 const PLAN_STATE_KEY = "planwijs_new_plan"
 
+function normalizeSubjectCategory(category: string | null | undefined): string {
+  const trimmed = category?.trim()
+  return trimmed && trimmed.length > 0 ? trimmed : "Overig"
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value)
 }
@@ -596,13 +601,16 @@ export default function NewLesplanPage() {
   useEffect(() => {
     if (subjects.length === 0) return
 
-    if (selectedSubject?.category && selectedCategory === null) {
-      setSelectedCategory(selectedSubject.category)
-      return
-    }
-
-    const categories = Array.from(new Set(subjects.map((subject) => subject.category?.trim() || "Overig")))
+    const categories = Array.from(new Set(subjects.map((subject) => normalizeSubjectCategory(subject.category))))
       .sort((a, b) => a.localeCompare(b, "nl"))
+
+    if (selectedSubject) {
+      const subjectCategory = normalizeSubjectCategory(selectedSubject.category)
+      if (categories.includes(subjectCategory) && selectedCategory !== subjectCategory) {
+        setSelectedCategory(subjectCategory)
+        return
+      }
+    }
 
     if (!selectedCategory || !categories.includes(selectedCategory)) {
       setSelectedCategory(categories[0] ?? null)
@@ -797,7 +805,7 @@ export default function NewLesplanPage() {
   function handleCategorySelect(category: string) {
     setSelectedCategory(category)
 
-    if ((selectedSubject?.category ?? "Overig") === category) {
+    if (normalizeSubjectCategory(selectedSubject?.category) === category) {
       return
     }
 
@@ -813,7 +821,7 @@ export default function NewLesplanPage() {
   }
 
   function handleSubjectSelect(subject: Subject) {
-    setSelectedCategory(subject.category ?? "Overig")
+    setSelectedCategory(normalizeSubjectCategory(subject.category))
     setSelectedSubject(subject)
     setSelectedMethod(null)
     setSelectedBook(null)
