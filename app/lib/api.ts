@@ -259,7 +259,7 @@ export async function getMethod(token: string | null, methodId: string): Promise
 }
 
 export async function createClass(
-  data: Omit<Class, "id" | "created_at" | "updated_at">,
+  data: Omit<Class, "id" | "created_at" | "updated_at" | "user_id">,
   token: string | null
 ): Promise<Class> {
   return requestJson<Class>(`${API_URL}/classes/`, {
@@ -269,15 +269,9 @@ export async function createClass(
   })
 }
 
-export async function getClasses(
-  token: string | null,
-  filters?: { userId?: string }
-): Promise<Class[]> {
+export async function getClasses(token: string | null): Promise<Class[]> {
   try {
-    const url = new URL(`${API_URL}/classes/`)
-    if (filters?.userId) url.searchParams.set("user_id", filters.userId)
-
-    const res = await fetch(url.toString(), {
+    const res = await fetch(`${API_URL}/classes/`, {
       headers: { "Content-Type": "application/json", ...authHeader(token) },
     })
     if (!res.ok) return []
@@ -323,7 +317,7 @@ export async function deleteClass(classId: string, token: string | null): Promis
   }
 }
 
-export async function createLesplan(data: CreateLesplanRequest, token: string | null): Promise<LesplanResponse> {
+export async function createLesplan(data: Omit<CreateLesplanRequest, "user_id">, token: string | null): Promise<LesplanResponse> {
   return requestJson<LesplanResponse>(`${API_URL}/lesplan/`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeader(token) },
@@ -343,11 +337,9 @@ export async function getLesplan(token: string | null, requestId: string): Promi
   }
 }
 
-export async function listLespannen(token: string | null, userId: string): Promise<LesplanResponse[]> {
+export async function listLespannen(token: string | null): Promise<LesplanResponse[]> {
   try {
-    const url = new URL(`${API_URL}/lesplan/`)
-    url.searchParams.set("user_id", userId)
-    const res = await fetch(url.toString(), {
+    const res = await fetch(`${API_URL}/lesplan/`, {
       headers: { "Content-Type": "application/json", ...authHeader(token) },
     })
     if (!res.ok) return []
@@ -412,13 +404,11 @@ export type CalendarResponse = {
 
 export async function getCalendarItems(
   token: string | null,
-  userId: string,
   startDate: string,
   endDate: string
 ): Promise<CalendarResponse> {
   try {
     const url = new URL(`${API_URL}/calendar/`)
-    url.searchParams.set("user_id", userId)
     url.searchParams.set("start_date", startDate)
     url.searchParams.set("end_date", endDate)
 

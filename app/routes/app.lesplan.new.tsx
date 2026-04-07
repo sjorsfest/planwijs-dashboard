@@ -267,11 +267,11 @@ function getLatestLesplanByClassId(lespannen: LesplanResponse[]): Map<string, Le
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { token, userId } = await requireAuthContext(request)
+  const { token } = await requireAuthContext(request)
 
   const [classes, lespannen] = await Promise.all([
-    getClasses(token, { userId }),
-    listLespannen(token, userId),
+    getClasses(token),
+    listLespannen(token),
   ])
 
   const latestByClassId = getLatestLesplanByClassId(lespannen)
@@ -305,7 +305,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const { token, userId } = await requireAuthContext(request)
+  const { token } = await requireAuthContext(request)
   const formData = await request.formData()
   const rawPayload = formData.get("payload")
 
@@ -331,7 +331,6 @@ export async function action({ request }: Route.ActionArgs) {
     if (!classId) {
       const classroom = await createClass(
         {
-          user_id: userId,
           subject: payload.selectedSubject.name as Method["subject"],
           level: payload.selectedLevel,
           school_year: payload.selectedYear,
@@ -350,7 +349,6 @@ export async function action({ request }: Route.ActionArgs) {
 
     const lesplan = await createLesplan(
       {
-        user_id: userId,
         class_id: classId,
         book_id: payload.selectedBookId,
         selected_paragraph_ids: payload.selectedParagraphIds,

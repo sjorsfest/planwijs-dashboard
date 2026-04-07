@@ -36,14 +36,14 @@ import type { Route } from "./+types/app.calendar"
 // ─── Loader ────────────────────────────────────────────────────────────────
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { token, userId } = await requireAuthContext(request)
+  const { token } = await requireAuthContext(request)
 
   // Fetch a wide range: 3 months back to 3 months forward
   const now = new Date()
   const rangeStart = format(startOfMonth(subMonths(now, 3)), "yyyy-MM-dd")
   const rangeEnd = format(endOfMonth(addMonths(now, 3)), "yyyy-MM-dd")
 
-  const calendar = await getCalendarItems(token, userId, rangeStart, rangeEnd)
+  const calendar = await getCalendarItems(token, rangeStart, rangeEnd)
 
   return { calendarItems: calendar.items }
 }

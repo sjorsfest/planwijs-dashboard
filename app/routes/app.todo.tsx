@@ -40,8 +40,8 @@ export function meta() {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { token, userId } = await requireAuthContext(request)
-  const lespannen = await listLespannen(token, userId)
+  const { token } = await requireAuthContext(request)
+  const lespannen = await listLespannen(token)
 
   const todoItems = lespannen
     .flatMap((lesplan) => {

@@ -29,16 +29,16 @@ export function meta() {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { token, userId } = await requireAuthContext(request)
+  const { token } = await requireAuthContext(request)
 
   const now = new Date()
   const startDate = format(now, "yyyy-MM-dd")
   const endDate = format(addDays(now, 14), "yyyy-MM-dd")
 
   const [lespannen, calendar, classes] = await Promise.all([
-    listLespannen(token, userId),
-    getCalendarItems(token, userId, startDate, endDate),
-    getClasses(token, { userId }),
+    listLespannen(token),
+    getCalendarItems(token, startDate, endDate),
+    getClasses(token),
   ])
 
   // Extract all todos from lesson plans
