@@ -8,6 +8,13 @@ import {
   LogOut,
 } from "lucide-react"
 import { LesLabLogo } from "~/components/branding/leslab-logo"
+import { requireAuthContext } from "~/lib/auth.server"
+import type { Route } from "./+types/app"
+
+export async function loader({ request }: Route.LoaderArgs) {
+  await requireAuthContext(request)
+  return null
+}
 
 const navItems = [
   {

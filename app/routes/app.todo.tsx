@@ -40,7 +40,7 @@ export function meta() {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { token, userId } = requireAuthContext(request)
+  const { token, userId } = await requireAuthContext(request)
   const lespannen = await listLespannen(token, userId)
 
   const todoItems = lespannen
@@ -66,7 +66,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const { token } = requireAuthContext(request)
+  const { token } = await requireAuthContext(request)
   const formData = await request.formData()
   const intent = formData.get("intent")
 

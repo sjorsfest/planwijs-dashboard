@@ -12,7 +12,7 @@ function buildProxyHeaders(source: Headers): Headers {
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-  const { token } = requireAuthContext(request)
+  const { token } = await requireAuthContext(request)
 
   const upstream = await fetch(`${getApiUrl()}/lesplan/${params.requestId}/stream-overview`, {
     headers: {

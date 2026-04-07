@@ -312,40 +312,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/lesplan/{request_id}/stream-overview": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Stream Overview Endpoint */
-        get: operations["stream_overview_endpoint_lesplan__request_id__stream_overview_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/lesplan/{request_id}/stream-revision": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Stream Revision Endpoint */
-        get: operations["stream_revision_endpoint_lesplan__request_id__stream_revision_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/lesplan/{request_id}": {
         parameters: {
             query?: never;
@@ -766,24 +732,22 @@ export interface components {
              */
             planned_date: string;
         };
-        /** FeedbackMessageResponse */
-        FeedbackMessageResponse: {
-            /** Id */
-            id: string;
-            /** Role */
-            role: string;
-            /** Content */
-            content: string;
+        /** FeedbackItem */
+        FeedbackItem: {
+            /** Field Name */
+            field_name: string;
             /**
-             * Created At
-             * Format: date-time
+             * Specific Part
+             * @default
              */
-            created_at: string;
+            specific_part: string;
+            /** User Feedback */
+            user_feedback: string;
         };
         /** FeedbackRequest */
         FeedbackRequest: {
-            /** Message */
-            message: string;
+            /** Items */
+            items: components["schemas"]["FeedbackItem"][];
         };
         /** GoalCoverageItemResponse */
         GoalCoverageItemResponse: {
@@ -872,8 +836,6 @@ export interface components {
              */
             updated_at: string;
             overview: components["schemas"]["LesplanOverviewResponse"] | null;
-            /** Feedback Messages */
-            feedback_messages: components["schemas"]["FeedbackMessageResponse"][];
         };
         /**
          * LesplanStatus
@@ -2237,68 +2199,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LesplanResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    stream_overview_endpoint_lesplan__request_id__stream_overview_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                request_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    stream_revision_endpoint_lesplan__request_id__stream_revision_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                request_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

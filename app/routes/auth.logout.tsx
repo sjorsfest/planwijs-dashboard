@@ -1,11 +1,8 @@
-import { redirect } from "react-router"
+import type { Route } from "./+types/auth.logout"
+import { logout } from "~/lib/auth.server"
 
-export async function loader() {
-  return redirect("/login", {
-    headers: {
-      "Set-Cookie": "access_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
-    },
-  })
+export async function loader({ request }: Route.LoaderArgs) {
+  return logout(request)
 }
 
 export default function AuthLogout() {

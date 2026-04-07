@@ -71,6 +71,12 @@ export function TodoCard({ todo, context }: TodoCardProps) {
             {todo.title}
           </p>
           <div className="flex items-center gap-2 shrink-0">
+            {todo.due_date && !isDone && (
+              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-[#5c5378]/70 font-medium">
+                <Calendar className="w-3 h-3" />
+                Deadline: {formatPlannedDate(todo.due_date)}
+              </span>
+            )}
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.1em] ${
                 isDone ? "bg-emerald-50 text-emerald-700" : "bg-[#ffdf9f]/60 text-[#4c3700]"

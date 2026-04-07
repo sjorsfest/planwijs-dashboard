@@ -36,7 +36,7 @@ import type { Route } from "./+types/app.calendar"
 // ─── Loader ────────────────────────────────────────────────────────────────
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { token, userId } = requireAuthContext(request)
+  const { token, userId } = await requireAuthContext(request)
 
   // Fetch a wide range: 3 months back to 3 months forward
   const now = new Date()

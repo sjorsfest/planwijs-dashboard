@@ -43,13 +43,13 @@ export function meta() {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { token } = requireAuthContext(request)
+  const { token } = await requireAuthContext(request)
   const classes = await getClasses(token)
   return { classes }
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const { token } = requireAuthContext(request)
+  const { token } = await requireAuthContext(request)
   const formData = await request.formData()
   const intent = formData.get("_action")
 
@@ -94,7 +94,6 @@ const AI_IMPACT_ITEMS = [
   { field: "Klasgrootte", description: "Beïnvloedt suggesties voor groepswerk en activiteiten" },
   { field: "Klasdynamiek", description: "Hoeveelheid scaffolding — Rood = kleine stappen, Groen = standaard" },
   { field: "Aandachtsspanne", description: "Bepaalt het lestempo en wanneer activiteitswisselingen nodig zijn" },
-  { field: "Ondersteuning/uitdaging", description: "Past het uitdagingsniveau en de complexiteit aan" },
   { field: "Klasnotities", description: "Vrije context die de AI meeweegt bij het genereren" },
 ]
 
@@ -104,7 +103,6 @@ type FieldHintKey =
   | "size"
   | "attentionSpan"
   | "difficulty"
-  | "supportChallenge"
   | "classNotes"
 
 interface FieldHintContent {
@@ -136,15 +134,6 @@ const FIELD_HINTS: Record<FieldHintKey, FieldHintContent> = {
       "Groen: hanteerbaar; AI-output mag relaxter zijn, zonder sterke geforceerde vereenvoudiging of extra uitdaging.",
       "Oranje: duidelijke nudge naar meer begeleiding en extra checkmomenten.",
       "Rood: sterkste ondersteuningssignaal; fallback-hints worden expliciet stap-voor-stap en check-heavy.",
-    ],
-  },
-  supportChallenge: {
-    impact:
-      "Ondersteuning/uitdaging is een tweede schaal: dit stuurt vooral formulering en didactische richting (meer steun of meer diepgang), maar forceert minder de lesstructuur dan Klasdynamiek.",
-    options: [
-      "Meer ondersteuning: vooral toon en docentbegeleiding; geen sterke structurele fallback-wijziging.",
-      "Gebalanceerd: vooral contextregistratie; beperkte harde impact.",
-      "Meer uitdaging: nudge naar meer diepgang en zelfstandigheid, zonder structureel zwaardere lesontwerpen af te dwingen.",
     ],
   },
   classNotes: {
@@ -638,37 +627,6 @@ function EditForm({ cls, onSaved, onCancel }: EditFormProps) {
           ))}
         </div>
       </div>
-
-      {/* Support / Challenge */}
-      <div>
-        <FieldHintLabel
-          label="Ondersteuning / uitdaging"
-          hint={FIELD_HINTS.supportChallenge}
-        />
-        <div className="grid grid-cols-3 gap-2">
-          {SUPPORT_OPTIONS.map(({ value, description }) => (
-            <button
-              key={value}
-              onClick={() => setSupportChallenge(value)}
-              className={cn(
-                "rounded-xl px-3 py-2.5 text-left transition-all border",
-                supportChallenge === value
-                  ? "border-[#2a14b4] bg-[#2a14b4]/8 shadow-[0px_6px_16px_rgba(42,20,180,0.12)]"
-                  : "border-[#e6e8f3] bg-[#f8f9ff] hover:bg-[#eff4ff]"
-              )}
-            >
-              <span className={cn(
-                "text-xs font-semibold",
-                supportChallenge === value ? "text-[#2a14b4]" : "text-[#0b1c30]"
-              )}>
-                {value}
-              </span>
-              <p className="text-[11px] text-[#464554] mt-0.5">{description}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Class notes */}
       <label className="block">
         <FieldHintLabel

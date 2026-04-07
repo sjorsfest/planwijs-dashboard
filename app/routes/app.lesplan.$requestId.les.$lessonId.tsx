@@ -21,7 +21,7 @@ export function meta({ data: loaderData }: Route.MetaArgs) {
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-  const { token } = requireAuthContext(request)
+  const { token } = await requireAuthContext(request)
   const lesplan = await getLesplan(token, params.requestId)
 
   if (!lesplan) {
@@ -63,7 +63,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const { token } = requireAuthContext(request)
+  const { token } = await requireAuthContext(request)
   const formData = await request.formData()
   const intent = formData.get("intent")
 

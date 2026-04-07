@@ -267,7 +267,7 @@ function getLatestLesplanByClassId(lespannen: LesplanResponse[]): Map<string, Le
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { token, userId } = requireAuthContext(request)
+  const { token, userId } = await requireAuthContext(request)
 
   const [classes, lespannen] = await Promise.all([
     getClasses(token, { userId }),
@@ -305,7 +305,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const { token, userId } = requireAuthContext(request)
+  const { token, userId } = await requireAuthContext(request)
   const formData = await request.formData()
   const rawPayload = formData.get("payload")
 

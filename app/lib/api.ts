@@ -9,14 +9,22 @@ export type Paragraph = components["schemas"]["ParagraphResponse"]
 export type SchoolYear = components["schemas"]["SchoolYear"]
 export type Level = components["schemas"]["Level"]
 export type LesplanStatus = components["schemas"]["LesplanStatus"]
-export type FeedbackMessageResponse = components["schemas"]["FeedbackMessageResponse"]
+export type FeedbackMessageResponse = {
+  id: string
+  role: string
+  content: string
+  created_at: string
+}
 export type LessonPlanResponse = components["schemas"]["LessonPlanResponse"]
 export type LessonPreparationTodoResponse = components["schemas"]["LessonPreparationTodoResponse"]
 export type LessonPreparationStatus = components["schemas"]["LessonPreparationStatus"]
 export type ClassSupportChallenge = components["schemas"]["ClassSupportChallenge"]
 export type LesplanOverviewResponse = components["schemas"]["LesplanOverviewResponse"]
-export type LesplanResponse = components["schemas"]["LesplanResponse"]
+export type LesplanResponse = components["schemas"]["LesplanResponse"] & {
+  feedback_messages: FeedbackMessageResponse[]
+}
 export type CreateLesplanRequest = components["schemas"]["CreateLesplanRequest"]
+export type FeedbackItem = components["schemas"]["FeedbackItem"]
 export type FeedbackRequest = components["schemas"]["FeedbackRequest"]
 export type Subject = {
   id: string

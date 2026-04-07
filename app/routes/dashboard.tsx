@@ -39,21 +39,23 @@ import {
   DialogDescription,
   DialogFooter,
 } from "~/components/ui/dialog"
-import { getEvents, createEvent, deleteEvent, extractToken } from "~/lib/api"
+import { getEvents, createEvent, deleteEvent } from "~/lib/api"
+import { getAuthContext } from "~/lib/auth.server"
 import type { Event } from "~/lib/api"
 
 // ─── Loader ────────────────────────────────────────────────────────────────
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const token = extractToken(request.headers.get("Cookie") || "")
-  const events = await getEvents(token)
+  const auth = await getAuthContext(request)
+  const events = await getEvents(auth?.token ?? null)
   return { events }
 }
 
 // ─── Action ────────────────────────────────────────────────────────────────
 
 export async function action({ request }: ActionFunctionArgs) {
-  const token = extractToken(request.headers.get("Cookie") || "")
+  const auth = await getAuthContext(request)
+  const token = auth?.token ?? null
   const formData = await request.formData()
   const intent = formData.get("intent")
 
