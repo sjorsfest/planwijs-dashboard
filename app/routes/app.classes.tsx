@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useLoaderData, useFetcher, Link } from "react-router"
+import { data, useLoaderData, useFetcher, Link } from "react-router"
 import {
   Users,
   Pencil,
@@ -45,7 +45,7 @@ export function meta() {
 export async function loader({ request }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
   const classes = await getClasses(token)
-  return { classes }
+  return data({ classes }, { headers: { "Cache-Control": "private, max-age=10" } })
 }
 
 export async function action({ request }: Route.ActionArgs) {

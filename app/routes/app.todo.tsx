@@ -62,7 +62,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     })
     .sort(compareTodoItems)
 
-  return data({ todoItems })
+  return data({ todoItems }, { headers: { "Cache-Control": "private, max-age=10" } })
 }
 
 export async function action({ request }: Route.ActionArgs) {

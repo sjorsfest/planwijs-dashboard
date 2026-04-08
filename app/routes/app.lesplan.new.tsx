@@ -301,7 +301,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       return a.subject.localeCompare(b.subject, "nl")
     })
 
-  return data<LoaderData>({ existingClasses })
+  return data<LoaderData>({ existingClasses }, { headers: { "Cache-Control": "private, max-age=10" } })
 }
 
 export async function action({ request }: Route.ActionArgs) {

@@ -75,7 +75,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     selectedParagraphs: lesplan.selected_paragraph_ids.map((id) => paragraphsById.get(id) ?? { id, title: id }),
   })
 
-  return {
+  return data({
     requestId: lesplan.id,
     updatedAt: lesplan.updated_at,
     lesplan,
@@ -88,7 +88,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       lessonDurationMinutes: lesplan.lesson_duration_minutes,
     },
     sourceContext,
-  } satisfies LesplanWorkspaceLoaderData
+  } satisfies LesplanWorkspaceLoaderData, { headers: { "Cache-Control": "private, max-age=10" } })
 }
 
 export async function action({ request, params }: Route.ActionArgs) {

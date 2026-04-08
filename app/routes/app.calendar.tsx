@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useLoaderData, Link } from "react-router"
+import { data, useLoaderData, Link } from "react-router"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   ChevronLeft,
@@ -45,7 +45,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const calendar = await getCalendarItems(token, rangeStart, rangeEnd)
 
-  return { calendarItems: calendar.items }
+  return data({ calendarItems: calendar.items }, { headers: { "Cache-Control": "private, max-age=10" } })
 }
 
 // ─── Meta ──────────────────────────────────────────────────────────────────

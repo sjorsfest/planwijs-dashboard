@@ -59,7 +59,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     selectedParagraphs: lesplan.selected_paragraph_ids.map((id) => paragraphsById.get(id) ?? { id, title: id }),
   }
 
-  return data({ requestId: params.requestId, lesson, sourceContext })
+  return data({ requestId: params.requestId, lesson, sourceContext }, { headers: { "Cache-Control": "private, max-age=10" } })
 }
 
 export async function action({ request }: Route.ActionArgs) {

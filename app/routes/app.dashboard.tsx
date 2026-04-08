@@ -85,7 +85,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     recentPlans: lespannen
       .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
       .slice(0, 3),
-  })
+  }, { headers: { "Cache-Control": "private, max-age=10" } })
 }
 
 function formatDateShort(dateStr: string): string {

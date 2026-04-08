@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { BookOpen, Plus, ArrowRight, ChevronDown, ChevronRight } from "lucide-react"
-import { Link, useLoaderData } from "react-router"
+import { data, Link, useLoaderData } from "react-router"
 import { listLespannen, type LesplanStatus } from "~/lib/api"
 import { requireAuthContext } from "~/lib/auth.server"
 import { Button } from "~/components/ui/button"
@@ -29,7 +29,7 @@ export function meta() {
 export async function loader({ request }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
   const lespannen = await listLespannen(token)
-  return { lespannen }
+  return data({ lespannen }, { headers: { "Cache-Control": "private, max-age=10" } })
 }
 
 export default function PlansPage() {
