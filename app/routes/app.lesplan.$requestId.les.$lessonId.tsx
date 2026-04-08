@@ -114,6 +114,7 @@ export default function LessonDetailPage() {
       <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-[#e8eeff] px-6 py-3 flex items-center gap-4">
         <Link
           to={`/lesplan/${requestId}`}
+          prefetch="intent"
           className="flex items-center gap-1.5 text-sm font-semibold text-[#5c5378] hover:text-[#0b1c30] transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

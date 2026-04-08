@@ -180,6 +180,7 @@ function LessonSequenceCard({
             {linkedLesson && (
               <Link
                 to={`/lesplan/${requestId}/les/${linkedLesson.id}`}
+                prefetch="intent"
                 className="inline-flex items-center gap-1 rounded-lg border border-[#d7dff8] px-2.5 py-1.5 text-xs font-semibold text-[#5c5378] hover:bg-[#eff4ff]"
               >
                 Bekijk les

@@ -107,6 +107,7 @@ export default function TodosPage() {
 
           <Link
             to="/plans"
+            prefetch="intent"
             className="inline-flex items-center justify-center rounded-xl border border-[#dce7ff] bg-white px-4 py-2 text-sm font-semibold text-[#2a14b4] shadow-[0px_8px_20px_rgba(11,28,48,0.05)] transition-all hover:-translate-y-0.5 hover:shadow-[0px_12px_28px_rgba(11,28,48,0.08)]"
           >
             Bekijk plannen
@@ -148,6 +149,7 @@ export default function TodosPage() {
             </p>
             <Link
               to="/plans"
+              prefetch="intent"
               className="mt-5 inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-[#2a14b4] to-[#4338ca] px-4 py-2 text-sm font-semibold text-white shadow-[0px_4px_16px_rgba(42,20,180,0.25)] transition-all hover:shadow-[0px_8px_24px_rgba(42,20,180,0.35)]"
             >
               Naar je plannen

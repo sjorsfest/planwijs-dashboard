@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from "react-router"
+import { NavigationProgress } from "~/components/navigation-progress"
 import {
   LayoutDashboard,
   CalendarDays,
@@ -46,6 +47,7 @@ const navItems = [
 export default function AppLayout() {
   return (
     <div className="min-h-screen bg-[#f8f9ff] grid grid-cols-1 lg:grid-cols-[260px_1fr]">
+      <NavigationProgress />
       {/* ── Zijbalk ── */}
       <aside className="w-full lg:w-auto flex-shrink-0 bg-white flex flex-col lg:sticky lg:top-0 lg:h-screen shadow-[1px_0px_0px_rgba(199,196,215,0.5)]">
 
@@ -60,6 +62,7 @@ export default function AppLayout() {
             <NavLink
               key={to}
               to={to}
+              prefetch="intent"
               className={({ isActive }) =>
                 [
                   "group flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all",

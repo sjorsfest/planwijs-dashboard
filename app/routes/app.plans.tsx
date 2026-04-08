@@ -56,7 +56,7 @@ export default function PlansPage() {
           <p className="text-[#464554] text-sm">Heropen, volg en bekijk je lesplannen.</p>
         </div>
         <Button asChild className="flex-shrink-0 gap-2">
-          <Link to="/lesplan/new">
+          <Link to="/lesplan/new" prefetch="intent">
             <Plus className="w-4 h-4" />
             Nieuw lesplan
           </Link>
@@ -95,6 +95,7 @@ export default function PlansPage() {
                 {/* Main row */}
                 <Link
                   to={`/lesplan/${lesplan.id}`}
+                  prefetch="intent"
                   className="group block hover:shadow-[0px_24px_40px_rgba(11,28,48,0.09)] hover:-translate-y-px transition-all rounded-2xl"
                 >
                   <div className="p-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -143,6 +144,7 @@ export default function PlansPage() {
                         <Link
                           key={lesson.id}
                           to={`/lesplan/${lesplan.id}/les/${lesson.id}`}
+                          prefetch="intent"
                           className={[
                             "group flex items-center gap-2.5 px-3 py-2 hover:bg-[#2a14b4]/5 transition-colors rounded-md",
                           ].join(" ")}

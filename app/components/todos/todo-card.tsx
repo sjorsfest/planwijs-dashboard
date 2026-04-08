@@ -128,6 +128,7 @@ export function TodoCard({ todo, context }: TodoCardProps) {
 
                 <Link
                   to={context.href}
+                  prefetch="intent"
                   className="inline-flex items-center gap-1 text-xs font-semibold text-[#2a14b4] hover:text-[#4338ca] transition-colors"
                 >
                   Open les

@@ -192,7 +192,7 @@ export default function ClassesPage() {
             </p>
           </div>
           <Button asChild className="gap-2 mt-2">
-            <Link to="/lesplan/new">Nieuw lesplan starten</Link>
+            <Link to="/lesplan/new" prefetch="intent">Nieuw lesplan starten</Link>
           </Button>
         </div>
       ) : (

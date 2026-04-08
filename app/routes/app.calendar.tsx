@@ -318,6 +318,7 @@ function LessonCard({ item }: { item: CalendarLessonItem }) {
     >
       <Link
         to={`/lesplan/${item.lesplan_id}/les/${item.id}`}
+        prefetch="intent"
         className="group flex items-start gap-3 px-5 py-4 border-b border-[#eff4ff] last:border-0 hover:bg-[#f8f9ff] transition-colors"
       >
         <div className={`w-8 h-8 rounded-lg ${LESSON_BG} flex items-center justify-center shrink-0 mt-0.5`}>

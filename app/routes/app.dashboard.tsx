@@ -138,7 +138,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <Button asChild className="flex-shrink-0 gap-2">
-            <Link to="/lesplan/new">
+            <Link to="/lesplan/new" prefetch="intent">
               <Plus className="w-4 h-4" />
               Nieuw lesplan
             </Link>
@@ -194,6 +194,7 @@ export default function DashboardPage() {
                 </div>
                 <Link
                   to="/calendar"
+                  prefetch="intent"
                   className="text-xs font-semibold text-[#2a14b4] hover:underline flex items-center gap-1"
                 >
                   Kalender
@@ -214,6 +215,7 @@ export default function DashboardPage() {
                     <Link
                       key={lesson.id}
                       to={`/lesplan/${lesson.lesplan_id}/les/${lesson.id}`}
+                      prefetch="intent"
                       className="group flex items-center gap-3 px-5 py-3.5 border-b border-[#eff4ff] last:border-0 hover:bg-[#f8f9ff] transition-colors"
                     >
                       <div className="w-12 text-center shrink-0">
@@ -252,6 +254,7 @@ export default function DashboardPage() {
                 </div>
                 <Link
                   to="/plans"
+                  prefetch="intent"
                   className="text-xs font-semibold text-[#2a14b4] hover:underline flex items-center gap-1"
                 >
                   Alle plannen
@@ -277,6 +280,7 @@ export default function DashboardPage() {
                       <Link
                         key={plan.id}
                         to={`/lesplan/${plan.id}`}
+                        prefetch="intent"
                         className="group flex items-center gap-3 px-5 py-3.5 border-b border-[#eff4ff] last:border-0 hover:bg-[#f8f9ff] transition-colors"
                       >
                         <div className="flex-1 min-w-0">

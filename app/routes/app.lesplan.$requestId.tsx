@@ -351,6 +351,7 @@ export default function LessonSeriesReviewPage() {
         <div className="flex items-center gap-4 min-w-0">
           <Link
             to="/plans"
+            prefetch="intent"
             className="flex items-center gap-1.5 text-sm font-semibold text-[#5c5378] hover:text-[#0b1c30] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
