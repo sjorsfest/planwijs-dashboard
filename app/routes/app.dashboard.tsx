@@ -28,6 +28,12 @@ export function meta() {
   return [{ title: "Dashboard — Planwijs" }]
 }
 
+export function headers({ loaderHeaders }: Route.HeadersArgs) {
+  return {
+    "Cache-Control": loaderHeaders.get("Cache-Control") ?? "",
+  }
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
 
@@ -195,6 +201,7 @@ export default function DashboardPage() {
                 <Link
                   to="/calendar"
                   prefetch="intent"
+
                   className="text-xs font-semibold text-[#2a14b4] hover:underline flex items-center gap-1"
                 >
                   Kalender
@@ -216,6 +223,7 @@ export default function DashboardPage() {
                       key={lesson.id}
                       to={`/lesplan/${lesson.lesplan_id}/les/${lesson.id}`}
                       prefetch="intent"
+    
                       className="group flex items-center gap-3 px-5 py-3.5 border-b border-[#eff4ff] last:border-0 hover:bg-[#f8f9ff] transition-colors"
                     >
                       <div className="w-12 text-center shrink-0">
@@ -255,6 +263,7 @@ export default function DashboardPage() {
                 <Link
                   to="/plans"
                   prefetch="intent"
+
                   className="text-xs font-semibold text-[#2a14b4] hover:underline flex items-center gap-1"
                 >
                   Alle plannen
@@ -281,6 +290,7 @@ export default function DashboardPage() {
                         key={plan.id}
                         to={`/lesplan/${plan.id}`}
                         prefetch="intent"
+      
                         className="group flex items-center gap-3 px-5 py-3.5 border-b border-[#eff4ff] last:border-0 hover:bg-[#f8f9ff] transition-colors"
                       >
                         <div className="flex-1 min-w-0">
@@ -322,6 +332,7 @@ export default function DashboardPage() {
                 </div>
                 <Link
                   to="/todo"
+                  prefetch="intent"
                   className="text-xs font-semibold text-[#2a14b4] hover:underline flex items-center gap-1"
                 >
                   Alles
@@ -343,6 +354,7 @@ export default function DashboardPage() {
                   </p>
                   <Link
                     to="/todos"
+                    prefetch="intent"
                     className="mt-2 inline-flex text-xs font-semibold text-[#2a14b4] hover:underline"
                   >
                     Bekijk alle taken
@@ -354,6 +366,7 @@ export default function DashboardPage() {
                     <Link
                       key={todo.id}
                       to={`/lesplan/${todo.lesplan_id}/les/${todo.lesson_id}`}
+                      prefetch="intent"
                       className="group flex items-start gap-3 px-5 py-3.5 border-b border-[#eff4ff] last:border-0 hover:bg-[#f8f9ff] transition-colors"
                     >
                       <div className="w-5 h-5 rounded-full border-2 border-orange-300 shrink-0 mt-0.5" />
@@ -371,6 +384,7 @@ export default function DashboardPage() {
                     <div className="px-5 py-3 text-center border-t border-[#eff4ff]">
                       <Link
                         to="/todos"
+                        prefetch="intent"
                         className="text-xs font-semibold text-[#5c5378] hover:text-[#2a14b4] transition-colors"
                       >
                         + {pendingTodoCount - upcomingTodos.length} meer
@@ -446,6 +460,7 @@ function QuickLink({
   return (
     <Link
       to={to}
+      prefetch="intent"
       className="group flex items-center gap-3 bg-white rounded-2xl p-4 shadow-[0px_16px_32px_rgba(11,28,48,0.06)] hover:shadow-[0px_24px_40px_rgba(11,28,48,0.1)] hover:-translate-y-0.5 transition-all"
     >
       <div className="w-10 h-10 rounded-xl bg-[#eff4ff] flex items-center justify-center text-[#2a14b4] group-hover:bg-gradient-to-br group-hover:from-[#2a14b4] group-hover:to-[#4338ca] group-hover:text-white transition-all shrink-0">

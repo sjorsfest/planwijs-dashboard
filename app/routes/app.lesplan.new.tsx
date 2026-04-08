@@ -242,6 +242,12 @@ export function meta() {
   return [{ title: "Nieuw lesplan — Planwijs" }]
 }
 
+export function headers({ loaderHeaders }: Route.HeadersArgs) {
+  return {
+    "Cache-Control": loaderHeaders.get("Cache-Control") ?? "",
+  }
+}
+
 function hasClassId(classroom: Class): classroom is Class & { id: string } {
   return typeof classroom.id === "string" && classroom.id.length > 0
 }
@@ -933,6 +939,7 @@ export default function NewLesplanPage() {
         {step === 1 ? (
           <Link
             to="/plans"
+            prefetch="intent"
             className="flex items-center gap-2 text-sm font-bold text-black/60 hover:text-black transition-colors w-fit"
           >
             <ArrowLeft className="w-4 h-4" />

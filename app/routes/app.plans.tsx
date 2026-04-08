@@ -26,6 +26,12 @@ export function meta() {
   return [{ title: "Plannen — Planwijs" }]
 }
 
+export function headers({ loaderHeaders }: Route.HeadersArgs) {
+  return {
+    "Cache-Control": loaderHeaders.get("Cache-Control") ?? "",
+  }
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
   const lespannen = await listLespannen(token)
@@ -145,6 +151,7 @@ export default function PlansPage() {
                           key={lesson.id}
                           to={`/lesplan/${lesplan.id}/les/${lesson.id}`}
                           prefetch="intent"
+
                           className={[
                             "group flex items-center gap-2.5 px-3 py-2 hover:bg-[#2a14b4]/5 transition-colors rounded-md",
                           ].join(" ")}

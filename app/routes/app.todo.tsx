@@ -39,6 +39,12 @@ export function meta() {
   return [{ title: "To Do's — Planwijs" }]
 }
 
+export function headers({ loaderHeaders }: Route.HeadersArgs) {
+  return {
+    "Cache-Control": loaderHeaders.get("Cache-Control") ?? "",
+  }
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
   const lespannen = await listLespannen(token)

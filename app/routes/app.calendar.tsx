@@ -54,6 +54,12 @@ export function meta(_: Route.MetaArgs) {
   return [{ title: "Kalender — Planwijs" }]
 }
 
+export function headers({ loaderHeaders }: Route.HeadersArgs) {
+  return {
+    "Cache-Control": loaderHeaders.get("Cache-Control") ?? "",
+  }
+}
+
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 function getPaddingDays(date: Date): number {
@@ -358,6 +364,7 @@ function TodoCard({ item }: { item: CalendarTodoItem }) {
     >
       <Link
         to={`/lesplan/${item.lesplan_id}/les/${item.lesson_id}`}
+        prefetch="intent"
         className="group flex items-start gap-3 px-5 py-4 border-b border-[#eff4ff] last:border-0 hover:bg-[#f8f9ff] transition-colors"
       >
         <div className={`w-8 h-8 rounded-lg ${bgClass} flex items-center justify-center shrink-0 mt-0.5`}>

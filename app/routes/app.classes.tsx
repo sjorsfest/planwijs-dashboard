@@ -42,6 +42,12 @@ export function meta() {
   return [{ title: "Klassenoverzicht — Planwijs" }]
 }
 
+export function headers({ loaderHeaders }: Route.HeadersArgs) {
+  return {
+    "Cache-Control": loaderHeaders.get("Cache-Control") ?? "",
+  }
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
   const classes = await getClasses(token)

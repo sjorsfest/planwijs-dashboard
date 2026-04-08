@@ -20,6 +20,12 @@ export function meta({ data: loaderData }: Route.MetaArgs) {
   return [{ title: `Les ${loaderData.lesson.lesson_number}: ${loaderData.lesson.title} — Planwijs` }]
 }
 
+export function headers({ loaderHeaders }: Route.HeadersArgs) {
+  return {
+    "Cache-Control": loaderHeaders.get("Cache-Control") ?? "",
+  }
+}
+
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
   const lesplan = await getLesplan(token, params.requestId)
