@@ -8,7 +8,7 @@ import {
   addMonths,
   subMonths,
 } from "date-fns"
-import { getCalendarItems } from "~/lib/api"
+import { createApiClient } from "~/lib/backend/client"
 import { requireAuthContext } from "~/lib/auth.server"
 import type { Route } from "./+types/route"
 
@@ -22,7 +22,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   const rangeStart = format(startOfMonth(subMonths(now, 3)), "yyyy-MM-dd")
   const rangeEnd = format(endOfMonth(addMonths(now, 3)), "yyyy-MM-dd")
 
-  const calendar = await getCalendarItems(token, rangeStart, rangeEnd)
+  const api = createApiClient(token)
+  const calendar = await api.getCalendarItems(rangeStart, rangeEnd)
 
   return data({ calendarItems: calendar.items }, { headers: { "Cache-Control": "private, max-age=10" } })
 }

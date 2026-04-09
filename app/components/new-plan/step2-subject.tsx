@@ -1,5 +1,5 @@
 import { ArrowRight, BookOpen } from "lucide-react"
-import type { Book, Subject } from "~/lib/api"
+import type { Book, Subject } from "~/lib/backend/types"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import { SubjectIcon } from "~/components/ui/subject-badge"

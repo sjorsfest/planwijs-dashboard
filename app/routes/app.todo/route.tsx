@@ -1,11 +1,8 @@
 export { default } from "./page"
 
 import { data } from "react-router"
-import {
-  listLespannen,
-  updatePreparationTodo,
-  type LessonPreparationTodoResponse,
-} from "~/lib/api"
+import { createApiClient } from "~/lib/backend/client"
+import type { LessonPreparationTodoResponse } from "~/lib/backend/types"
 import { requireAuthContext } from "~/lib/auth.server"
 import type { Route } from "./+types/route"
 
@@ -31,7 +28,8 @@ export function headers({ loaderHeaders }: Route.HeadersArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
-  const lespannen = await listLespannen(token)
+  const api = createApiClient(token)
+  const lespannen = await api.listLespannen()
 
   const todoItems = lespannen
     .flatMap((lesplan) => {
@@ -65,7 +63,8 @@ export async function action({ request }: Route.ActionArgs) {
     const status = formData.get("status") as "pending" | "done"
 
     try {
-      const updated = await updatePreparationTodo(token, todoId, { status })
+      const api = createApiClient(token)
+      const updated = await api.updatePreparationTodo(todoId, { status })
       return data({ ok: true, todo: updated })
     } catch (error) {
       const message = error instanceof Error ? error.message : "Er ging iets mis"

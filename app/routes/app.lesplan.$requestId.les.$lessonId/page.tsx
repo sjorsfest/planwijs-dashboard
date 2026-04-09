@@ -1,7 +1,7 @@
 import { useRef, useState } from "react"
 import { Link, useFetcher, useLoaderData } from "react-router"
 import { ArrowLeft, Calendar, CheckCircle2, Circle, Loader2, Pencil, X } from "lucide-react"
-import { type LessonPlanResponse } from "~/lib/api"
+import type { LessonPlanResponse } from "~/lib/backend/types"
 import { TodoCard } from "~/components/todos/todo-card"
 import type { SourceContext } from "~/components/lesplan/types"
 import type { loader } from "./route"

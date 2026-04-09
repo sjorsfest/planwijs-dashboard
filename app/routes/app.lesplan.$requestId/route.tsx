@@ -1,15 +1,7 @@
 export { default } from "./page"
 
 import { data } from "react-router"
-import {
-  approveLesplan,
-  ApiRequestError,
-  getBookDetail,
-  getClass,
-  getLesplan,
-  getMethod,
-  submitFeedback,
-} from "~/lib/api"
+import { createApiClient, ApiRequestError } from "~/lib/backend/client"
 import { requireAuthContext } from "~/lib/auth.server"
 import type { LesplanWorkspaceLoaderData } from "~/components/lesplan/types"
 import {
@@ -32,18 +24,19 @@ export function headers({ loaderHeaders }: Route.HeadersArgs) {
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
-  const lesplan = await getLesplan(token, params.requestId)
+  const api = createApiClient(token)
+  const lesplan = await api.getLesplan(params.requestId)
 
   if (!lesplan) {
     throw new Response("Lesplan not found", { status: 404 })
   }
 
   const [classroom, bookDetail] = await Promise.all([
-    getClass(token, lesplan.class_id),
-    getBookDetail(token, lesplan.book_id),
+    api.getClass(lesplan.class_id),
+    api.getBookDetail(lesplan.book_id),
   ])
 
-  const method = bookDetail?.method_id ? await getMethod(token, bookDetail.method_id) : null
+  const method = bookDetail?.method_id ? await api.getMethod(bookDetail.method_id) : null
   const paragraphsById = new Map(
     (bookDetail?.chapters ?? []).flatMap((chapter) =>
       chapter.paragraphs.map((paragraph) => [
@@ -83,6 +76,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 export async function action({ request, params }: Route.ActionArgs) {
   const { token } = await requireAuthContext(request)
+  const api = createApiClient(token)
   const formData = await request.formData()
   const intent = formData.get("intent")
 
@@ -96,7 +90,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       if (!Array.isArray(items) || items.length === 0) {
         return data<ActionData>({ intent: "feedback", ok: false, error: "Voer eerst feedback in." }, { status: 400 })
       }
-      const lesplan = await submitFeedback(token, params.requestId, { items })
+      const lesplan = await api.submitFeedback(params.requestId, { items })
       return data<ActionData>({ intent: "feedback", ok: true, lesplan })
     } catch (error) {
       if (error instanceof ApiRequestError) {
@@ -108,7 +102,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (intent === "approve") {
     try {
-      const lesplan = await approveLesplan(token, params.requestId)
+      const lesplan = await api.approveLesplan(params.requestId)
       return data<ActionData>({ intent: "approve", ok: true, lesplan })
     } catch (error) {
       if (error instanceof ApiRequestError) {

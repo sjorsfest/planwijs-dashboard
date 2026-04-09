@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { ArrowRight, Plus } from "lucide-react"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
@@ -32,6 +33,7 @@ interface Props {
   onClassDifficultyChange: (value: ClassDifficulty) => void
   onConfirm: () => void
   canContinue: boolean
+  classroomPicker?: ReactNode
 }
 
 const LESSON_DURATION_OPTIONS = [45, 50, 60, 90]
@@ -53,6 +55,7 @@ export function Step1ClassSetup({
   onClassDifficultyChange,
   onConfirm,
   canContinue,
+  classroomPicker,
 }: Props) {
   const disabledYears = getDisabledYears(selectedLevel)
 
@@ -269,6 +272,8 @@ export function Step1ClassSetup({
             ))}
           </div>
         </div>
+          {classroomPicker}
+
           <div className="mt-8">
             <Button disabled={!canContinue} className="gap-2" onClick={onConfirm}>
               Volgende stap

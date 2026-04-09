@@ -20,12 +20,12 @@ const navItems = [
   },
   {
     to: "/classes",
-    label: "Lokaal & Klassen",
+    label: "Klassen",
     icon: Users,
   },
   {
     to: "/plans",
-    label: "Mijn Lessen",
+    label: "Lessen",
     icon: BookOpen,
   },
   {
@@ -44,8 +44,21 @@ export default function AppLayout() {
     <OnboardingProvider>
     <div className="min-h-screen bg-[#f8f9ff] grid grid-cols-1 lg:grid-cols-[260px_1fr]">
       <NavigationProgress />
-      {/* ── Zijbalk ── */}
-      <aside className="w-full lg:w-auto flex-shrink-0 bg-white flex flex-col lg:sticky lg:top-0 lg:h-screen shadow-[1px_0px_0px_rgba(199,196,215,0.5)]">
+
+      {/* ── Mobile top header ── */}
+      <header className="flex lg:hidden items-center justify-between px-4 h-14 bg-white shadow-[0px_1px_0px_rgba(199,196,215,0.5)]">
+        <LesLabLogo />
+        <a
+          href="/auth/logout"
+          className="w-9 h-9 rounded-xl bg-[#eff4ff] flex items-center justify-center text-[#5c5378] hover:bg-[#dce9ff] transition-colors"
+          aria-label="Uitloggen"
+        >
+          <LogOut className="w-4 h-4" />
+        </a>
+      </header>
+
+      {/* ── Zijbalk (desktop only) ── */}
+      <aside className="w-full lg:w-auto flex-shrink-0 bg-white hidden lg:flex lg:flex-col lg:sticky lg:top-0 lg:h-screen shadow-[1px_0px_0px_rgba(199,196,215,0.5)]">
 
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 h-16 flex-shrink-0">
@@ -102,9 +115,39 @@ export default function AppLayout() {
       </aside>
 
       {/* ── Paginainhoud ── */}
-      <div className="min-w-0">
+      <div className="min-w-0 pb-20 lg:pb-0">
         <Outlet />
       </div>
+
+      {/* ── Mobile bottom nav ── */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white shadow-[0px_-4px_20px_rgba(11,28,48,0.08)] border-t border-[#eff4ff] pb-[env(safe-area-inset-bottom)] lg:hidden">
+        <div className="flex items-center justify-around px-1 h-16">
+          {navItems.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              prefetch="intent"
+              className="flex flex-col items-center gap-1 min-w-0 py-1 px-1"
+            >
+              {({ isActive }) => (
+                <>
+                  <div className={[
+                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+                    isActive
+                      ? "bg-gradient-to-br from-[#2a14b4] to-[#4338ca] shadow-[0px_4px_10px_rgba(42,20,180,0.25)]"
+                      : "bg-[#eff4ff]",
+                  ].join(" ")}>
+                    <Icon className={["w-5 h-5 transition-colors", isActive ? "text-white" : "text-[#5c5378]"].join(" ")} />
+                  </div>
+                  <span className={["text-[10px] font-semibold leading-tight", isActive ? "text-[#2a14b4]" : "text-[#464554]"].join(" ")}>
+                    {label}
+                  </span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
     </div>
     <WelkomOverlay />
     </OnboardingProvider>

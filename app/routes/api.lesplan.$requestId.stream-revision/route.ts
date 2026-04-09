@@ -1,4 +1,4 @@
-import { getApiUrl } from "~/lib/api"
+import { getApiUrl } from "~/lib/backend/client"
 import { requireAuthContext } from "~/lib/auth.server"
 import type { Route } from "./+types/route"
 

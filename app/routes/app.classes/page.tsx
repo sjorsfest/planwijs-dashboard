@@ -13,7 +13,7 @@ import {
   ChevronUp,
 } from "lucide-react"
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion"
-import type { Class } from "~/lib/api"
+import type { Class } from "~/lib/backend/types"
 import { Button } from "~/components/ui/button"
 import { Badge } from "~/components/ui/badge"
 import {
@@ -468,7 +468,7 @@ function EditForm({ cls, onSaved, onCancel }: EditFormProps) {
   return (
     <div className="p-5 space-y-4">
       {/* Level & Year */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block">
           <FieldHintLabel
             label="Niveau"
@@ -524,7 +524,7 @@ function EditForm({ cls, onSaved, onCancel }: EditFormProps) {
       </div>
 
       {/* Class size & Attention span */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block">
           <FieldHintLabel
             label="Aantal leerlingen"
@@ -565,7 +565,7 @@ function EditForm({ cls, onSaved, onCancel }: EditFormProps) {
           label="Klasdynamiek"
           hint={FIELD_HINTS.difficulty}
         />
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {DIFFICULTY_OPTIONS.map(({ value, description }) => (
             <button
               key={value}

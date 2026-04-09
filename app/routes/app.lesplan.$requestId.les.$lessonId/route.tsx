@@ -1,14 +1,7 @@
 export { default } from "./page"
 
 import { data } from "react-router"
-import {
-  getBookDetail,
-  getClass,
-  getLesplan,
-  getMethod,
-  updateLessonPlannedDate,
-  updatePreparationTodo,
-} from "~/lib/api"
+import { createApiClient } from "~/lib/backend/client"
 import { requireAuthContext } from "~/lib/auth.server"
 import type { SourceContext } from "~/components/lesplan/types"
 import type { Route } from "./+types/route"
@@ -26,7 +19,8 @@ export function headers({ loaderHeaders }: Route.HeadersArgs) {
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
-  const lesplan = await getLesplan(token, params.requestId)
+  const api = createApiClient(token)
+  const lesplan = await api.getLesplan(params.requestId)
 
   if (!lesplan) {
     throw new Response("Lesplan not found", { status: 404 })
@@ -38,11 +32,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
 
   const [classroom, bookDetail] = await Promise.all([
-    getClass(token, lesplan.class_id),
-    getBookDetail(token, lesplan.book_id),
+    api.getClass(lesplan.class_id),
+    api.getBookDetail(lesplan.book_id),
   ])
 
-  const method = bookDetail?.method_id ? await getMethod(token, bookDetail.method_id) : null
+  const method = bookDetail?.method_id ? await api.getMethod(bookDetail.method_id) : null
   const paragraphsById = new Map(
     (bookDetail?.chapters ?? []).flatMap((chapter) =>
       chapter.paragraphs.map((paragraph) => [
@@ -68,6 +62,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const { token } = await requireAuthContext(request)
+  const api = createApiClient(token)
   const formData = await request.formData()
   const intent = formData.get("intent")
 
@@ -75,7 +70,7 @@ export async function action({ request }: Route.ActionArgs) {
     const todoId = formData.get("todoId") as string
     const status = formData.get("status") as "pending" | "done"
     try {
-      const updated = await updatePreparationTodo(token, todoId, { status })
+      const updated = await api.updatePreparationTodo(todoId, { status })
       return data({ ok: true, todo: updated })
     } catch (e) {
       const message = e instanceof Error ? e.message : "Er ging iets mis"
@@ -88,7 +83,7 @@ export async function action({ request }: Route.ActionArgs) {
     const rawDate = formData.get("plannedDate") as string | null
     const plannedDate = rawDate || null
     try {
-      await updateLessonPlannedDate(token, lessonId, plannedDate)
+      await api.updateLessonPlannedDate(lessonId, plannedDate)
       return data({ ok: true })
     } catch (e) {
       const message = e instanceof Error ? e.message : "Er ging iets mis"

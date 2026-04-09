@@ -1,4 +1,4 @@
-import type { LesplanResponse } from "~/lib/api"
+import type { LesplanResponse } from "~/lib/backend/types"
 import {
   mapFeedbackMessages,
   type LesplanDoneEvent,

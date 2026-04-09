@@ -1,5 +1,5 @@
 import { BookOpen } from "lucide-react"
-import type { Book } from "~/lib/api"
+import type { Book } from "~/lib/backend/types"
 import { Badge } from "~/components/ui/badge"
 import { SubjectBadge } from "~/components/ui/subject-badge"
 import { cn } from "~/lib/utils"

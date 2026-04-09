@@ -28,7 +28,7 @@ import type {
   CalendarItem,
   CalendarLessonItem,
   CalendarTodoItem,
-} from "~/lib/api"
+} from "~/lib/backend/types"
 import type { loader } from "./route"
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -82,13 +82,13 @@ export default function CalendarPage() {
   const selectedTodos = selectedItems.filter((i): i is CalendarTodoItem => i.type === "preparation_todo")
 
   return (
-    <div className="min-h-screen bg-[#f8f9ff] p-8">
+    <div className="min-h-screen bg-[#f8f9ff] p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl space-y-6">
         {/* Page header */}
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]/70 mb-1">Planning</p>
-            <h1 className="text-3xl font-bold tracking-tight text-[#0b1c30]">Kalender</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0b1c30]">Kalender</h1>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-xs font-medium text-[#5c5378]">
@@ -181,7 +181,7 @@ export default function CalendarPage() {
                   >
                     <span
                       className={[
-                        "w-7 h-7 flex items-center justify-center text-sm font-semibold rounded-full transition-all",
+                        "w-7 h-7 flex items-center justify-center text-xs sm:text-sm font-semibold rounded-full transition-all",
                         isSelected
                           ? "text-white font-bold"
                           : today
@@ -198,19 +198,19 @@ export default function CalendarPage() {
                       <div className="flex gap-0.5 flex-wrap justify-center px-1">
                         {hasLessons && (
                           <span
-                            className={`w-2 h-2 rounded-full ${isSelected ? "bg-white/70" : ""}`}
+                            className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isSelected ? "bg-white/70" : ""}`}
                             style={isSelected ? undefined : { backgroundColor: LESSON_COLOR }}
                           />
                         )}
                         {hasPendingTodos && (
                           <span
-                            className={`w-2 h-2 rounded-full ${isSelected ? "bg-orange-300" : ""}`}
+                            className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isSelected ? "bg-orange-300" : ""}`}
                             style={isSelected ? undefined : { backgroundColor: TODO_COLOR_PENDING }}
                           />
                         )}
                         {hasDoneTodos && !hasPendingTodos && (
                           <span
-                            className={`w-2 h-2 rounded-full ${isSelected ? "bg-emerald-300" : "bg-emerald-500"}`}
+                            className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isSelected ? "bg-emerald-300" : "bg-emerald-500"}`}
                           />
                         )}
                       </div>
@@ -241,7 +241,7 @@ export default function CalendarPage() {
             </div>
 
             {/* Items */}
-            <div className="overflow-y-auto max-h-[440px]">
+            <div className="overflow-y-auto max-h-[320px] lg:max-h-[440px]">
               <AnimatePresence mode="popLayout">
                 {selectedItems.length === 0 ? (
                   <motion.div

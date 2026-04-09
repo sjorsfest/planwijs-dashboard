@@ -1,6 +1,6 @@
 export { default } from "./page"
 
-import { getApiUrl } from "~/lib/api"
+import { getApiUrl } from "~/lib/backend/client"
 import type { Route } from "./+types/route"
 
 export function meta(_: Route.MetaArgs) {

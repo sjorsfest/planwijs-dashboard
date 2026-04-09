@@ -35,10 +35,13 @@ export function VoltooidOverlay() {
           {/* Content */}
           <div className="px-8 pb-8 pt-4 text-center">
             <h1 className="text-2xl font-bold text-[#0b1c30] tracking-[-0.02em] font-[family-name:var(--font-heading)]">
-              Je eerste lesplan is aangemaakt!
+              Je lesplan wordt gegenereerd!
             </h1>
             <p className="mt-3 text-[#464554] leading-relaxed">
-              Bekijk het overzicht en pas het aan naar wens.
+              Dit gebeurt op de achtergrond en kan een minuutje of twee duren.
+            </p>
+            <p className="mt-2 text-[#464554] leading-relaxed">
+              Pak gerust een kopje koffie in de tussentijd! ☕
             </p>
 
             <div className="mt-8">

@@ -7,7 +7,7 @@ import type {
   LesplanOverviewState,
   LesplanPageState,
 } from "./types"
-import type { LesplanResponse } from "~/lib/api"
+import type { LesplanResponse } from "~/lib/backend/types"
 
 export function asObject(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null

@@ -2,13 +2,8 @@ export { default } from "./page"
 
 import { data } from "react-router"
 import { format, addDays } from "date-fns"
-import {
-  listLespannen,
-  getCalendarItems,
-  getClasses,
-  type CalendarLessonItem,
-  type CalendarTodoItem,
-} from "~/lib/api"
+import { createApiClient } from "~/lib/backend/client"
+import type { CalendarLessonItem, CalendarTodoItem } from "~/lib/backend/types"
 import { requireAuthContext } from "~/lib/auth.server"
 import type { Route } from "./+types/route"
 
@@ -29,10 +24,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   const startDate = format(now, "yyyy-MM-dd")
   const endDate = format(addDays(now, 14), "yyyy-MM-dd")
 
+  const api = createApiClient(token)
   const [lespannen, calendar, classes] = await Promise.all([
-    listLespannen(token),
-    getCalendarItems(token, startDate, endDate),
-    getClasses(token),
+    api.listLespannen(),
+    api.getCalendarItems(startDate, endDate),
+    api.getClasses(),
   ])
 
   // Extract all todos from lesson plans

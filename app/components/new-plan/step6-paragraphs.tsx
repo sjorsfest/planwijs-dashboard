@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react"
 import { ArrowRight, BookOpen, Check, ChevronDown, ChevronRight } from "lucide-react"
-import type { Book, BookDetail } from "~/lib/api"
+import type { Book, BookDetail } from "~/lib/backend/types"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import { SubjectBadge } from "~/components/ui/subject-badge"

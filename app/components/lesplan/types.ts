@@ -1,4 +1,4 @@
-import type { FeedbackMessageResponse, LesplanResponse, LesplanStatus, LessonPlanResponse } from "~/lib/api"
+import type { FeedbackMessageResponse, LesplanResponse, LesplanStatus, LessonPlanResponse } from "~/lib/backend/types"
 
 export type SourceContextParagraph = {
   id: string

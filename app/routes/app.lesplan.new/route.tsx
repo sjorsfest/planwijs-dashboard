@@ -1,15 +1,8 @@
 export { default } from "./page"
 
 import { data, redirect } from "react-router"
-import {
-  createClass,
-  createLesplan,
-  getClasses,
-  listLespannen,
-  ApiRequestError,
-  type Class,
-  type LesplanResponse,
-} from "~/lib/api"
+import { createApiClient, ApiRequestError } from "~/lib/backend/client"
+import type { Class, Classroom, LesplanResponse } from "~/lib/backend/types"
 import { requireAuthContext } from "~/lib/auth.server"
 import { SUBJECT_VALUES } from "~/lib/subject-metadata"
 import { type ExistingClassOption } from "~/components/new-plan/step1-class-setup"
@@ -33,10 +26,12 @@ export type ExistingClassData = ExistingClassOption & {
 
 export type LoaderData = {
   existingClasses: ExistingClassData[]
+  classrooms: Classroom[]
 }
 
 type SubmittedPlanPayload = {
   selectedExistingClassId: string | null
+  selectedClassroomId: string | null
   selectedLevel: Level
   selectedYear: SchoolYear
   selectedSubject: { id: string; slug: string; name: string; category: string; created_at?: string; updated_at?: string }
@@ -102,6 +97,10 @@ function parseSubmittedPayload(value: unknown): SubmittedPlanPayload | null {
       typeof value.selectedExistingClassId === "string" && value.selectedExistingClassId.length > 0
         ? value.selectedExistingClassId
         : null,
+    selectedClassroomId:
+      typeof value.selectedClassroomId === "string" && value.selectedClassroomId.length > 0
+        ? value.selectedClassroomId
+        : null,
     selectedLevel: value.selectedLevel as Level,
     selectedYear: value.selectedYear as SchoolYear,
     selectedSubject: subject,
@@ -151,9 +150,11 @@ function getLatestLesplanByClassId(lespannen: LesplanResponse[]): Map<string, Le
 export async function loader({ request }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
 
-  const [classes, lespannen] = await Promise.all([
-    getClasses(token),
-    listLespannen(token),
+  const api = createApiClient(token)
+  const [classes, lespannen, classrooms] = await Promise.all([
+    api.getClasses(),
+    api.listLespannen(),
+    api.getClassrooms(),
   ])
 
   const latestByClassId = getLatestLesplanByClassId(lespannen)
@@ -183,7 +184,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       return a.subject.localeCompare(b.subject, "nl")
     })
 
-  return data<LoaderData>({ existingClasses }, { headers: { "Cache-Control": "private, max-age=10" } })
+  return data<LoaderData>({ existingClasses, classrooms }, { headers: { "Cache-Control": "private, max-age=10" } })
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -208,19 +209,17 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   try {
+    const api = createApiClient(token)
     let classId = payload.selectedExistingClassId
 
     if (!classId) {
-      const classroom = await createClass(
-        {
-          subject: payload.selectedSubject.name as Method["subject"],
-          level: payload.selectedLevel,
-          school_year: payload.selectedYear,
-          size: payload.classSize,
-          difficulty: payload.classDifficulty,
-        },
-        token
-      )
+      const classroom = await api.createClass({
+        subject: payload.selectedSubject.name as Method["subject"],
+        level: payload.selectedLevel,
+        school_year: payload.selectedYear,
+        size: payload.classSize,
+        difficulty: payload.classDifficulty,
+      })
 
       if (!classroom.id) {
         return data<ActionData>({ error: "De klas kon niet worden opgeslagen." }, { status: 500 })
@@ -229,16 +228,14 @@ export async function action({ request }: Route.ActionArgs) {
       classId = classroom.id
     }
 
-    const lesplan = await createLesplan(
-      {
-        class_id: classId,
-        book_id: payload.selectedBookId,
-        selected_paragraph_ids: payload.selectedParagraphIds,
-        num_lessons: payload.lessonCount,
-        lesson_duration_minutes: payload.lessonDuration,
-      },
-      token
-    )
+    const lesplan = await api.createLesplan({
+      class_id: classId,
+      book_id: payload.selectedBookId,
+      selected_paragraph_ids: payload.selectedParagraphIds,
+      num_lessons: payload.lessonCount,
+      lesson_duration_minutes: payload.lessonDuration,
+      classroom_id: payload.selectedClassroomId,
+    })
 
     return redirect(`/lesplan/${lesplan.id}`)
   } catch (error) {

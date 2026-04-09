@@ -1,7 +1,7 @@
 import { ArrowRight, BookOpen, Calendar, CheckCircle2, ChevronDown, Circle } from "lucide-react"
 import { useState } from "react"
 import { Link, useFetcher } from "react-router"
-import type { LessonPreparationTodoResponse } from "~/lib/api"
+import type { LessonPreparationTodoResponse } from "~/lib/backend/types"
 
 type TodoCardContext = {
   href: string

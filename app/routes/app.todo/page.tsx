@@ -26,14 +26,14 @@ export default function TodosPage() {
   const doneItems = todoItems.filter((item) => item.todo.status === "done")
 
   return (
-    <div className="min-h-screen bg-[#f8f9ff] p-8">
+    <div className="min-h-screen bg-[#f8f9ff] p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]/70 mb-1">
               Werkvoorraad
             </p>
-            <h1 className="text-3xl font-bold tracking-tight text-[#0b1c30]">To Do&apos;s</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0b1c30]">To Do&apos;s</h1>
             <p className="mt-1 text-sm text-[#464554]">
               Alle voorbereidingstaken uit je lessen, met je voortgang op één plek.
             </p>
@@ -114,7 +114,7 @@ function SummaryCard({
   icon: ReactNode
 }) {
   return (
-    <div className="rounded-2xl border border-[#e8eeff] bg-white p-5 shadow-[0px_16px_32px_rgba(11,28,48,0.06)]">
+    <div className="rounded-2xl border border-[#e8eeff] bg-white p-4 sm:p-5 shadow-[0px_16px_32px_rgba(11,28,48,0.06)]">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5c5378]/70">{label}</p>

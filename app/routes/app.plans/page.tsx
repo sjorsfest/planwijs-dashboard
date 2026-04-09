@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { BookOpen, Plus, ArrowRight, ChevronDown, ChevronRight } from "lucide-react"
 import { Link, useLoaderData } from "react-router"
-import type { LesplanStatus } from "~/lib/api"
+import type { LesplanStatus } from "~/lib/backend/types"
 import { Button } from "~/components/ui/button"
 import { Badge } from "~/components/ui/badge"
 import type { loader } from "./route"
@@ -46,13 +46,13 @@ export default function PlansPage() {
   }
 
   return (
-    <div className="p-8 max-w-5xl">
-      <div className="flex items-start justify-between gap-4 mb-10">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6 lg:mb-10">
         <div>
-          <h1 className="text-4xl font-bold mb-1.5 text-[#0b1c30]">Plannen</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-1.5 text-[#0b1c30]">Plannen</h1>
           <p className="text-[#464554] text-sm">Heropen, volg en bekijk je lesplannen.</p>
         </div>
-        <Button asChild className="flex-shrink-0 gap-2">
+        <Button asChild className="flex-shrink-0 gap-2 w-full sm:w-auto">
           <Link to="/lesplan/new" prefetch="intent">
             <Plus className="w-4 h-4" />
             Nieuw lesplan
@@ -95,7 +95,7 @@ export default function PlansPage() {
                   prefetch="intent"
                   className="group block hover:shadow-[0px_24px_40px_rgba(11,28,48,0.09)] hover:-translate-y-px transition-all rounded-2xl"
                 >
-                  <div className="p-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="p-4 sm:p-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
                         <p className="text-base font-semibold text-[#0b1c30] truncate">{lesplan.overview?.title ?? "Lesplan in opbouw"}</p>

@@ -14,7 +14,7 @@ import { addDays } from "date-fns"
 import { format } from "date-fns"
 import { nl } from "date-fns/locale"
 import { Button } from "~/components/ui/button"
-import type { LesplanResponse } from "~/lib/api"
+import type { LesplanResponse } from "~/lib/backend/types"
 import type { loader } from "./route"
 
 function formatDateShort(dateStr: string): string {
@@ -54,19 +54,19 @@ export default function DashboardPage() {
   } = useLoaderData<typeof loader>()
 
   return (
-    <div className="min-h-screen bg-[#f8f9ff] p-8">
+    <div className="min-h-screen bg-[#f8f9ff] p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl space-y-6">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-[#0b1c30]">
+            <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-[#0b1c30]">
               Welkom terug!
             </h1>
             <p className="text-sm text-[#464554] mt-1">
               Hier is een overzicht van je lesplanning.
             </p>
           </div>
-          <Button asChild className="flex-shrink-0 gap-2">
+          <Button asChild className="flex-shrink-0 gap-2 w-full sm:w-auto">
             <Link to="/lesplan/new" prefetch="intent">
               <Plus className="w-4 h-4" />
               Nieuw lesplan
@@ -75,7 +75,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Stat cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <StatCard
             label="Lesplannen"
             value={totalPlans}
@@ -242,8 +242,8 @@ export default function DashboardPage() {
             </section>
           </div>
 
-          {/* Right column */}
-          <div className="space-y-6">
+          {/* Right column (hidden on mobile - content accessible via bottom nav) */}
+          <div className="hidden lg:block space-y-6">
             {/* Pending todos */}
             <section className="bg-white rounded-2xl shadow-[0px_24px_40px_rgba(11,28,48,0.07)] overflow-hidden">
               <div className="px-5 py-4 border-b border-[#eff4ff] flex items-center justify-between">
@@ -354,7 +354,7 @@ function StatCard({
   accent: string
 }) {
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-[0px_16px_32px_rgba(11,28,48,0.06)]">
+    <div className="rounded-2xl bg-white p-3 sm:p-4 shadow-[0px_16px_32px_rgba(11,28,48,0.06)]">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5c5378]/70">
           {label}
@@ -363,7 +363,7 @@ function StatCard({
           {icon}
         </div>
       </div>
-      <p className="text-2xl font-bold tracking-tight text-[#0b1c30] mt-1">{value}</p>
+      <p className="text-xl sm:text-2xl font-bold tracking-tight text-[#0b1c30] mt-1">{value}</p>
       <p className="text-xs text-[#5c5378] mt-0.5">{sub}</p>
     </div>
   )

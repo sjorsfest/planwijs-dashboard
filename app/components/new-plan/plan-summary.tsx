@@ -1,6 +1,6 @@
 import { motion, type Variants } from "framer-motion"
 import { ArrowLeft, ArrowRight, BookOpen, LoaderCircle } from "lucide-react"
-import type { Book, BookDetail, Subject } from "~/lib/api"
+import type { Book, BookDetail, Subject } from "~/lib/backend/types"
 import { SubjectBadge } from "~/components/ui/subject-badge"
 import type { ClassDifficulty, Level, Method, SchoolYear } from "./types"
 import { cn } from "~/lib/utils"

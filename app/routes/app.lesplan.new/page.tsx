@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react"
 import { Link, useActionData, useFetcher, useLoaderData, useNavigation, useSubmit } from "react-router"
 import { ArrowLeft } from "lucide-react"
-import {
-  type Book,
-  type BookDetail,
-  type Subject,
-} from "~/lib/api"
+import { useOnboarding } from "~/components/onboarding/onboarding-context"
+import { StepIntroOverlay } from "~/components/onboarding/step-intro-overlay"
+import type { Book, BookDetail, Classroom, Subject } from "~/lib/backend/types"
 import { Step1ClassSetup } from "~/components/new-plan/step1-class-setup"
+import { ClassroomPicker, type PendingClassroom } from "~/components/new-plan/classroom-picker"
 import { Step2Subject } from "~/components/new-plan/step2-subject"
 import { Step6Paragraphs } from "~/components/new-plan/step6-paragraphs"
 import { PlanSummary } from "~/components/new-plan/plan-summary"
@@ -24,6 +23,7 @@ import type { loader, action } from "./route"
 type SavedPlanState = {
   classSelectionMode: "choose" | "create"
   selectedExistingClassId: string | null
+  selectedClassroomId: string | null
   selectedLevel: Level | null
   selectedYear: SchoolYear | null
   selectedCategory: string | null
@@ -144,6 +144,10 @@ function loadPlanState(): SavedPlanState | null {
         typeof parsed.selectedExistingClassId === "string" && parsed.selectedExistingClassId.length > 0
           ? parsed.selectedExistingClassId
           : null,
+      selectedClassroomId:
+        typeof parsed.selectedClassroomId === "string" && parsed.selectedClassroomId.length > 0
+          ? parsed.selectedClassroomId
+          : null,
       selectedLevel: typeof parsed.selectedLevel === "string" ? (parsed.selectedLevel as Level) : null,
       selectedYear: typeof parsed.selectedYear === "string" ? (parsed.selectedYear as SchoolYear) : null,
       selectedCategory: typeof parsed.selectedCategory === "string" ? parsed.selectedCategory : null,
@@ -167,17 +171,23 @@ function loadPlanState(): SavedPlanState | null {
 }
 
 export default function NewLesplanPage() {
-  const { existingClasses } = useLoaderData<typeof loader>()
+  const { existingClasses, classrooms: initialClassrooms } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>() as ActionData | undefined
   const navigation = useNavigation()
   const submit = useSubmit()
 
+  const { phase } = useOnboarding()
+  const isOnboarding = phase === "voltooid"
+  const [dismissedStepIntros, setDismissedStepIntros] = useState<Set<number>>(new Set())
   const hasExistingClasses = existingClasses.length > 0
   const [classSelectionMode, setClassSelectionMode] = useState<"choose" | "create">(
     hasExistingClasses ? "choose" : "create"
   )
   const [selectedExistingClassId, setSelectedExistingClassId] = useState<string | null>(null)
   const [existingClassPrefillBookId, setExistingClassPrefillBookId] = useState<string | null>(null)
+  const [classrooms, setClassrooms] = useState<Classroom[]>(initialClassrooms)
+  const [selectedClassroomId, setSelectedClassroomId] = useState<string | null>(null)
+  const [pendingClassroom, setPendingClassroom] = useState<PendingClassroom>(null)
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null)
   const [selectedYear, setSelectedYear] = useState<SchoolYear | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -287,6 +297,7 @@ export default function NewLesplanPage() {
       setExistingClassPrefillBookId(null)
     }
 
+    setSelectedClassroomId(saved.selectedClassroomId)
     setSelectedLevel(saved.selectedLevel)
     setSelectedYear(saved.selectedYear)
     setSelectedCategory(saved.selectedCategory)
@@ -438,6 +449,7 @@ export default function NewLesplanPage() {
     const draft: SavedPlanState = {
       classSelectionMode,
       selectedExistingClassId,
+      selectedClassroomId,
       selectedLevel,
       selectedYear,
       selectedCategory,
@@ -458,6 +470,7 @@ export default function NewLesplanPage() {
   }, [
     classSelectionMode,
     selectedExistingClassId,
+    selectedClassroomId,
     selectedLevel,
     selectedYear,
     selectedCategory,
@@ -690,6 +703,27 @@ export default function NewLesplanPage() {
     }
   }
 
+  async function handleConfirmStep1() {
+    if (pendingClassroom) {
+      try {
+        const res = await fetch("/api/classrooms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: pendingClassroom.name, assets: pendingClassroom.assets }),
+        })
+        if (res.ok) {
+          const created: Classroom = await res.json()
+          setClassrooms((prev) => [...prev, created])
+          setSelectedClassroomId(created.id ?? null)
+          setPendingClassroom(null)
+        }
+      } catch {
+        // Classroom creation failed — continue without it
+      }
+    }
+    setClassSetupConfirmed(true)
+  }
+
   function handleCreateLesplan() {
     if (
       !selectedLevel ||
@@ -710,6 +744,7 @@ export default function NewLesplanPage() {
       "payload",
       JSON.stringify({
         selectedExistingClassId,
+        selectedClassroomId,
         selectedLevel,
         selectedYear,
         selectedSubject,
@@ -764,8 +799,17 @@ export default function NewLesplanPage() {
           onClassSizeChange={setClassSize}
           onLessonDurationChange={setLessonDuration}
           onClassDifficultyChange={setClassDifficulty}
-          onConfirm={() => setClassSetupConfirmed(true)}
+          onConfirm={handleConfirmStep1}
           canContinue={classSetupValid}
+          classroomPicker={
+            <ClassroomPicker
+              classrooms={classrooms}
+              classroomsLoading={false}
+              selectedClassroomId={selectedClassroomId}
+              onSelect={setSelectedClassroomId}
+              onPendingChange={setPendingClassroom}
+            />
+          }
         />
       )}
 
@@ -836,6 +880,13 @@ export default function NewLesplanPage() {
           submitting={isSubmitting}
           submitError={actionData?.error ?? null}
           submitLabel="Genereer lesplan"
+        />
+      )}
+
+      {isOnboarding && !showSummary && !dismissedStepIntros.has(step) && (
+        <StepIntroOverlay
+          step={step as 1 | 2 | 3}
+          onDismiss={() => setDismissedStepIntros((prev) => new Set([...prev, step]))}
         />
       )}
     </div>
