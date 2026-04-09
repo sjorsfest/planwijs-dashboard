@@ -38,8 +38,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from "~/components/ui/dialog"
-import type { Event } from "~/lib/api"
 import type { loader } from "./route"
+
+type Event = { id: string; name: string; description?: string | null; planned_date: string }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 

@@ -1,6 +1,5 @@
 import type { components } from "~/types/api.generated"
 
-export type Event = components["schemas"]["Event"]
 export type User = components["schemas"]["User"]
 export type Method = components["schemas"]["Method"]
 export type Class = components["schemas"]["Class"]
@@ -19,11 +18,15 @@ export type LessonPlanResponse = components["schemas"]["LessonPlanResponse"]
 export type LessonPreparationTodoResponse = components["schemas"]["LessonPreparationTodoResponse"]
 export type LessonPreparationStatus = components["schemas"]["LessonPreparationStatus"]
 export type ClassSupportChallenge = components["schemas"]["ClassSupportChallenge"]
+export type Classroom = components["schemas"]["Classroom"]
+export type ClassroomCreate = components["schemas"]["ClassroomCreate"]
 export type LesplanOverviewResponse = components["schemas"]["LesplanOverviewResponse"]
 export type LesplanResponse = components["schemas"]["LesplanResponse"] & {
   feedback_messages: FeedbackMessageResponse[]
 }
-export type CreateLesplanRequest = components["schemas"]["CreateLesplanRequest"]
+export type CreateLesplanRequest = components["schemas"]["CreateLesplanRequest"] & {
+  classroom_id?: string | null
+}
 export type FeedbackItem = components["schemas"]["FeedbackItem"]
 export type FeedbackRequest = components["schemas"]["FeedbackRequest"]
 export type Subject = {
@@ -103,9 +106,9 @@ async function requestJson<T>(url: string, init: RequestInit): Promise<T> {
   return res.json()
 }
 
-export async function getEvents(token: string | null): Promise<Event[]> {
+export async function getClassrooms(token: string | null): Promise<Classroom[]> {
   try {
-    const res = await fetch(`${API_URL}/events/`, {
+    const res = await fetch(`${API_URL}/classrooms/`, {
       headers: { "Content-Type": "application/json", ...authHeader(token) },
     })
     if (!res.ok) return []
@@ -115,20 +118,47 @@ export async function getEvents(token: string | null): Promise<Event[]> {
   }
 }
 
-export async function createEvent(
-  data: { name: string; description?: string | null; planned_date: string },
-  token: string | null
-): Promise<Event | null> {
+export async function getClassroom(token: string | null, classroomId: string): Promise<Classroom | null> {
   try {
-    const res = await fetch(`${API_URL}/events/`, {
-      method: "POST",
+    const res = await fetch(`${API_URL}/classrooms/${classroomId}`, {
       headers: { "Content-Type": "application/json", ...authHeader(token) },
-      body: JSON.stringify(data),
     })
     if (!res.ok) return null
     return res.json()
   } catch {
     return null
+  }
+}
+
+export async function createClassroom(data: ClassroomCreate, token: string | null): Promise<Classroom> {
+  return requestJson<Classroom>(`${API_URL}/classrooms/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeader(token) },
+    body: JSON.stringify(data),
+  })
+}
+
+export async function updateClassroom(
+  classroomId: string,
+  data: Partial<Omit<Classroom, "id" | "created_at" | "updated_at" | "user_id">>,
+  token: string | null
+): Promise<Classroom> {
+  return requestJson<Classroom>(`${API_URL}/classrooms/${classroomId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeader(token) },
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteClassroom(classroomId: string, token: string | null): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_URL}/classrooms/${classroomId}`, {
+      method: "DELETE",
+      headers: authHeader(token),
+    })
+    return res.ok || res.status === 204
+  } catch {
+    return false
   }
 }
 
@@ -231,18 +261,6 @@ export async function getBookDetail(token: string | null, bookId: string): Promi
     return res.json()
   } catch {
     return null
-  }
-}
-
-export async function deleteEvent(id: string, token: string | null): Promise<boolean> {
-  try {
-    const res = await fetch(`${API_URL}/events/${id}`, {
-      method: "DELETE",
-      headers: authHeader(token),
-    })
-    return res.ok || res.status === 204
-  } catch {
-    return false
   }
 }
 

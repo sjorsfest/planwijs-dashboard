@@ -9,6 +9,8 @@ import {
   LogOut,
 } from "lucide-react"
 import { LesLabLogo } from "~/components/branding/leslab-logo"
+import { OnboardingProvider } from "~/components/onboarding/onboarding-context"
+import { WelkomOverlay } from "~/components/onboarding/welkom-overlay"
 
 const navItems = [
   {
@@ -39,6 +41,7 @@ const navItems = [
 ]
 export default function AppLayout() {
   return (
+    <OnboardingProvider>
     <div className="min-h-screen bg-[#f8f9ff] grid grid-cols-1 lg:grid-cols-[260px_1fr]">
       <NavigationProgress />
       {/* ── Zijbalk ── */}
@@ -103,5 +106,7 @@ export default function AppLayout() {
         <Outlet />
       </div>
     </div>
+    <WelkomOverlay />
+    </OnboardingProvider>
   )
 }

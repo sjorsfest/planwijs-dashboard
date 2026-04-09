@@ -20,6 +20,8 @@ import { OverviewTab } from "~/components/lesplan/overview-tab"
 import { LessonSequenceTab } from "~/components/lesplan/lesson-sequence-tab"
 import { TeacherNotesTab } from "~/components/lesplan/teacher-notes-tab"
 import { type SectionFeedbackItem, FeedbackPanel } from "~/components/lesplan/section-feedback"
+import { useOnboarding } from "~/components/onboarding/onboarding-context"
+import { VoltooidOverlay } from "~/components/onboarding/voltooid-overlay"
 import type { ActionData } from "./route"
 import type { loader } from "./route"
 
@@ -32,6 +34,14 @@ export default function LessonSeriesReviewPage() {
   const [feedbackText, setFeedbackText] = useState("")
   const [activeTab, setActiveTab] = useState<ReviewTabId>("overview")
   const [sectionFeedback, setSectionFeedback] = useState<SectionFeedbackItem[]>([])
+  const onboarding = useOnboarding()
+
+  // Advance onboarding to "voltooid" when user lands here for the first time
+  useEffect(() => {
+    if (onboarding.hydrated && onboarding.phase !== "dismissed" && onboarding.phase !== "voltooid") {
+      onboarding.advance()
+    }
+  }, [onboarding.hydrated]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSectionFeedback = useCallback((item: Omit<SectionFeedbackItem, "id" | "createdAt">) => {
     setSectionFeedback((prev) => [
@@ -341,6 +351,7 @@ export default function LessonSeriesReviewPage() {
         isApproving={state.ui.approving || approveFetcher.state !== "idle"}
         status={state.status}
       />
+      <VoltooidOverlay />
     </div>
   )
 }

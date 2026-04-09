@@ -45,13 +45,6 @@ export type KnowledgeCoverageItem = {
   rationale?: string
 }
 
-export type ApprovalReadiness = {
-  ready_for_approval: boolean
-  rationale: string
-  checklist: string[]
-  open_questions: string[]
-}
-
 export type LesplanOverviewState = {
   title?: string
   series_summary?: string
@@ -63,7 +56,6 @@ export type LesplanOverviewState = {
   lesson_outline?: LessonOutlineItem[]
   goal_coverage?: GoalCoverageItem[]
   knowledge_coverage?: KnowledgeCoverageItem[]
-  approval_readiness?: ApprovalReadiness
   didactic_approach?: string
 } | null
 
@@ -90,7 +82,6 @@ export type LesplanDoneEvent = {
     lesson_outline?: LessonOutlineItem[]
     goal_coverage?: GoalCoverageItem[]
     knowledge_coverage?: KnowledgeCoverageItem[]
-    approval_readiness?: ApprovalReadiness
     didactic_approach?: string
   }
   assistant_message?: string

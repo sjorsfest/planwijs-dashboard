@@ -38,78 +38,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/users/": {
+    "/users/me": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List Users */
-        get: operations["list_users_users__get"];
+        /** Get Current User Profile */
+        get: operations["get_current_user_profile_users_me_get"];
         put?: never;
-        /** Create User */
-        post: operations["create_user_users__post"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Current User */
+        patch: operations["update_current_user_users_me_patch"];
+        trace?: never;
+    };
+    "/classrooms/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Classrooms */
+        get: operations["list_classrooms_classrooms__get"];
+        put?: never;
+        /** Create Classroom */
+        post: operations["create_classroom_classrooms__post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/users/{user_id}": {
+    "/classrooms/{classroom_id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get User */
-        get: operations["get_user_users__user_id__get"];
+        /** Get Classroom */
+        get: operations["get_classroom_classrooms__classroom_id__get"];
         put?: never;
         post?: never;
-        /** Delete User */
-        delete: operations["delete_user_users__user_id__delete"];
+        /** Delete Classroom */
+        delete: operations["delete_classroom_classrooms__classroom_id__delete"];
         options?: never;
         head?: never;
-        /** Update User */
-        patch: operations["update_user_users__user_id__patch"];
-        trace?: never;
-    };
-    "/events/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Events */
-        get: operations["list_events_events__get"];
-        put?: never;
-        /** Create Event */
-        post: operations["create_event_events__post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/events/{event_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Event */
-        get: operations["get_event_events__event_id__get"];
-        put?: never;
-        post?: never;
-        /** Delete Event */
-        delete: operations["delete_event_events__event_id__delete"];
-        options?: never;
-        head?: never;
-        /** Update Event */
-        patch: operations["update_event_events__event_id__patch"];
+        /** Update Classroom */
+        patch: operations["update_classroom_classrooms__classroom_id__patch"];
         trace?: never;
     };
     "/methods/": {
@@ -278,6 +259,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/lesplan/{request_id}/generate-overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate Overview Endpoint */
+        post: operations["generate_overview_endpoint_lesplan__request_id__generate_overview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lesplan/{request_id}/stream-overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stream Overview Endpoint */
+        get: operations["stream_overview_endpoint_lesplan__request_id__stream_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/lesplan/{request_id}/feedback": {
         parameters: {
             query?: never;
@@ -400,27 +415,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Health
+         * @description Health check endpoint that verifies database connectivity.
+         */
+        get: operations["health_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** ApprovalReadinessResponse */
-        ApprovalReadinessResponse: {
-            /**
-             * Ready For Approval
-             * @default false
-             */
-            ready_for_approval: boolean;
-            /**
-             * Rationale
-             * @default
-             */
-            rationale: string;
-            /** Checklist */
-            checklist?: string[];
-            /** Open Questions */
-            open_questions?: string[];
-        };
         /** Book */
         "Book-Input": {
             /** Id */
@@ -668,10 +686,46 @@ export interface components {
          * @enum {string}
          */
         ClassSupportChallenge: "Meer ondersteuning" | "Gebalanceerd" | "Meer uitdaging";
-        /** CreateLesplanRequest */
-        CreateLesplanRequest: {
+        /** Classroom */
+        Classroom: {
+            /** Id */
+            id?: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at?: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /**
+             * Assets
+             * @description Beschikbare middelen in het lokaal (bijv. Digibord, Whiteboard, Lab-materiaal).
+             */
+            assets?: string[];
             /** User Id */
             user_id: string;
+        };
+        /** ClassroomCreate */
+        ClassroomCreate: {
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /**
+             * Assets
+             * @description Beschikbare middelen in het lokaal (bijv. Digibord, Whiteboard, Lab-materiaal).
+             */
+            assets?: string[];
+        };
+        /** CreateLesplanRequest */
+        CreateLesplanRequest: {
             /** Class Id */
             class_id: string;
             /** Book Id */
@@ -695,42 +749,6 @@ export interface components {
             status: components["schemas"]["LessonPreparationStatus"];
             /** Due Date */
             due_date?: string | null;
-        };
-        /** Event */
-        Event: {
-            /** Id */
-            id?: string;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at?: string;
-            /**
-             * Updated At
-             * Format: date-time
-             */
-            updated_at?: string;
-            /** Name */
-            name: string;
-            /** Description */
-            description?: string | null;
-            /**
-             * Planned Date
-             * Format: date
-             */
-            planned_date: string;
-        };
-        /** EventCreate */
-        EventCreate: {
-            /** Name */
-            name: string;
-            /** Description */
-            description?: string | null;
-            /**
-             * Planned Date
-             * Format: date
-             */
-            planned_date: string;
         };
         /** FeedbackItem */
         FeedbackItem: {
@@ -802,7 +820,6 @@ export interface components {
             goal_coverage: components["schemas"]["GoalCoverageItemResponse"][];
             /** Knowledge Coverage */
             knowledge_coverage: components["schemas"]["KnowledgeCoverageItemResponse"][];
-            approval_readiness: components["schemas"]["ApprovalReadinessResponse"];
             /** Didactic Approach */
             didactic_approach: string;
             /** Lessons */
@@ -1143,7 +1160,7 @@ export interface operations {
             };
         };
     };
-    list_users_users__get: {
+    get_current_user_profile_users_me_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1158,111 +1175,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["User"][];
+                    "application/json": components["schemas"]["User"];
                 };
             };
         };
     };
-    create_user_users__post: {
+    update_current_user_users_me_patch: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["User"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["User"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_user_users__user_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                user_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["User"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_user_users__user_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                user_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_user_users__user_id__patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                user_id: string;
-            };
             cookie?: never;
         };
         requestBody: {
@@ -1291,7 +1213,7 @@ export interface operations {
             };
         };
     };
-    list_events_events__get: {
+    list_classrooms_classrooms__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1306,12 +1228,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Event"][];
+                    "application/json": components["schemas"]["Classroom"][];
                 };
             };
         };
     };
-    create_event_events__post: {
+    create_classroom_classrooms__post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1320,7 +1242,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["EventCreate"];
+                "application/json": components["schemas"]["ClassroomCreate"];
             };
         };
         responses: {
@@ -1330,7 +1252,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Event"];
+                    "application/json": components["schemas"]["Classroom"];
                 };
             };
             /** @description Validation Error */
@@ -1344,12 +1266,12 @@ export interface operations {
             };
         };
     };
-    get_event_events__event_id__get: {
+    get_classroom_classrooms__classroom_id__get: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                event_id: string;
+                classroom_id: string;
             };
             cookie?: never;
         };
@@ -1361,7 +1283,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Event"];
+                    "application/json": components["schemas"]["Classroom"];
                 };
             };
             /** @description Validation Error */
@@ -1375,12 +1297,12 @@ export interface operations {
             };
         };
     };
-    delete_event_events__event_id__delete: {
+    delete_classroom_classrooms__classroom_id__delete: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                event_id: string;
+                classroom_id: string;
             };
             cookie?: never;
         };
@@ -1404,18 +1326,18 @@ export interface operations {
             };
         };
     };
-    update_event_events__event_id__patch: {
+    update_classroom_classrooms__classroom_id__patch: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                event_id: string;
+                classroom_id: string;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Event"];
+                "application/json": components["schemas"]["Classroom"];
             };
         };
         responses: {
@@ -1425,7 +1347,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Event"];
+                    "application/json": components["schemas"]["Classroom"];
                 };
             };
             /** @description Validation Error */
@@ -1763,7 +1685,6 @@ export interface operations {
     list_classes_classes__get: {
         parameters: {
             query?: {
-                user_id?: string | null;
                 subject?: components["schemas"]["app__models__enums__Subject"] | null;
                 level?: components["schemas"]["Level"] | null;
                 school_year?: components["schemas"]["SchoolYear"] | null;
@@ -2084,9 +2005,7 @@ export interface operations {
     };
     list_lespannen_lesplan__get: {
         parameters: {
-            query?: {
-                user_id?: string | null;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
@@ -2100,15 +2019,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LesplanResponse"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2133,6 +2043,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LesplanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_overview_endpoint_lesplan__request_id__generate_overview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LesplanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stream_overview_endpoint_lesplan__request_id__stream_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -2442,7 +2414,6 @@ export interface operations {
     get_calendar_calendar__get: {
         parameters: {
             query: {
-                user_id: string;
                 start_date: string;
                 end_date: string;
             };
@@ -2468,6 +2439,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    health_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
                 };
             };
         };

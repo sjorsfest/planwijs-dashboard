@@ -1,5 +1,4 @@
 import type {
-  ApprovalReadiness,
   GoalCoverageItem,
   KnowledgeCoverageItem,
   LesplanDoneEvent,
@@ -79,17 +78,6 @@ export function knowledgeCoverageList(value: unknown): KnowledgeCoverageItem[] |
   return normalized.length > 0 ? normalized : undefined
 }
 
-export function approvalReadiness(value: unknown): ApprovalReadiness | undefined {
-  const raw = asObject(value)
-  if (!raw) return undefined
-  return {
-    ready_for_approval: Boolean(raw.ready_for_approval),
-    rationale: typeof raw.rationale === "string" ? raw.rationale : "",
-    checklist: stringList(raw.checklist) ?? [],
-    open_questions: stringList(raw.open_questions) ?? [],
-  }
-}
-
 export function normalizeOverview(
   overview: LesplanResponse["overview"] | LesplanDoneEvent["overview"] | null | undefined
 ): LesplanOverviewState {
@@ -107,7 +95,6 @@ export function normalizeOverview(
     lesson_outline: lessonOutlineList(raw.lesson_outline),
     goal_coverage: goalCoverageList(raw.goal_coverage),
     knowledge_coverage: knowledgeCoverageList(raw.knowledge_coverage),
-    approval_readiness: approvalReadiness(raw.approval_readiness),
     didactic_approach: typeof raw.didactic_approach === "string" ? raw.didactic_approach : undefined,
   }
 }
@@ -143,9 +130,6 @@ export function mapPartialPayload(partial: Record<string, unknown>): LesplanOver
   if (Array.isArray(partial.goal_coverage)) result.goal_coverage = goalCoverageList(partial.goal_coverage)
   if (Array.isArray(partial.knowledge_coverage)) {
     result.knowledge_coverage = knowledgeCoverageList(partial.knowledge_coverage)
-  }
-  if (partial.approval_readiness && typeof partial.approval_readiness === "object") {
-    result.approval_readiness = approvalReadiness(partial.approval_readiness)
   }
   if (typeof partial.didactic_approach === "string") result.didactic_approach = partial.didactic_approach
   return result
