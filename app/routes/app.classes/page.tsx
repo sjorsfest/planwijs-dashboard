@@ -11,9 +11,11 @@ import {
   CircleHelp,
   ChevronDown,
   ChevronUp,
+  MapPin,
+  Plus,
 } from "lucide-react"
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion"
-import type { Class } from "~/lib/backend/types"
+import type { Class, Classroom } from "~/lib/backend/types"
 import { Button } from "~/components/ui/button"
 import { Badge } from "~/components/ui/badge"
 import {
@@ -35,6 +37,7 @@ import {
   type ClassSupportChallenge,
 } from "~/components/new-plan/types"
 import { cn } from "~/lib/utils"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs"
 import type { loader } from "./route"
 
 const DIFFICULTY_OPTIONS: { value: ClassDifficulty; label: string; description: string }[] = [
@@ -114,8 +117,19 @@ const SOFT_EASE = [0.22, 1, 0.36, 1] as const
 const SUBTLE_EASE = [0.22, 0.64, 0.29, 0.99] as const
 const SUBTLE_LAYOUT_TRANSITION = { duration: 0.5, ease: SUBTLE_EASE } as const
 
+const PRESET_ASSETS = [
+  "Digibord",
+  "Whiteboard",
+  "Beamer",
+  "Laptops / Chromebooks",
+  "Telefoons (Kahoot e.d.)",
+  "Groepstafels",
+  "Geluidsinstallatie",
+  "Printer",
+]
+
 export default function ClassesPage() {
-  const { classes } = useLoaderData<typeof loader>()
+  const { classes, classrooms } = useLoaderData<typeof loader>()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const selectedId = editingId
@@ -137,6 +151,21 @@ export default function ClassesPage() {
     setEditingId(classId)
   }
 
+  // Classroom editing state
+  const [editingClassroomId, setEditingClassroomId] = useState<string | null>(null)
+  const [deletingClassroomId, setDeletingClassroomId] = useState<string | null>(null)
+  const orderedClassrooms = editingClassroomId
+    ? [
+        ...classrooms.filter((cr) => cr.id === editingClassroomId),
+        ...classrooms.filter((cr) => cr.id !== editingClassroomId),
+      ]
+    : classrooms
+  const focusedClassroom = editingClassroomId
+    ? orderedClassrooms.find((cr) => cr.id === editingClassroomId) ?? null
+    : null
+  const classroomsToRender = focusedClassroom ? [focusedClassroom] : orderedClassrooms
+  const isFocusedClassroomEditView = focusedClassroom !== null
+
   return (
     <div className="p-6 md:p-8 max-w-6xl">
       <div className="mb-8">
@@ -144,67 +173,144 @@ export default function ClassesPage() {
           Klassenoverzicht
         </h1>
         <p className="text-sm text-[#464554] mt-1.5">
-          Beheer je klassen en pas hun profiel aan. Deze gegevens bepalen hoe de AI je lesplannen op maat maakt.
+          Beheer je klassen, lokalen en hun profielen. Deze gegevens bepalen hoe de AI je lesplannen op maat maakt.
         </p>
       </div>
 
-      {classes.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 flex flex-col items-center gap-4 text-center shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
-          <div className="w-12 h-12 rounded-2xl bg-[#eff4ff] flex items-center justify-center">
-            <Users className="w-6 h-6 text-[#5c5378]" />
-          </div>
-          <div>
-            <p className="font-semibold text-base text-[#0b1c30]">Nog geen klassen</p>
-            <p className="text-sm text-[#464554] mt-1">
-              Klassen worden automatisch aangemaakt wanneer je een nieuw lesplan start.
-            </p>
-          </div>
-          <Button asChild className="gap-2 mt-2">
-            <Link to="/lesplan/new" prefetch="intent">Nieuw lesplan starten</Link>
-          </Button>
-        </div>
-      ) : (
-        <LayoutGroup>
-          <motion.div
-            layout
-            transition={{ layout: SUBTLE_LAYOUT_TRANSITION }}
-            className={cn(
-              "grid gap-4",
-              isFocusedEditView
-                ? "grid-cols-1 max-w-3xl"
-                : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-            )}
-          >
-            {classesToRender.map((cls) => (
+      <Tabs defaultValue="klassen">
+        <TabsList>
+          <TabsTrigger value="klassen" className="gap-1.5">
+            <Users className="w-3.5 h-3.5" />
+            Klassen
+          </TabsTrigger>
+          <TabsTrigger value="lokalen" className="gap-1.5">
+            <MapPin className="w-3.5 h-3.5" />
+            Lokalen
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ── Klassen tab ── */}
+        <TabsContent value="klassen">
+          {classes.length === 0 ? (
+            <div className="bg-white rounded-2xl p-12 flex flex-col items-center gap-4 text-center shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
+              <div className="w-12 h-12 rounded-2xl bg-[#eff4ff] flex items-center justify-center">
+                <Users className="w-6 h-6 text-[#5c5378]" />
+              </div>
+              <div>
+                <p className="font-semibold text-base text-[#0b1c30]">Nog geen klassen</p>
+                <p className="text-sm text-[#464554] mt-1">
+                  Klassen worden automatisch aangemaakt wanneer je een nieuw lesplan start.
+                </p>
+              </div>
+              <Button asChild className="gap-2 mt-2">
+                <Link to="/lesplan/new" prefetch="intent">Nieuw lesplan starten</Link>
+              </Button>
+            </div>
+          ) : (
+            <LayoutGroup>
               <motion.div
-                key={cls.id}
                 layout
                 transition={{ layout: SUBTLE_LAYOUT_TRANSITION }}
                 className={cn(
-                  isFocusedEditView && editingId === cls.id && "col-start-1 row-start-1"
+                  "grid gap-4",
+                  isFocusedEditView
+                    ? "grid-cols-1 max-w-3xl"
+                    : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
                 )}
               >
-                <ClassCard
-                  cls={cls}
-                  isEditing={editingId === cls.id}
-                  isDeleting={deletingId === cls.id}
-                  onEdit={() => {
-                    if (editingId === cls.id) {
-                      closeEditor()
-                    } else {
-                      startEditor(cls.id!)
-                    }
-                  }}
-                  onCancelEdit={closeEditor}
-                  onDelete={() => setDeletingId(cls.id!)}
-                  onCancelDelete={() => setDeletingId(null)}
-                  onSaved={closeEditor}
-                />
+                {classesToRender.map((cls) => (
+                  <motion.div
+                    key={cls.id}
+                    layout
+                    transition={{ layout: SUBTLE_LAYOUT_TRANSITION }}
+                    className={cn(
+                      isFocusedEditView && editingId === cls.id && "col-start-1 row-start-1"
+                    )}
+                  >
+                    <ClassCard
+                      cls={cls}
+                      isEditing={editingId === cls.id}
+                      isDeleting={deletingId === cls.id}
+                      onEdit={() => {
+                        if (editingId === cls.id) {
+                          closeEditor()
+                        } else {
+                          startEditor(cls.id!)
+                        }
+                      }}
+                      onCancelEdit={closeEditor}
+                      onDelete={() => setDeletingId(cls.id!)}
+                      onCancelDelete={() => setDeletingId(null)}
+                      onSaved={closeEditor}
+                    />
+                  </motion.div>
+                ))}
               </motion.div>
-            ))}
-          </motion.div>
-        </LayoutGroup>
-      )}
+            </LayoutGroup>
+          )}
+        </TabsContent>
+
+        {/* ── Lokalen tab ── */}
+        <TabsContent value="lokalen">
+          {classrooms.length === 0 ? (
+            <div className="bg-white rounded-2xl p-12 flex flex-col items-center gap-4 text-center shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
+              <div className="w-12 h-12 rounded-2xl bg-[#e6f7f7] flex items-center justify-center">
+                <MapPin className="w-6 h-6 text-[#0d7377]" />
+              </div>
+              <div>
+                <p className="font-semibold text-base text-[#0b1c30]">Nog geen lokalen</p>
+                <p className="text-sm text-[#464554] mt-1">
+                  Lokalen worden aangemaakt wanneer je een nieuw lesplan start en een lokaal toevoegt.
+                </p>
+              </div>
+              <Button asChild className="gap-2 mt-2">
+                <Link to="/lesplan/new" prefetch="intent">Nieuw lesplan starten</Link>
+              </Button>
+            </div>
+          ) : (
+            <LayoutGroup id="classrooms">
+              <motion.div
+                layout
+                transition={{ layout: SUBTLE_LAYOUT_TRANSITION }}
+                className={cn(
+                  "grid gap-4",
+                  isFocusedClassroomEditView
+                    ? "grid-cols-1 max-w-3xl"
+                    : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
+                )}
+              >
+                {classroomsToRender.map((classroom) => (
+                  <motion.div
+                    key={classroom.id}
+                    layout
+                    transition={{ layout: SUBTLE_LAYOUT_TRANSITION }}
+                    className={cn(
+                      isFocusedClassroomEditView && editingClassroomId === classroom.id && "col-start-1 row-start-1"
+                    )}
+                  >
+                    <ClassroomCard
+                      classroom={classroom}
+                      isEditing={editingClassroomId === classroom.id}
+                      isDeleting={deletingClassroomId === classroom.id}
+                      onEdit={() => {
+                        if (editingClassroomId === classroom.id) {
+                          setEditingClassroomId(null)
+                        } else {
+                          setEditingClassroomId(classroom.id!)
+                        }
+                      }}
+                      onCancelEdit={() => setEditingClassroomId(null)}
+                      onDelete={() => setDeletingClassroomId(classroom.id!)}
+                      onCancelDelete={() => setDeletingClassroomId(null)}
+                      onSaved={() => setEditingClassroomId(null)}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </LayoutGroup>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
@@ -258,8 +364,8 @@ function ClassCard({
               <SubjectIcon subjectName={cls.subject} className="w-4.5 h-4.5 text-white" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-[#0b1c30] truncate">{cls.subject}</p>
-              <p className="text-xs text-[#464554]">{cls.level} · {cls.school_year}</p>
+              <p className="text-sm font-bold text-[#0b1c30] truncate">{cls.name}</p>
+              <p className="text-xs text-[#464554]">{cls.subject} · {cls.level} · {cls.school_year}</p>
             </div>
           </div>
 
@@ -435,6 +541,7 @@ function EditForm({ cls, onSaved, onCancel }: EditFormProps) {
   const fetcher = useFetcher()
   const isSubmitting = fetcher.state !== "idle"
 
+  const [name, setName] = useState(cls.name)
   const [level, setLevel] = useState<Level>(cls.level)
   const [schoolYear, setSchoolYear] = useState<SchoolYear>(cls.school_year)
   const [size, setSize] = useState<number>(cls.size)
@@ -448,6 +555,7 @@ function EditForm({ cls, onSaved, onCancel }: EditFormProps) {
 
   function handleSave() {
     const body: Record<string, unknown> = {
+      name: name.trim(),
       level,
       school_year: schoolYear,
       size,
@@ -467,6 +575,18 @@ function EditForm({ cls, onSaved, onCancel }: EditFormProps) {
 
   return (
     <div className="p-5 space-y-4">
+      {/* Name */}
+      <label className="block">
+        <span className="block text-xs font-medium text-[#464554] mb-1.5">Klasnaam</span>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="bijv. 3H1, 2V-A, Klas 4"
+          className="w-full h-10 rounded-xl bg-[#dce9ff] px-3 text-sm font-semibold text-[#0b1c30] outline-none focus:ring-2 focus:ring-[#2a14b4]/35 placeholder:font-normal placeholder:text-[#8a91a5]"
+        />
+      </label>
+
       {/* Level & Year */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block">
@@ -648,6 +768,307 @@ function EditForm({ cls, onSaved, onCancel }: EditFormProps) {
         <Button
           onClick={handleSave}
           disabled={isSubmitting}
+          className="gap-1.5 text-sm"
+        >
+          <Check className="w-4 h-4" />
+          Opslaan
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={onCancel}
+          disabled={isSubmitting}
+          className="text-sm"
+        >
+          Annuleren
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// ── Classroom Card ──────────────────────────────────────────
+
+interface ClassroomCardProps {
+  classroom: Classroom
+  isEditing: boolean
+  isDeleting: boolean
+  onEdit: () => void
+  onCancelEdit: () => void
+  onDelete: () => void
+  onCancelDelete: () => void
+  onSaved: () => void
+}
+
+function ClassroomCard({
+  classroom,
+  isEditing,
+  isDeleting,
+  onEdit,
+  onCancelEdit,
+  onDelete,
+  onCancelDelete,
+  onSaved,
+}: ClassroomCardProps) {
+  const fetcher = useFetcher()
+
+  function handleDelete() {
+    const formData = new FormData()
+    formData.set("_action", "deleteClassroom")
+    formData.set("classroomId", classroom.id!)
+    fetcher.submit(formData, { method: "POST" })
+    onCancelDelete()
+  }
+
+  return (
+    <motion.div
+      layout
+      transition={{ layout: SUBTLE_LAYOUT_TRANSITION }}
+      className="bg-white rounded-2xl shadow-[0px_24px_40px_rgba(11,28,48,0.07)] overflow-hidden"
+    >
+      <div className="p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0d7377] to-[#14919b] flex items-center justify-center flex-shrink-0 shadow-[0px_4px_10px_rgba(13,115,119,0.25)]">
+              <MapPin className="w-4.5 h-4.5 text-white" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-[#0b1c30] truncate">{classroom.name}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={onEdit}
+              className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+                isEditing
+                  ? "bg-[#0d7377]/10 text-[#0d7377]"
+                  : "text-[#5c5378] hover:bg-[#eff4ff]"
+              )}
+            >
+              {isEditing ? <X className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={isDeleting ? handleDelete : onDelete}
+              className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+                isDeleting
+                  ? "bg-red-50 text-red-600"
+                  : "text-[#5c5378] hover:bg-[#eff4ff]"
+              )}
+            >
+              {isDeleting ? <Check className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
+            </button>
+            {isDeleting && (
+              <button
+                onClick={onCancelDelete}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#5c5378] hover:bg-[#eff4ff] transition-all"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {isDeleting && (
+          <p className="text-xs text-red-600 font-medium mb-3">
+            Klik op ✓ om dit lokaal te verwijderen
+          </p>
+        )}
+
+        {/* Assets */}
+        {(classroom.assets ?? []).length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {(classroom.assets ?? []).map((asset) => (
+              <span
+                key={asset}
+                className="inline-flex items-center px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#e6f7f7] text-[#0d7377]"
+              >
+                {asset}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {(classroom.assets ?? []).length === 0 && !isEditing && (
+          <p className="text-xs text-[#8a91a5]">Geen middelen opgegeven</p>
+        )}
+      </div>
+
+      {/* Edit mode */}
+      <AnimatePresence>
+        {isEditing && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{
+              height: { duration: 0.5, ease: SUBTLE_EASE },
+              opacity: { duration: 0.28, ease: SOFT_EASE },
+            }}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-[#eff4ff]">
+              <ClassroomEditForm
+                classroom={classroom}
+                onSaved={onSaved}
+                onCancel={onCancelEdit}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+
+// ── Classroom Edit Form ─────────────────────────────────────
+
+interface ClassroomEditFormProps {
+  classroom: Classroom
+  onSaved: () => void
+  onCancel: () => void
+}
+
+function ClassroomEditForm({ classroom, onSaved, onCancel }: ClassroomEditFormProps) {
+  const fetcher = useFetcher()
+  const isSubmitting = fetcher.state !== "idle"
+
+  const [name, setName] = useState(classroom.name)
+  const [assets, setAssets] = useState<string[]>(classroom.assets ?? [])
+  const [customAsset, setCustomAsset] = useState("")
+  const [showPresets, setShowPresets] = useState(false)
+
+  const availablePresets = PRESET_ASSETS.filter((p) => !assets.includes(p))
+
+  function addAsset(asset: string) {
+    const trimmed = asset.trim()
+    if (trimmed && !assets.includes(trimmed)) {
+      setAssets((prev) => [...prev, trimmed])
+    }
+  }
+
+  function removeAsset(asset: string) {
+    setAssets((prev) => prev.filter((a) => a !== asset))
+  }
+
+  function handleCustomAssetKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      if (customAsset.trim()) {
+        addAsset(customAsset)
+        setCustomAsset("")
+      }
+    }
+    if (e.key === "Backspace" && customAsset === "" && assets.length > 0) {
+      setAssets((prev) => prev.slice(0, -1))
+    }
+  }
+
+  function handleSave() {
+    if (!name.trim()) return
+
+    const body = {
+      name: name.trim(),
+      assets,
+    }
+
+    const formData = new FormData()
+    formData.set("_action", "updateClassroom")
+    formData.set("classroomId", classroom.id!)
+    formData.set("body", JSON.stringify(body))
+    fetcher.submit(formData, { method: "POST" })
+    onSaved()
+  }
+
+  return (
+    <div className="p-5 space-y-4">
+      <label className="block">
+        <span className="block text-xs font-medium text-[#464554] mb-1.5">Naam lokaal</span>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="bijv. Lokaal 204, Science Lab"
+          className="w-full h-10 rounded-xl bg-[#dce9ff] px-3 text-sm font-semibold text-[#0b1c30] outline-none focus:ring-2 focus:ring-[#2a14b4]/35 placeholder:font-normal placeholder:text-[#8a91a5]"
+        />
+      </label>
+
+      <div>
+        <span className="block text-xs font-medium text-[#464554] mb-1.5">
+          Beschikbare middelen
+        </span>
+
+        <div
+          className="min-h-[44px] rounded-xl bg-[#dce9ff] px-3 py-2 flex flex-wrap gap-1.5 items-center cursor-text focus-within:ring-2 focus-within:ring-[#2a14b4]/35"
+          onClick={() => document.getElementById(`asset-input-${classroom.id}`)?.focus()}
+        >
+          {assets.map((asset) => (
+            <span
+              key={asset}
+              className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-1 text-xs font-semibold rounded-lg bg-[#2a14b4] text-white shadow-[0px_2px_6px_rgba(42,20,180,0.25)]"
+            >
+              {asset}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  removeAsset(asset)
+                }}
+                className="ml-0.5 p-0.5 rounded-md hover:bg-white/20 transition-colors"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+          <input
+            id={`asset-input-${classroom.id}`}
+            type="text"
+            value={customAsset}
+            onChange={(e) => setCustomAsset(e.target.value)}
+            onKeyDown={handleCustomAssetKeyDown}
+            onFocus={() => setShowPresets(true)}
+            onBlur={() => setTimeout(() => setShowPresets(false), 200)}
+            placeholder={assets.length === 0 ? "Typ of kies middelen..." : ""}
+            className="flex-1 min-w-[120px] bg-transparent text-sm font-medium text-[#0b1c30] outline-none placeholder:font-normal placeholder:text-[#8a91a5]"
+          />
+        </div>
+
+        {showPresets && availablePresets.length > 0 && (
+          <div className="mt-2 rounded-xl bg-[#f8f9ff] p-2 shadow-[0px_12px_24px_rgba(11,28,48,0.1)]">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8a91a5] px-2 pb-1.5">
+              Suggesties
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {availablePresets
+                .filter(
+                  (p) =>
+                    !customAsset.trim() ||
+                    p.toLowerCase().includes(customAsset.toLowerCase())
+                )
+                .map((preset) => (
+                  <button
+                    key={preset}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      addAsset(preset)
+                      setCustomAsset("")
+                    }}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-[#eff4ff] text-[#0b1c30] hover:bg-[#dce9ff] transition-all"
+                  >
+                    <Plus className="w-3 h-3 text-[#2a14b4]" />
+                    {preset}
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 pt-1">
+        <Button
+          onClick={handleSave}
+          disabled={isSubmitting || !name.trim()}
           className="gap-1.5 text-sm"
         >
           <Check className="w-4 h-4" />

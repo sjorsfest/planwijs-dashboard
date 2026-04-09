@@ -147,23 +147,7 @@ export function ClassroomPicker({
                     {classroom.description && (
                       <p className="text-xs text-[#5c5378] mt-0.5 line-clamp-1">{classroom.description}</p>
                     )}
-                    {(classroom.assets ?? []).length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {(classroom.assets ?? []).slice(0, 4).map((asset) => (
-                          <span
-                            key={asset}
-                            className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full bg-[#2a14b4]/8 text-[#2a14b4]"
-                          >
-                            {asset}
-                          </span>
-                        ))}
-                        {(classroom.assets ?? []).length > 4 && (
-                          <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full bg-[#eff4ff] text-[#5c5378]">
-                            +{(classroom.assets ?? []).length - 4}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    
                   </button>
                 )
               })}

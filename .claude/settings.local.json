@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(npx tsc:*)",
-      "Bash(npx react-router:*)"
+      "Bash(npx react-router:*)",
+      "Bash(npx shadcn@latest add tabs)",
+      "Bash(npx shadcn@latest add tabs --yes)",
+      "Bash(npm ls:*)",
+      "Bash(npm install:*)",
+      "Bash(wc -l /Users/jeroenmeij/Desktop/personal/planwijs-dashboard/app/components/new-plan/*.tsx)"
     ]
   }
 }

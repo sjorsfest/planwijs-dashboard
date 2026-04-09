@@ -18,8 +18,8 @@ export function headers({ loaderHeaders }: Route.HeadersArgs) {
 export async function loader({ request }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
   const api = createApiClient(token)
-  const classes = await api.getClasses()
-  return data({ classes }, { headers: { "Cache-Control": "private, max-age=10" } })
+  const [classes, classrooms] = await Promise.all([api.getClasses(), api.getClassrooms()])
+  return data({ classes, classrooms }, { headers: { "Cache-Control": "private, max-age=10" } })
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -38,6 +38,19 @@ export async function action({ request }: Route.ActionArgs) {
   if (intent === "delete") {
     const classId = formData.get("classId") as string
     await api.deleteClass(classId)
+    return { ok: true }
+  }
+
+  if (intent === "updateClassroom") {
+    const classroomId = formData.get("classroomId") as string
+    const body = JSON.parse(formData.get("body") as string)
+    await api.updateClassroom(classroomId, body)
+    return { ok: true }
+  }
+
+  if (intent === "deleteClassroom") {
+    const classroomId = formData.get("classroomId") as string
+    await api.deleteClassroom(classroomId)
     return { ok: true }
   }
 

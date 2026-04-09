@@ -6,6 +6,7 @@ import type { ClassDifficulty, Level, Method, SchoolYear } from "./types"
 import { cn } from "~/lib/utils"
 
 interface Props {
+  className_: string
   selectedLevel: Level
   selectedYear: SchoolYear
   selectedSubject: Subject
@@ -41,6 +42,7 @@ const DIFFICULTY_STYLES: Record<string, { bg: string; dot: string; text: string 
 }
 
 export function PlanSummary({
+  className_,
   selectedLevel,
   selectedYear,
   selectedSubject,
@@ -130,8 +132,8 @@ export function PlanSummary({
         className="grid grid-cols-2 gap-3.5 mb-4"
       >
         <StatBlock label="Klas" variants={fadeUp}>
-          <p className="text-xl font-bold text-[#0b1c30] leading-tight">{selectedLevel}</p>
-          <p className="text-sm text-[#464554] mt-1">{selectedYear} · {classSize} leerlingen</p>
+          <p className="text-xl font-bold text-[#0b1c30] leading-tight">{className_ || selectedLevel}</p>
+          <p className="text-sm text-[#464554] mt-1">{className_ ? `${selectedLevel} · ` : ""}{selectedYear} · {classSize} leerlingen</p>
         </StatBlock>
 
         <StatBlock label="Lessen" variants={fadeUp}>

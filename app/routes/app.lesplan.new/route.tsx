@@ -32,6 +32,7 @@ export type LoaderData = {
 type SubmittedPlanPayload = {
   selectedExistingClassId: string | null
   selectedClassroomId: string | null
+  className_: string
   selectedLevel: Level
   selectedYear: SchoolYear
   selectedSubject: { id: string; slug: string; name: string; category: string; created_at?: string; updated_at?: string }
@@ -101,6 +102,7 @@ function parseSubmittedPayload(value: unknown): SubmittedPlanPayload | null {
       typeof value.selectedClassroomId === "string" && value.selectedClassroomId.length > 0
         ? value.selectedClassroomId
         : null,
+    className_: typeof value.className_ === "string" ? value.className_ : "",
     selectedLevel: value.selectedLevel as Level,
     selectedYear: value.selectedYear as SchoolYear,
     selectedSubject: subject,
@@ -166,6 +168,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
       return {
         id: classroom.id,
+        name: classroom.name,
         subject: classroom.subject,
         level: classroom.level,
         schoolYear: classroom.school_year,
@@ -214,6 +217,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     if (!classId) {
       const classroom = await api.createClass({
+        name: payload.className_,
         subject: payload.selectedSubject.name as Method["subject"],
         level: payload.selectedLevel,
         school_year: payload.selectedYear,

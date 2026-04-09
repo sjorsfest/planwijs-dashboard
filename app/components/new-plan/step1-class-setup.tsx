@@ -8,6 +8,7 @@ import { LEVELS, SCHOOL_YEARS, getDisabledYears, type ClassDifficulty, type Leve
 
 export interface ExistingClassOption {
   id: string
+  name: string
   subject: string
   level: Level
   schoolYear: SchoolYear
@@ -19,6 +20,7 @@ export interface ExistingClassOption {
 interface Props {
   existingClasses: ExistingClassOption[]
   showCreateForm: boolean
+  className_: string
   selectedLevel: Level | null
   selectedYear: SchoolYear | null
   classSize: number | null
@@ -26,6 +28,7 @@ interface Props {
   classDifficulty: ClassDifficulty | null
   onCreateNew: () => void
   onExistingClassSelect: (classId: string) => void
+  onClassNameChange: (value: string) => void
   onLevelSelect: (level: Level) => void
   onYearSelect: (year: SchoolYear) => void
   onClassSizeChange: (value: number | null) => void
@@ -41,6 +44,7 @@ const LESSON_DURATION_OPTIONS = [45, 50, 60, 90]
 export function Step1ClassSetup({
   existingClasses,
   showCreateForm,
+  className_,
   selectedLevel,
   selectedYear,
   classSize,
@@ -48,6 +52,7 @@ export function Step1ClassSetup({
   classDifficulty,
   onCreateNew,
   onExistingClassSelect,
+  onClassNameChange,
   onLevelSelect,
   onYearSelect,
   onClassSizeChange,
@@ -81,7 +86,7 @@ export function Step1ClassSetup({
                   className="rounded-xl px-4 py-3 text-left transition-all border border-[#e6e8f3] bg-[#f8f9ff] hover:bg-[#eff4ff]"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-[#0b1c30]">{existingClass.subject}</p>
+                    <p className="text-sm font-semibold text-[#0b1c30]">{existingClass.name}</p>
                     {existingClass.latestLesplanUpdatedAt && (
                       <span className="text-[11px] text-[#5c5378]/70">
                         Laatst: {new Date(existingClass.latestLesplanUpdatedAt).toLocaleDateString("nl-NL")}
@@ -89,7 +94,7 @@ export function Step1ClassSetup({
                     )}
                   </div>
                   <p className="mt-1 text-xs text-[#464554]">
-                    {existingClass.level} · {existingClass.schoolYear} · {existingClass.size} leerlingen
+                    {existingClass.subject} · {existingClass.level} · {existingClass.schoolYear} · {existingClass.size} leerlingen
                   </p>
                   <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1">
                     <span
@@ -122,6 +127,16 @@ export function Step1ClassSetup({
         <div className="space-y-4">
           <div className="bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
             <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-4">Klas basis</p>
+            <label className="block mb-3">
+              <span className="block text-xs font-medium text-[#464554] mb-1.5">Klasnaam</span>
+              <input
+                type="text"
+                value={className_}
+                onChange={(e) => onClassNameChange(e.target.value)}
+                placeholder="bijv. 3H1, 2V-A, Klas 4"
+                className="w-full h-10 rounded-xl bg-[#dce9ff] px-3 text-sm font-semibold text-[#0b1c30] outline-none focus:ring-2 focus:ring-[#2a14b4]/35 placeholder:font-normal placeholder:text-[#8a91a5]"
+              />
+            </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <label className="block">
                 <span className="block text-xs font-medium text-[#464554] mb-1.5">Niveau</span>

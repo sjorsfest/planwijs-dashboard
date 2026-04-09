@@ -24,6 +24,7 @@ type SavedPlanState = {
   classSelectionMode: "choose" | "create"
   selectedExistingClassId: string | null
   selectedClassroomId: string | null
+  className_: string
   selectedLevel: Level | null
   selectedYear: SchoolYear | null
   selectedCategory: string | null
@@ -148,6 +149,7 @@ function loadPlanState(): SavedPlanState | null {
         typeof parsed.selectedClassroomId === "string" && parsed.selectedClassroomId.length > 0
           ? parsed.selectedClassroomId
           : null,
+      className_: typeof parsed.className_ === "string" ? parsed.className_ : "",
       selectedLevel: typeof parsed.selectedLevel === "string" ? (parsed.selectedLevel as Level) : null,
       selectedYear: typeof parsed.selectedYear === "string" ? (parsed.selectedYear as SchoolYear) : null,
       selectedCategory: typeof parsed.selectedCategory === "string" ? parsed.selectedCategory : null,
@@ -198,6 +200,7 @@ export default function NewLesplanPage() {
   const [lessonDuration, setLessonDuration] = useState<number | null>(null)
   const [classSize, setClassSize] = useState<number | null>(null)
   const [classDifficulty, setClassDifficulty] = useState<ClassDifficulty | null>(null)
+  const [className_, setClassName] = useState("")
   const [selectedMethod, setSelectedMethod] = useState<Method | null>(null)
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [openChapters, setOpenChapters] = useState<string[]>([])
@@ -257,6 +260,7 @@ export default function NewLesplanPage() {
   })
 
   const classSetupValid =
+    (selectedExistingClassId !== null || className_.trim().length > 0) &&
     selectedLevel !== null &&
     selectedYear !== null &&
     lessonDuration !== null &&
@@ -298,6 +302,7 @@ export default function NewLesplanPage() {
     }
 
     setSelectedClassroomId(saved.selectedClassroomId)
+    setClassName(saved.className_)
     setSelectedLevel(saved.selectedLevel)
     setSelectedYear(saved.selectedYear)
     setSelectedCategory(saved.selectedCategory)
@@ -450,6 +455,7 @@ export default function NewLesplanPage() {
       classSelectionMode,
       selectedExistingClassId,
       selectedClassroomId,
+      className_,
       selectedLevel,
       selectedYear,
       selectedCategory,
@@ -471,6 +477,7 @@ export default function NewLesplanPage() {
     classSelectionMode,
     selectedExistingClassId,
     selectedClassroomId,
+    className_,
     selectedLevel,
     selectedYear,
     selectedCategory,
@@ -745,6 +752,7 @@ export default function NewLesplanPage() {
       JSON.stringify({
         selectedExistingClassId,
         selectedClassroomId,
+        className_,
         selectedLevel,
         selectedYear,
         selectedSubject,
@@ -787,6 +795,7 @@ export default function NewLesplanPage() {
         <Step1ClassSetup
           existingClasses={existingClasses}
           showCreateForm={showCreateClassForm}
+          className_={className_}
           selectedLevel={selectedLevel}
           selectedYear={selectedYear}
           classSize={classSize}
@@ -794,6 +803,7 @@ export default function NewLesplanPage() {
           classDifficulty={classDifficulty}
           onCreateNew={handleCreateNewClass}
           onExistingClassSelect={handleExistingClassSelect}
+          onClassNameChange={setClassName}
           onLevelSelect={handleLevelSelect}
           onYearSelect={handleYearSelect}
           onClassSizeChange={setClassSize}
@@ -864,6 +874,7 @@ export default function NewLesplanPage() {
         selectedMethod && selectedLevel && selectedYear &&
         classDifficulty && lessonCount && lessonDuration && classSize && (
         <PlanSummary
+          className_={selectedExistingClass?.name ?? className_}
           selectedLevel={selectedLevel}
           selectedYear={selectedYear}
           selectedSubject={selectedSubject}

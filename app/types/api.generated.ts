@@ -647,6 +647,8 @@ export interface components {
             updated_at?: string;
             /** User Id */
             user_id: string;
+            /** Name */
+            name: string;
             /** @default Unknown */
             subject: components["schemas"]["app__models__enums__Subject"];
             /** @default Unknown */
