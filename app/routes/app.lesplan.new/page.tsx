@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Link, useActionData, useFetcher, useLoaderData, useNavigation, useSubmit } from "react-router"
+import { useActionData, useFetcher, useLoaderData, useNavigation, useSubmit } from "react-router"
 import { ArrowLeft } from "lucide-react"
 import { useOnboarding } from "~/components/onboarding/onboarding-context"
 import { StepIntroOverlay } from "~/components/onboarding/step-intro-overlay"
@@ -567,7 +567,7 @@ export default function NewLesplanPage() {
     setLessonDuration(existingClass.latestLesplanLessonDuration ?? 50)
     setLessonCount(existingClass.latestLesplanNumLessons ?? null)
 
-    setClassSetupConfirmed(true)
+    setClassSetupConfirmed(false)
     setCurriculumConfirmed(false)
     setSelectedCategory(null)
     setSelectedSubject(null)
@@ -596,15 +596,10 @@ export default function NewLesplanPage() {
     } else if (step === 2) {
       setClassSetupConfirmed(false)
       setCurriculumConfirmed(false)
-      if (selectedExistingClassId) {
-        setSelectedExistingClassId(null)
-        setExistingClassPrefillBookId(null)
-        setClassSelectionMode(hasExistingClasses ? "choose" : "create")
-        setSelectedCategory(null)
-        setSelectedSubject(null)
-        setSelectedMethod(null)
-        setSelectedBook(null)
-      }
+      setSelectedCategory(null)
+      setSelectedSubject(null)
+      setSelectedMethod(null)
+      setSelectedBook(null)
     } else if (step === 1) {
       setSelectedExistingClassId(null)
       setExistingClassPrefillBookId(null)
@@ -770,31 +765,11 @@ export default function NewLesplanPage() {
 
   return (
     <div className="p-8 max-w-4xl">
-      <div className="mb-8">
-        {step === 1 ? (
-          <Link
-            to="/plans"
-            prefetch="intent"
-            className="flex items-center gap-2 text-sm font-bold text-black/60 hover:text-black transition-colors w-fit"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Lessen
-          </Link>
-        ) : (
-          <button
-            onClick={handleBack}
-            className="flex items-center gap-2 text-sm font-bold text-black/60 hover:text-black transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Terug
-          </button>
-        )}
-      </div>
-
       {step === 1 && (
         <Step1ClassSetup
           existingClasses={existingClasses}
           showCreateForm={showCreateClassForm}
+          selectedExistingClassId={selectedExistingClassId}
           className_={className_}
           selectedLevel={selectedLevel}
           selectedYear={selectedYear}
@@ -803,6 +778,11 @@ export default function NewLesplanPage() {
           classDifficulty={classDifficulty}
           onCreateNew={handleCreateNewClass}
           onExistingClassSelect={handleExistingClassSelect}
+          onDeselectExistingClass={() => {
+            setSelectedExistingClassId(null)
+            setExistingClassPrefillBookId(null)
+            setClassSelectionMode(hasExistingClasses ? "choose" : "create")
+          }}
           onClassNameChange={setClassName}
           onLevelSelect={handleLevelSelect}
           onYearSelect={handleYearSelect}
@@ -825,6 +805,15 @@ export default function NewLesplanPage() {
 
       {step === 2 && selectedLevel && selectedYear && (
         <Step2Subject
+          backLink={
+            <button
+              onClick={handleBack}
+              className="flex items-center gap-2 text-sm font-bold text-black/60 hover:text-black transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Terug
+            </button>
+          }
           selectedLevel={selectedLevel}
           selectedYear={selectedYear}
           selectedCategory={selectedCategory}
@@ -848,6 +837,15 @@ export default function NewLesplanPage() {
 
       {step === 3 && selectedBook && !showSummary && (
         <Step6Paragraphs
+          backLink={
+            <button
+              onClick={handleBack}
+              className="flex items-center gap-2 text-sm font-bold text-black/60 hover:text-black transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Terug
+            </button>
+          }
           selectedSubjectName={selectedSubjectName}
           selectedBook={selectedBook}
           lessonCount={lessonCount}

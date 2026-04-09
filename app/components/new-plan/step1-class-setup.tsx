@@ -20,6 +20,7 @@ export interface ExistingClassOption {
 interface Props {
   existingClasses: ExistingClassOption[]
   showCreateForm: boolean
+  selectedExistingClassId: string | null
   className_: string
   selectedLevel: Level | null
   selectedYear: SchoolYear | null
@@ -28,6 +29,7 @@ interface Props {
   classDifficulty: ClassDifficulty | null
   onCreateNew: () => void
   onExistingClassSelect: (classId: string) => void
+  onDeselectExistingClass: () => void
   onClassNameChange: (value: string) => void
   onLevelSelect: (level: Level) => void
   onYearSelect: (year: SchoolYear) => void
@@ -37,6 +39,7 @@ interface Props {
   onConfirm: () => void
   canContinue: boolean
   classroomPicker?: ReactNode
+  backLink?: ReactNode
 }
 
 const LESSON_DURATION_OPTIONS = [45, 50, 60, 90]
@@ -44,6 +47,7 @@ const LESSON_DURATION_OPTIONS = [45, 50, 60, 90]
 export function Step1ClassSetup({
   existingClasses,
   showCreateForm,
+  selectedExistingClassId,
   className_,
   selectedLevel,
   selectedYear,
@@ -52,6 +56,7 @@ export function Step1ClassSetup({
   classDifficulty,
   onCreateNew,
   onExistingClassSelect,
+  onDeselectExistingClass,
   onClassNameChange,
   onLevelSelect,
   onYearSelect,
@@ -61,20 +66,72 @@ export function Step1ClassSetup({
   onConfirm,
   canContinue,
   classroomPicker,
+  backLink,
 }: Props) {
   const disabledYears = getDisabledYears(selectedLevel)
+  const selectedExistingClass = selectedExistingClassId
+    ? existingClasses.find((c) => c.id === selectedExistingClassId) ?? null
+    : null
 
   return (
     <>
       <div className="mb-8">
-        <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-widest mb-3">
-          Stap 1 van 3
-        </Badge>
+        <div className="flex items-center gap-3 mb-3">
+          {backLink}
+          <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-widest">
+            Stap 1 van 3
+          </Badge>
+        </div>
         <h1 className="text-4xl font-bold mb-1.5 text-[#0b1c30]">Klasgegevens</h1>
         <p className="text-sm text-[#464554]">Stel je klas in voordat je je vakmateriaal kiest.</p>
       </div>
 
-      {!showCreateForm && existingClasses.length > 0 ? (
+      {selectedExistingClass ? (
+        /* ── Selected existing class: show summary + classroom picker ── */
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-3">Geselecteerde klas</p>
+            <div className="rounded-xl px-4 py-3 border border-[#2a14b4] bg-[#eff4ff] shadow-[0px_4px_12px_rgba(42,20,180,0.12)]">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-[#0b1c30]">{selectedExistingClass.name}</p>
+                <button
+                  onClick={onDeselectExistingClass}
+                  className="text-xs font-semibold text-[#5c5378] hover:text-[#2a14b4] transition-colors"
+                >
+                  Wijzigen
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-[#464554]">
+                {selectedExistingClass.subject} · {selectedExistingClass.level} · {selectedExistingClass.schoolYear} · {selectedExistingClass.size} leerlingen
+              </p>
+              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1">
+                <span
+                  className={cn(
+                    "h-2 w-2 rounded-full",
+                    selectedExistingClass.difficulty === "Groen"
+                      ? "bg-emerald-500"
+                      : selectedExistingClass.difficulty === "Oranje"
+                      ? "bg-orange-400"
+                      : selectedExistingClass.difficulty === "Rood"
+                      ? "bg-red-500"
+                      : "bg-[#a6abc0]"
+                  )}
+                />
+                <span className="text-[11px] font-semibold text-[#464554]">{selectedExistingClass.difficulty ?? "Onbekend"}</span>
+              </div>
+            </div>
+          </div>
+
+          {classroomPicker}
+
+          <div className="mt-8">
+            <Button disabled={!canContinue} className="gap-2" onClick={onConfirm}>
+              Volgende stap
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      ) : !showCreateForm && existingClasses.length > 0 ? (
         <div className="space-y-4">
           <div className="bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
             <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-3">Bestaande klassen</p>
@@ -119,7 +176,7 @@ export function Step1ClassSetup({
           <div>
             <Button className="gap-2" onClick={onCreateNew}>
               <Plus className="w-4 h-4" />
-              Create new
+              Nieuwe klas
             </Button>
           </div>
         </div>

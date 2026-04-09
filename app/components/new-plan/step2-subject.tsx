@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { ArrowRight, BookOpen } from "lucide-react"
 import type { Book, Subject } from "~/lib/backend/types"
 import { Badge } from "~/components/ui/badge"
@@ -25,6 +26,7 @@ interface Props {
   onBookSelect: (book: Book) => void
   onConfirm: () => void
   canContinue: boolean
+  backLink?: ReactNode
 }
 
 function getBookKey(book: Book) {
@@ -50,6 +52,7 @@ export function Step2Subject({
   onBookSelect,
   onConfirm,
   canContinue,
+  backLink,
 }: Props) {
   const categoryMap = subjects.reduce<Record<string, Subject[]>>((acc, subject) => {
     const category = subject.category?.trim() || "Overig"
@@ -64,7 +67,8 @@ export function Step2Subject({
   return (
     <>
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-3 mb-3">
+          {backLink}
           <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-widest">
             Stap 2 van 3
           </Badge>

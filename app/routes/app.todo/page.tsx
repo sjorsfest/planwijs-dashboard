@@ -7,7 +7,7 @@ import type { UserTodoListItem } from "./route"
 
 const SECTION_COPY = {
   pending: {
-    eyebrow: "Werkvoorraad",
+    eyebrow: "Af te vinken",
     title: "Te doen",
     emptyTitle: "Alles is afgerond",
     emptyDescription: "Nieuwe voorbereidingstaken verschijnen hier zodra er lessen met taken zijn.",
@@ -31,7 +31,7 @@ export default function TodosPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]/70 mb-1">
-              Werkvoorraad
+              Lesvoorbereiding
             </p>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0b1c30]">To Do&apos;s</h1>
             <p className="mt-1 text-sm text-[#464554]">

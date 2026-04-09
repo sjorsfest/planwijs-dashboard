@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, type ReactNode } from "react"
 import { ArrowRight, BookOpen, Check, ChevronDown, ChevronRight } from "lucide-react"
 import type { Book, BookDetail } from "~/lib/backend/types"
 import { Badge } from "~/components/ui/badge"
@@ -27,6 +27,7 @@ interface Props {
   isChapterPartiallySelected: (chapter: Chapter) => boolean
   onLessonCountChange: (value: number | null) => void
   onContinueToSummary: () => void
+  backLink?: ReactNode
 }
 
 const LESSON_COUNT_OPTIONS = [2, 3, 4, 6, 8]
@@ -51,6 +52,7 @@ export function Step6Paragraphs({
   isChapterPartiallySelected,
   onLessonCountChange,
   onContinueToSummary,
+  backLink,
 }: Props) {
   const comboRef = useRef<HTMLDivElement>(null)
 
@@ -90,7 +92,8 @@ export function Step6Paragraphs({
   return (
     <>
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-3 mb-3">
+          {backLink}
           <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-widest">
             Stap 3 van 3
           </Badge>
