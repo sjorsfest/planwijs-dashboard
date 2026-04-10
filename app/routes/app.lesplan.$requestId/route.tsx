@@ -90,8 +90,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       if (!Array.isArray(items) || items.length === 0) {
         return data<ActionData>({ intent: "feedback", ok: false, error: "Voer eerst feedback in." }, { status: 400 })
       }
-      const lesplan = await api.submitFeedback(params.requestId, { items })
-      return data<ActionData>({ intent: "feedback", ok: true, lesplan })
+      const task = await api.submitFeedback(params.requestId, { items })
+      return data<ActionData>({ intent: "feedback", ok: true, task })
     } catch (error) {
       if (error instanceof ApiRequestError) {
         return data<ActionData>({ intent: "feedback", ok: false, error: error.message }, { status: error.status })
@@ -102,8 +102,8 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (intent === "approve") {
     try {
-      const lesplan = await api.approveLesplan(params.requestId)
-      return data<ActionData>({ intent: "approve", ok: true, lesplan })
+      const task = await api.approveLesplan(params.requestId)
+      return data<ActionData>({ intent: "approve", ok: true, task })
     } catch (error) {
       if (error instanceof ApiRequestError) {
         return data<ActionData>({ intent: "approve", ok: false, error: error.message }, { status: error.status })

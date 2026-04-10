@@ -90,3 +90,32 @@ export type CalendarResponse = {
 }
 
 export type UpdateLessonPreparationTodoRequest = components["schemas"]["UpdateLessonPreparationTodoRequest"]
+
+// ─── Task queue types ─────────────────────────────────────────────────────
+
+export type TaskSubmittedResponse = {
+  task_id: string
+  resource_id: string
+  task_type: "generate_overview" | "apply_feedback" | "generate_lessons"
+  status: "queued"
+}
+
+export type TaskStep = {
+  name: string
+  status: "queued" | "completed" | "running"
+  started_at: string | null
+  completed_at: string | null
+}
+
+export type TaskStatusResponse = {
+  task_id: string
+  task_type: "generate_overview" | "apply_feedback" | "generate_lessons"
+  resource_id: string
+  status: "queued" | "running" | "completed" | "failed"
+  current_step: string | null
+  steps: TaskStep[]
+  progress_pct: number
+  error: string | null
+  created_at: string
+  updated_at: string
+}

@@ -10,8 +10,7 @@ export default [
   route("api/books", "routes/api.books/route.tsx"),
   route("api/book/:id", "routes/api.book/route.tsx"),
   route("api/classrooms", "routes/api.classrooms/route.tsx"),
-  route("api/lesplan/:requestId/stream-overview", "routes/api.lesplan.$requestId.stream-overview/route.ts"),
-  route("api/lesplan/:requestId/stream-revision", "routes/api.lesplan.$requestId.stream-revision/route.ts"),
+  route("api/tasks/:taskId", "routes/api.tasks.$taskId/route.ts"),
   layout("routes/app/route.tsx", [
     route("dashboard", "routes/app.dashboard/route.tsx"),
     route("todos", "routes/app.todo/route.tsx"),

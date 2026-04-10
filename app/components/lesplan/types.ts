@@ -1,4 +1,4 @@
-import type { FeedbackMessageResponse, LesplanResponse, LesplanStatus, LessonPlanResponse } from "~/lib/backend/types"
+import type { FeedbackMessageResponse, LesplanResponse, LesplanStatus, LessonPlanResponse, TaskStep } from "~/lib/backend/types"
 
 export type SourceContextParagraph = {
   id: string
@@ -59,32 +59,12 @@ export type LesplanOverviewState = {
   didactic_approach?: string
 } | null
 
-export type LesplanOverviewPartial = Partial<NonNullable<LesplanOverviewState>>
-
 export type LesplanThreadMessage = {
   id: string
   role: "teacher" | "assistant"
   content: string
   createdAt: string
   pending?: boolean
-}
-
-export type LesplanDoneEvent = {
-  status: LesplanStatus
-  overview: {
-    title?: string
-    series_summary?: string
-    series_themes?: string[]
-    learning_goals?: string[]
-    key_knowledge?: string[]
-    recommended_approach?: string
-    learning_progression?: string
-    lesson_outline?: LessonOutlineItem[]
-    goal_coverage?: GoalCoverageItem[]
-    knowledge_coverage?: KnowledgeCoverageItem[]
-    didactic_approach?: string
-  }
-  assistant_message?: string
 }
 
 export type LesplanWorkspaceLoaderData = {
@@ -111,8 +91,12 @@ export type LesplanPageState = {
   feedbackMessages: LesplanThreadMessage[]
   lessons: LessonPlanResponse[]
   ui: {
-    streamConnected: boolean
-    streamMode: "overview" | "revision" | null
+    activeTaskId: string | null
+    activeTaskType: "generate_overview" | "apply_feedback" | "generate_lessons" | null
+    taskProgress: number
+    taskCurrentStep: string | null
+    taskSteps: TaskStep[]
+    taskLastCompletedCount: number
     sendingFeedback: boolean
     approving: boolean
     pollingLessons: boolean

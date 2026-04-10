@@ -1,9 +1,7 @@
 import type {
   GoalCoverageItem,
   KnowledgeCoverageItem,
-  LesplanDoneEvent,
   LessonOutlineItem,
-  LesplanOverviewPartial,
   LesplanOverviewState,
   LesplanPageState,
 } from "./types"
@@ -79,7 +77,7 @@ export function knowledgeCoverageList(value: unknown): KnowledgeCoverageItem[] |
 }
 
 export function normalizeOverview(
-  overview: LesplanResponse["overview"] | LesplanDoneEvent["overview"] | null | undefined
+  overview: LesplanResponse["overview"] | null | undefined
 ): LesplanOverviewState {
   if (!overview) return null
   const raw = overview as unknown as Record<string, unknown>
@@ -97,42 +95,6 @@ export function normalizeOverview(
     knowledge_coverage: knowledgeCoverageList(raw.knowledge_coverage),
     didactic_approach: typeof raw.didactic_approach === "string" ? raw.didactic_approach : undefined,
   }
-}
-
-export function mergeOverview(current: LesplanOverviewState, partial: LesplanOverviewPartial): LesplanOverviewState {
-  const next = { ...(current ?? {}) }
-  for (const [key, value] of Object.entries(partial)) {
-    if (value !== undefined) {
-      Object.assign(next, { [key]: value })
-    }
-  }
-  return next
-}
-
-export function mapPartialPayload(partial: Record<string, unknown>): LesplanOverviewPartial {
-  const result: LesplanOverviewPartial = {}
-  if (typeof partial.title === "string") result.title = partial.title
-  if (typeof partial.series_summary === "string") result.series_summary = partial.series_summary
-  if (Array.isArray(partial.series_themes)) {
-    result.series_themes = partial.series_themes.filter((item): item is string => typeof item === "string")
-  }
-  if (Array.isArray(partial.learning_goals)) {
-    result.learning_goals = partial.learning_goals.filter((goal): goal is string => typeof goal === "string")
-  }
-  if (Array.isArray(partial.key_knowledge)) {
-    result.key_knowledge = partial.key_knowledge.filter((item): item is string => typeof item === "string")
-  }
-  if (typeof partial.recommended_approach === "string") result.recommended_approach = partial.recommended_approach
-  if (typeof partial.learning_progression === "string") result.learning_progression = partial.learning_progression
-  if (Array.isArray(partial.lesson_outline)) {
-    result.lesson_outline = lessonOutlineList(partial.lesson_outline)
-  }
-  if (Array.isArray(partial.goal_coverage)) result.goal_coverage = goalCoverageList(partial.goal_coverage)
-  if (Array.isArray(partial.knowledge_coverage)) {
-    result.knowledge_coverage = knowledgeCoverageList(partial.knowledge_coverage)
-  }
-  if (typeof partial.didactic_approach === "string") result.didactic_approach = partial.didactic_approach
-  return result
 }
 
 export function truncateText(value: string, maxLength: number): string {

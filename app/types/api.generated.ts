@@ -276,23 +276,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/lesplan/{request_id}/stream-overview": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Stream Overview Endpoint */
-        get: operations["stream_overview_endpoint_lesplan__request_id__stream_overview_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/lesplan/{request_id}/feedback": {
         parameters: {
             query?: never;
@@ -407,6 +390,23 @@ export interface paths {
         };
         /** Get Calendar */
         get: operations["get_calendar_calendar__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Task Status */
+        get: operations["get_task_status_tasks__task_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1000,6 +1000,65 @@ export interface components {
          * @enum {string}
          */
         SubjectCategory: "Talen" | "Exacte vakken" | "Mens- en maatschappijvakken" | "Economie en bedrijf";
+        /** TaskState */
+        TaskState: {
+            /** Task Id */
+            task_id: string;
+            /** Task Type */
+            task_type: string;
+            /** Resource Id */
+            resource_id: string;
+            /** @default queued */
+            status: components["schemas"]["TaskStatus"];
+            /** Current Step */
+            current_step?: string | null;
+            /** Steps */
+            steps?: components["schemas"]["TaskStep"][];
+            /**
+             * Progress Pct
+             * @default 0
+             */
+            progress_pct: number;
+            /** Error */
+            error?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * TaskStatus
+         * @enum {string}
+         */
+        TaskStatus: "queued" | "running" | "completed" | "failed";
+        /** TaskStep */
+        TaskStep: {
+            /** Name */
+            name: string;
+            /** @default queued */
+            status: components["schemas"]["TaskStatus"];
+            /** Started At */
+            started_at?: string | null;
+            /** Completed At */
+            completed_at?: string | null;
+        };
+        /** TaskSubmittedResponse */
+        TaskSubmittedResponse: {
+            /** Task Id */
+            task_id: string;
+            /** Resource Id */
+            resource_id: string;
+            /** Task Type */
+            task_type: string;
+            /** Status */
+            status: string;
+        };
         /** TimeSectionResponse */
         TimeSectionResponse: {
             /** Start Min */
@@ -2075,38 +2134,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LesplanResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    stream_overview_endpoint_lesplan__request_id__stream_overview_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                request_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["TaskSubmittedResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2141,7 +2169,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LesplanResponse"];
+                    "application/json": components["schemas"]["TaskSubmittedResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2172,7 +2200,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LesplanResponse"];
+                    "application/json": components["schemas"]["TaskSubmittedResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2432,6 +2460,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CalendarResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_task_status_tasks__task_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskState"];
                 };
             };
             /** @description Validation Error */

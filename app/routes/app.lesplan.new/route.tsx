@@ -112,7 +112,8 @@ export async function action({ request }: Route.ActionArgs) {
       classroom_id: payload.selectedClassroomId,
     })
 
-    return redirect(`/lesplan/${lesplan.id}`)
+    const task = await api.generateOverview(lesplan.id)
+    return redirect(`/lesplan/${lesplan.id}?task=${task.task_id}`)
   } catch (error) {
     if (error instanceof ApiRequestError) {
       return data<ActionData>({ error: error.message }, { status: error.status })

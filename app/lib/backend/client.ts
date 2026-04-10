@@ -12,6 +12,8 @@ import type {
   LessonPreparationTodoResponse,
   Method,
   Subject,
+  TaskSubmittedResponse,
+  TaskStatusResponse,
   UpdateLessonPreparationTodoRequest,
 } from "./types"
 
@@ -293,17 +295,30 @@ class ApiClient {
     }
   }
 
-  async submitFeedback(requestId: string, data: FeedbackRequest): Promise<LesplanResponse> {
-    return this.requestJson<LesplanResponse>(`${API_URL}/lesplan/${requestId}/feedback`, {
+  async generateOverview(requestId: string): Promise<TaskSubmittedResponse> {
+    return this.requestJson<TaskSubmittedResponse>(`${API_URL}/lesplan/${requestId}/generate-overview`, {
+      method: "POST",
+      headers: this.headers,
+    })
+  }
+
+  async submitFeedback(requestId: string, data: FeedbackRequest): Promise<TaskSubmittedResponse> {
+    return this.requestJson<TaskSubmittedResponse>(`${API_URL}/lesplan/${requestId}/feedback`, {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify(data),
     })
   }
 
-  async approveLesplan(requestId: string): Promise<LesplanResponse> {
-    return this.requestJson<LesplanResponse>(`${API_URL}/lesplan/${requestId}/approve`, {
+  async approveLesplan(requestId: string): Promise<TaskSubmittedResponse> {
+    return this.requestJson<TaskSubmittedResponse>(`${API_URL}/lesplan/${requestId}/approve`, {
       method: "POST",
+      headers: this.headers,
+    })
+  }
+
+  async getTaskStatus(taskId: string): Promise<TaskStatusResponse> {
+    return this.requestJson<TaskStatusResponse>(`${API_URL}/tasks/${taskId}`, {
       headers: this.headers,
     })
   }

@@ -1,29 +1,18 @@
-import type { LesplanResponse } from "~/lib/backend/types"
+import type { LesplanResponse, TaskSubmittedResponse, TaskStatusResponse } from "~/lib/backend/types"
 import {
   mapFeedbackMessages,
-  type LesplanDoneEvent,
-  type LesplanOverviewPartial,
   type LesplanPageState,
   type LesplanThreadMessage,
   type LesplanWorkspaceLoaderData,
   type SourceContext,
 } from "./types"
-import { normalizeOverview, mergeOverview } from "./utils"
+import { normalizeOverview } from "./utils"
 
 export type ActionData = {
   intent: "feedback" | "approve"
   ok: boolean
-  lesplan?: LesplanResponse
+  task?: TaskSubmittedResponse
   error?: string
-}
-
-export type StatusEvent = {
-  status: LesplanPageState["status"]
-}
-
-export type StreamRef = {
-  mode: "overview" | "revision"
-  close: () => void
 }
 
 export type PendingFeedbackRequest = {
@@ -33,18 +22,15 @@ export type PendingFeedbackRequest = {
 
 export type StateAction =
   | { type: "hydrate"; payload: LesplanWorkspaceLoaderData }
-  | { type: "stream_connecting"; mode: "overview" | "revision" }
-  | { type: "stream_connected"; status?: LesplanPageState["status"] }
-  | { type: "stream_partial"; partial: LesplanOverviewPartial }
-  | { type: "ensure_revision_placeholder"; placeholderId: string }
+  | { type: "task_started"; taskId: string; taskType: LesplanPageState["ui"]["activeTaskType"] }
+  | { type: "task_progress"; status: TaskStatusResponse }
+  | { type: "task_completed"; taskType: LesplanPageState["ui"]["activeTaskType"] }
+  | { type: "task_failed"; error: string }
   | { type: "feedback_submit_start"; teacherId: string; teacherContent: string; placeholderId: string }
   | { type: "feedback_submit_failed"; teacherId: string; placeholderId: string; error: string }
-  | { type: "feedback_submit_ack"; lesplan: LesplanResponse; placeholderId: string }
-  | { type: "revision_done"; done: LesplanDoneEvent; placeholderId: string }
-  | { type: "overview_done"; done: LesplanDoneEvent }
-  | { type: "stream_error"; message: string }
+  | { type: "feedback_submit_ack"; task: TaskSubmittedResponse; placeholderId: string }
   | { type: "approve_start" }
-  | { type: "approve_success"; lesplan: LesplanResponse }
+  | { type: "approve_success"; task: TaskSubmittedResponse }
   | { type: "approve_failed"; error: string }
   | { type: "set_polling"; active: boolean }
   | { type: "clear_error" }
@@ -59,6 +45,18 @@ export const STATUS_COPY: Record<LesplanPageState["status"], { label: string; co
   failed: { label: "Genereren mislukt", color: "bg-red-100 text-red-800" },
 }
 
+const INITIAL_UI: LesplanPageState["ui"] = {
+  activeTaskId: null,
+  activeTaskType: null,
+  taskProgress: 0,
+  taskCurrentStep: null,
+  taskSteps: [],
+  taskLastCompletedCount: 0,
+  sendingFeedback: false,
+  approving: false,
+  pollingLessons: false,
+}
+
 export function buildStateFromLoaderData(loaderData: LesplanWorkspaceLoaderData): LesplanPageState {
   return {
     requestId: loaderData.requestId,
@@ -68,13 +66,7 @@ export function buildStateFromLoaderData(loaderData: LesplanWorkspaceLoaderData)
     overview: normalizeOverview(loaderData.lesplan.overview),
     feedbackMessages: mapFeedbackMessages(loaderData.lesplan.feedback_messages ?? []),
     lessons: loaderData.lesplan.overview?.lessons ?? [],
-    ui: {
-      streamConnected: false,
-      streamMode: null,
-      sendingFeedback: false,
-      approving: false,
-      pollingLessons: false,
-    },
+    ui: { ...INITIAL_UI },
   }
 }
 
@@ -92,18 +84,6 @@ export function reducer(state: LesplanPageState, action: StateAction): LesplanPa
         feedbackMessages: placeholder ? [...next.feedbackMessages, placeholder] : next.feedbackMessages,
         ui: {
           ...state.ui,
-          streamConnected:
-            next.status === "generating_overview" || next.status === "revising_overview"
-              ? state.ui.streamConnected
-              : false,
-          streamMode:
-            next.status === "generating_overview"
-              ? "overview"
-              : next.status === "revising_overview"
-              ? "revision"
-              : placeholder
-              ? "revision"
-              : null,
           pollingLessons:
             next.status === "generating_overview" ||
             next.status === "revising_overview" ||
@@ -121,22 +101,69 @@ export function reducer(state: LesplanPageState, action: StateAction): LesplanPa
         },
       }
     }
-    case "stream_connecting":
-      return { ...state, ui: { ...state.ui, streamConnected: false, streamMode: action.mode, lastError: undefined } }
-    case "stream_connected":
-      return { ...state, status: action.status ?? state.status, ui: { ...state.ui, streamConnected: true } }
-    case "stream_partial":
-      return { ...state, overview: mergeOverview(state.overview, action.partial) }
-    case "ensure_revision_placeholder": {
-      if (findPendingAssistant(state.feedbackMessages)) return state
+    case "task_started":
       return {
         ...state,
-        feedbackMessages: [
-          ...state.feedbackMessages,
-          { id: action.placeholderId, role: "assistant", content: "Overzicht wordt aangepast…", createdAt: new Date().toISOString(), pending: true },
-        ],
+        ui: {
+          ...state.ui,
+          activeTaskId: action.taskId,
+          activeTaskType: action.taskType,
+          taskProgress: 0,
+          taskCurrentStep: null,
+          taskSteps: [],
+          taskLastCompletedCount: 0,
+          lastError: undefined,
+        },
+      }
+    case "task_progress": {
+      const completedCount = action.status.steps.filter((s) => s.status === "completed").length
+      return {
+        ...state,
+        status: action.status.status === "running" || action.status.status === "queued"
+          ? (state.ui.activeTaskType === "generate_overview" ? "generating_overview"
+            : state.ui.activeTaskType === "apply_feedback" ? "revising_overview"
+            : state.ui.activeTaskType === "generate_lessons" ? "generating_lessons"
+            : state.status)
+          : state.status,
+        ui: {
+          ...state.ui,
+          taskProgress: action.status.progress_pct,
+          taskCurrentStep: action.status.current_step,
+          taskSteps: action.status.steps,
+          taskLastCompletedCount: completedCount,
+        },
       }
     }
+    case "task_completed":
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          activeTaskId: null,
+          activeTaskType: null,
+          taskProgress: 0,
+          taskCurrentStep: null,
+          taskSteps: [],
+          taskLastCompletedCount: 0,
+          lastError: undefined,
+        },
+      }
+    case "task_failed":
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          activeTaskId: null,
+          activeTaskType: null,
+          taskProgress: 0,
+          taskCurrentStep: null,
+          taskSteps: [],
+          taskLastCompletedCount: 0,
+          sendingFeedback: false,
+          approving: false,
+          lastError: action.error,
+        },
+      }
     case "feedback_submit_start":
       return {
         ...state,
@@ -156,46 +183,34 @@ export function reducer(state: LesplanPageState, action: StateAction): LesplanPa
     case "feedback_submit_ack":
       return {
         ...state,
-        status: action.lesplan.status,
-        overview: normalizeOverview(action.lesplan.overview) ?? state.overview,
-        lessons: action.lesplan.overview?.lessons ?? state.lessons,
-        feedbackMessages: [
-          ...mapFeedbackMessages(action.lesplan.feedback_messages ?? []),
-          { id: action.placeholderId, role: "assistant", content: "Overzicht wordt aangepast…", createdAt: new Date().toISOString(), pending: true },
-        ],
-        ui: { ...state.ui, sendingFeedback: false, streamMode: "revision", lastError: undefined },
+        ui: {
+          ...state.ui,
+          sendingFeedback: false,
+          activeTaskId: action.task.task_id,
+          activeTaskType: "apply_feedback",
+          taskProgress: 0,
+          taskCurrentStep: null,
+          taskSteps: [],
+          taskLastCompletedCount: 0,
+          lastError: undefined,
+        },
       }
-    case "revision_done":
-      return {
-        ...state,
-        status: action.done.status,
-        overview: normalizeOverview(action.done.overview),
-        feedbackMessages: state.feedbackMessages.map((m) =>
-          m.id === action.placeholderId
-            ? { ...m, content: action.done.assistant_message ?? "Het overzicht is bijgewerkt.", pending: false }
-            : m
-        ),
-        ui: { ...state.ui, streamConnected: false, streamMode: null, lastError: undefined },
-      }
-    case "overview_done":
-      return {
-        ...state,
-        status: action.done.status,
-        overview: normalizeOverview(action.done.overview),
-        ui: { ...state.ui, streamConnected: false, streamMode: null, lastError: undefined },
-      }
-    case "stream_error":
-      return { ...state, ui: { ...state.ui, streamConnected: false, streamMode: null, sendingFeedback: false, approving: false, lastError: action.message } }
     case "approve_start":
       return { ...state, ui: { ...state.ui, approving: true, lastError: undefined } }
     case "approve_success":
       return {
         ...state,
-        status: action.lesplan.status,
-        overview: normalizeOverview(action.lesplan.overview) ?? state.overview,
-        lessons: action.lesplan.overview?.lessons ?? state.lessons,
-        feedbackMessages: mapFeedbackMessages(action.lesplan.feedback_messages ?? []),
-        ui: { ...state.ui, approving: false, pollingLessons: true },
+        ui: {
+          ...state.ui,
+          approving: false,
+          activeTaskId: action.task.task_id,
+          activeTaskType: "generate_lessons",
+          taskProgress: 0,
+          taskCurrentStep: null,
+          taskSteps: [],
+          taskLastCompletedCount: 0,
+          pollingLessons: true,
+        },
       }
     case "approve_failed":
       return { ...state, ui: { ...state.ui, approving: false, lastError: action.error } }

@@ -1,19 +1,15 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react"
-import { Link, useFetcher, useLoaderData, useRevalidator } from "react-router"
+import { Link, useFetcher, useLoaderData, useRevalidator, useSearchParams } from "react-router"
 import { motion } from "framer-motion"
-import { AlertTriangle, ArrowLeft, Sparkles } from "lucide-react"
-import { openEventSource } from "~/lib/sse"
-import { Button } from "~/components/ui/button"
-import type { LesplanDoneEvent } from "~/components/lesplan/types"
+import { AlertTriangle, ArrowLeft } from "lucide-react"
+import type { TaskStatusResponse } from "~/lib/backend/types"
 import {
-  type StatusEvent,
-  type StreamRef,
   type PendingFeedbackRequest,
   STATUS_COPY,
   reducer,
   buildStateFromLoaderData,
 } from "~/components/lesplan/reducer"
-import { mapPartialPayload, getReviewStatusLabel, sectionKeyToFieldName } from "~/components/lesplan/utils"
+import { getReviewStatusLabel, sectionKeyToFieldName } from "~/components/lesplan/utils"
 import { LessonSeriesHeader } from "~/components/lesplan/lesson-series-header"
 import { type ReviewTabId, LessonSeriesTabNav, TabPanel } from "~/components/lesplan/tab-nav"
 import { OverviewTab } from "~/components/lesplan/overview-tab"
@@ -26,9 +22,29 @@ import type { ActionData } from "./route"
 import type { loader } from "./route"
 import { SOFT_EASE } from "./constants"
 
+const TASK_STEP_LABELS: Record<string, string> = {
+  "Loading context": "Context laden...",
+  "Generating identity": "Titel en thema's genereren...",
+  "Generating learning goals": "Leerdoelen opstellen...",
+  "Generating sequence": "Lessenreeks samenstellen...",
+  "Generating teacher notes": "Docentnotities schrijven...",
+  "Persisting overview": "Opslaan...",
+  "Applying feedback": "Feedback verwerken...",
+  "Persisting changes": "Wijzigingen opslaan...",
+  "Generating lessons": "Lessen genereren...",
+  "Generating preparation": "Voorbereiding genereren...",
+  "Persisting lessons": "Lessen opslaan...",
+}
+
+function translateStep(step: string | null): string | null {
+  if (!step) return null
+  return TASK_STEP_LABELS[step] ?? step
+}
+
 export default function LessonSeriesReviewPage() {
   const loaderData = useLoaderData<typeof loader>()
   const revalidator = useRevalidator()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [state, dispatch] = useReducer(reducer, loaderData, buildStateFromLoaderData)
   const [feedbackText, setFeedbackText] = useState("")
   const [activeTab, setActiveTab] = useState<ReviewTabId>("overview")
@@ -56,22 +72,39 @@ export default function LessonSeriesReviewPage() {
   const feedbackFetcher = useFetcher<ActionData>()
   const approveFetcher = useFetcher<ActionData>()
   const processFeedbackFetcher = useFetcher<ActionData>()
-  const streamRef = useRef<StreamRef | null>(null)
   const pendingFeedbackRef = useRef<PendingFeedbackRequest | null>(null)
-  const revisionPlaceholderRef = useRef<string | null>(null)
   const pollingStartedAtRef = useRef<number | null>(null)
+  const taskLastCompletedRef = useRef<number>(0)
   const hydratedAt = useMemo(() => loaderData.updatedAt, [loaderData.updatedAt])
 
+  // ─── Read initial task_id from URL params (set by lesplan.new redirect) ──
+  const initialTaskId = useRef(searchParams.get("task"))
+
+  useEffect(() => {
+    const taskId = initialTaskId.current
+    if (taskId) {
+      dispatch({ type: "task_started", taskId, taskType: "generate_overview" })
+      // Clear the ?task= param from URL without navigation
+      setSearchParams((prev) => {
+        prev.delete("task")
+        return prev
+      }, { replace: true })
+      initialTaskId.current = null
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Hydrate state from loader data ──────────────────────────────────────
   useEffect(() => {
     dispatch({ type: "hydrate", payload: loaderData })
   }, [hydratedAt, loaderData])
 
+  // ─── Handle feedback fetcher response ────────────────────────────────────
   useEffect(() => {
     if (feedbackFetcher.state !== "idle" || !feedbackFetcher.data) return
     if (feedbackFetcher.data.intent !== "feedback" || !pendingFeedbackRef.current) return
     const pending = pendingFeedbackRef.current
     pendingFeedbackRef.current = null
-    if (!feedbackFetcher.data.ok || !feedbackFetcher.data.lesplan) {
+    if (!feedbackFetcher.data.ok || !feedbackFetcher.data.task) {
       dispatch({
         type: "feedback_submit_failed",
         teacherId: pending.teacherId,
@@ -80,94 +113,106 @@ export default function LessonSeriesReviewPage() {
       })
       return
     }
-    revisionPlaceholderRef.current = pending.placeholderId
-    dispatch({ type: "feedback_submit_ack", lesplan: feedbackFetcher.data.lesplan, placeholderId: pending.placeholderId })
+    dispatch({ type: "feedback_submit_ack", task: feedbackFetcher.data.task, placeholderId: pending.placeholderId })
   }, [feedbackFetcher.state, feedbackFetcher.data])
 
+  // ─── Handle approve fetcher response ─────────────────────────────────────
   useEffect(() => {
     if (approveFetcher.state !== "idle" || !approveFetcher.data) return
     if (approveFetcher.data.intent !== "approve") return
-    if (!approveFetcher.data.ok || !approveFetcher.data.lesplan) {
+    if (!approveFetcher.data.ok || !approveFetcher.data.task) {
       dispatch({ type: "approve_failed", error: approveFetcher.data.error ?? "Het overzicht kon niet worden goedgekeurd." })
       return
     }
-    dispatch({ type: "approve_success", lesplan: approveFetcher.data.lesplan })
+    dispatch({ type: "approve_success", task: approveFetcher.data.task })
   }, [approveFetcher.state, approveFetcher.data])
 
-  const streamTargetMode: "overview" | "revision" | null =
-    state.status === "pending" || state.status === "generating_overview"
-      ? "overview"
-      : state.status === "revising_overview"
-      ? "revision"
-      : null
+  // ─── Task polling ────────────────────────────────────────────────────────
+  const activeTaskId = state.ui.activeTaskId
 
   useEffect(() => {
-    if (!streamTargetMode) {
-      streamRef.current?.close()
-      streamRef.current = null
+    if (!activeTaskId) {
+      taskLastCompletedRef.current = 0
       return
     }
 
-    if (streamRef.current?.mode === streamTargetMode) return
-    streamRef.current?.close()
-    dispatch({ type: "stream_connecting", mode: streamTargetMode })
+    let cancelled = false
+    let timerId: number | undefined
+    let consecutiveErrors = 0
 
-    let placeholderId = revisionPlaceholderRef.current
-    if (streamTargetMode === "revision" && !placeholderId) {
-      placeholderId = `assistant-${Date.now()}`
-      revisionPlaceholderRef.current = placeholderId
-      dispatch({ type: "ensure_revision_placeholder", placeholderId })
-    }
+    const poll = async () => {
+      if (cancelled) return
+      try {
+        const res = await fetch(`/api/tasks/${activeTaskId}`)
+        if (cancelled) return
 
-    const close = openEventSource<StatusEvent, Record<string, unknown>, LesplanDoneEvent>({
-      url:
-        streamTargetMode === "overview"
-          ? `/api/lesplan/${state.requestId}/stream-overview`
-          : `/api/lesplan/${state.requestId}/stream-revision`,
-      onStatus: (payload) => {
-        dispatch({ type: "stream_connected", status: payload.status })
-      },
-      onPartial: (payload) => {
-        dispatch({ type: "stream_partial", partial: mapPartialPayload(payload) })
-      },
-      onDone: (payload) => {
-        streamRef.current?.close()
-        streamRef.current = null
-        if (streamTargetMode === "revision" && placeholderId) {
-          dispatch({ type: "revision_done", done: payload, placeholderId })
-          revisionPlaceholderRef.current = null
-        } else {
-          dispatch({ type: "overview_done", done: payload })
+        if (!res.ok) {
+          consecutiveErrors++
+          if (res.status === 404 || consecutiveErrors >= 5) {
+            dispatch({ type: "task_failed", error: "De taak kon niet worden gevonden of is verlopen." })
+            return
+          }
+          timerId = window.setTimeout(poll, 3_000)
+          return
         }
-        revalidator.revalidate()
-      },
-      onError: (message) => {
-        streamRef.current?.close()
-        streamRef.current = null
-        dispatch({ type: "stream_error", message })
-        revalidator.revalidate()
-      },
-    })
 
-    streamRef.current = { mode: streamTargetMode, close }
-    return () => {
-      if (streamRef.current?.close === close) {
-        streamRef.current.close()
-        streamRef.current = null
+        consecutiveErrors = 0
+        const taskStatus: TaskStatusResponse = await res.json()
+
+        dispatch({ type: "task_progress", status: taskStatus })
+
+        // Revalidate lesplan data when a new step completes
+        const completedCount = taskStatus.steps.filter((s) => s.status === "completed").length
+        if (completedCount > taskLastCompletedRef.current) {
+          taskLastCompletedRef.current = completedCount
+          revalidator.revalidate()
+        }
+
+        if (taskStatus.status === "completed") {
+          dispatch({ type: "task_completed", taskType: state.ui.activeTaskType })
+          revalidator.revalidate()
+          return
+        }
+
+        if (taskStatus.status === "failed") {
+          dispatch({ type: "task_failed", error: taskStatus.error ?? "De taak is mislukt." })
+          revalidator.revalidate()
+          return
+        }
+
+        // Continue polling
+        timerId = window.setTimeout(poll, 1_500)
+      } catch {
+        if (cancelled) return
+        consecutiveErrors++
+        if (consecutiveErrors >= 5) {
+          dispatch({ type: "task_failed", error: "Verbinding met de server verloren." })
+          return
+        }
+        timerId = window.setTimeout(poll, 3_000)
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.requestId, streamTargetMode])
 
-  const shouldPollLesplan =
-    state.status === "pending" ||
-    state.status === "generating_overview" ||
-    state.status === "revising_overview" ||
-    state.status === "generating_lessons" ||
-    (state.status === "completed" && state.lessons.length < state.request.numLessons)
+    // Start first poll immediately
+    poll()
+
+    return () => {
+      cancelled = true
+      if (timerId) window.clearTimeout(timerId)
+    }
+  }, [activeTaskId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Fallback polling (page refresh during generation, no task_id) ───────
+  const isGeneratingWithoutTask =
+    !activeTaskId &&
+    (state.status === "pending" ||
+      state.status === "generating_overview" ||
+      state.status === "revising_overview" ||
+      state.status === "generating_lessons" ||
+      (state.status === "completed" && state.lessons.length < state.request.numLessons))
 
   useEffect(() => {
-    if (!shouldPollLesplan) {
+    if (!isGeneratingWithoutTask) {
       pollingStartedAtRef.current = null
       dispatch({ type: "set_polling", active: false })
       return
@@ -178,19 +223,18 @@ export default function LessonSeriesReviewPage() {
     let timerId: number | undefined
     const schedule = () => {
       if (cancelled || pollingStartedAtRef.current === null) return
-      const elapsed = Date.now() - pollingStartedAtRef.current
       timerId = window.setTimeout(() => {
         if (cancelled) return
         revalidator.revalidate()
         schedule()
-      }, elapsed < 20_000 ? 2_000 : 5_000)
+      }, 5_000)
     }
     schedule()
     return () => {
       cancelled = true
       if (timerId) window.clearTimeout(timerId)
     }
-  }, [shouldPollLesplan, revalidator, state.lessons.length, state.request.numLessons])
+  }, [isGeneratingWithoutTask, revalidator, state.lessons.length, state.request.numLessons])
 
   const [loadingFields, setLoadingFields] = useState<Set<string>>(new Set())
 
@@ -224,7 +268,6 @@ export default function LessonSeriesReviewPage() {
     const teacherId = `teacher-${Date.now()}`
     const placeholderId = `assistant-${Date.now()}`
     pendingFeedbackRef.current = { teacherId, placeholderId }
-    revisionPlaceholderRef.current = placeholderId
     dispatch({ type: "feedback_submit_start", teacherId, teacherContent: message, placeholderId })
     setFeedbackText("")
     const formData = new FormData()
@@ -241,11 +284,16 @@ export default function LessonSeriesReviewPage() {
     approveFetcher.submit(formData, { method: "post" })
   }
 
-  const isStreaming =
-    state.status === "pending" || state.status === "generating_overview" || state.status === "revising_overview"
+  const isProcessing =
+    state.status === "pending" ||
+    state.status === "generating_overview" ||
+    state.status === "revising_overview" ||
+    state.ui.activeTaskId !== null
   const canReview = state.status === "overview_ready"
   const isGeneratingLessons = state.status === "generating_lessons"
-  const statusCopy = STATUS_COPY[state.status]
+  const statusCopy = activeTaskId && state.ui.taskCurrentStep
+    ? { label: translateStep(state.ui.taskCurrentStep) ?? STATUS_COPY[state.status].label, color: STATUS_COPY[state.status].color }
+    : STATUS_COPY[state.status]
   const reviewStatusLabel = getReviewStatusLabel(state.status)
 
   return (
@@ -262,9 +310,20 @@ export default function LessonSeriesReviewPage() {
           </Link>
           <span className="text-[#c7c4d7]">·</span>
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${statusCopy.color}`}>
-            {isStreaming && <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />}
+            {isProcessing && <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />}
             {statusCopy.label}
           </span>
+          {activeTaskId && state.ui.taskProgress > 0 && (
+            <div className="flex items-center gap-2 ml-2">
+              <div className="w-24 h-1.5 rounded-full bg-[#e8eeff] overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-[#2a14b4] transition-all duration-500 ease-out"
+                  style={{ width: `${state.ui.taskProgress}%` }}
+                />
+              </div>
+              <span className="text-xs text-[#5c5378] tabular-nums">{state.ui.taskProgress}%</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -307,7 +366,7 @@ export default function LessonSeriesReviewPage() {
             overview={state.overview}
             request={state.request}
             sourceContext={state.sourceContext}
-            isStreaming={isStreaming}
+            isStreaming={isProcessing}
             reviewStatusLabel={reviewStatusLabel}
             onSectionFeedback={handleSectionFeedback}
             loadingFields={loadingFields}
@@ -321,7 +380,7 @@ export default function LessonSeriesReviewPage() {
             lessons={state.lessons}
             requestId={state.requestId}
             expectedLessonCount={state.request.numLessons}
-            isStreaming={isStreaming}
+            isStreaming={isProcessing}
             isGeneratingLessons={isGeneratingLessons}
             onSectionFeedback={handleSectionFeedback}
             loadingFields={loadingFields}
@@ -332,7 +391,7 @@ export default function LessonSeriesReviewPage() {
         <TabPanel id="notes" activeTab={activeTab}>
           <TeacherNotesTab
             overview={state.overview}
-            isStreaming={isStreaming}
+            isStreaming={isProcessing}
             onSectionFeedback={handleSectionFeedback}
             loadingFields={loadingFields}
             feedbackDisabled={state.status !== "overview_ready"}
