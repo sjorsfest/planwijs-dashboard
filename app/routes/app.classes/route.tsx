@@ -28,6 +28,12 @@ export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData()
   const intent = formData.get("_action")
 
+  if (intent === "create") {
+    const body = JSON.parse(formData.get("body") as string)
+    await api.createClass(body)
+    return { ok: true }
+  }
+
   if (intent === "update") {
     const classId = formData.get("classId") as string
     const body = JSON.parse(formData.get("body") as string)
@@ -38,6 +44,12 @@ export async function action({ request }: Route.ActionArgs) {
   if (intent === "delete") {
     const classId = formData.get("classId") as string
     await api.deleteClass(classId)
+    return { ok: true }
+  }
+
+  if (intent === "createClassroom") {
+    const body = JSON.parse(formData.get("body") as string)
+    await api.createClassroom(body)
     return { ok: true }
   }
 

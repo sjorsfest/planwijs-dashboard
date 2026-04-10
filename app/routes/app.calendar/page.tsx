@@ -18,7 +18,6 @@ import {
   eachDayOfInterval,
   isSameDay,
   isToday,
-  getDay,
   addMonths,
   subMonths,
 } from "date-fns"
@@ -30,34 +29,19 @@ import type {
   CalendarTodoItem,
 } from "~/lib/backend/types"
 import type { loader } from "./route"
-
-// ─── Helpers ───────────────────────────────────────────────────────────────
-
-function getPaddingDays(date: Date): number {
-  const day = getDay(startOfMonth(date))
-  return day === 0 ? 6 : day - 1
-}
-
-function toDateString(d: Date): string {
-  return format(d, "yyyy-MM-dd")
-}
-
-function getItemDate(item: CalendarItem): string {
-  return item.type === "lesson" ? item.planned_date : item.due_date
-}
-
-const SOFT_EASE = [0.22, 1, 0.36, 1] as const
-const WEEKDAYS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"]
-
-// Color constants
-const LESSON_COLOR = "#2a14b4"
-const LESSON_BG = "bg-[#eff4ff]"
-const LESSON_TEXT = "text-[#2a14b4]"
-const TODO_COLOR_PENDING = "#e67e22"
-const TODO_BG_PENDING = "bg-orange-50"
-const TODO_TEXT_PENDING = "text-orange-700"
-const TODO_BG_DONE = "bg-emerald-50"
-const TODO_TEXT_DONE = "text-emerald-700"
+import { getPaddingDays, toDateString, getItemDate } from "./utils"
+import {
+  SOFT_EASE,
+  WEEKDAYS,
+  LESSON_COLOR,
+  LESSON_BG,
+  LESSON_TEXT,
+  TODO_COLOR_PENDING,
+  TODO_BG_PENDING,
+  TODO_TEXT_PENDING,
+  TODO_BG_DONE,
+  TODO_TEXT_DONE,
+} from "./constants"
 
 // ─── Component ─────────────────────────────────────────────────────────────
 

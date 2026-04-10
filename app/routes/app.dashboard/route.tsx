@@ -1,6 +1,6 @@
 export { default } from "./page"
 
-import { data } from "react-router"
+import { data, redirect } from "react-router"
 import { format, addDays } from "date-fns"
 import { createApiClient } from "~/lib/backend/client"
 import type { CalendarLessonItem, CalendarTodoItem } from "~/lib/backend/types"
@@ -31,6 +31,9 @@ export async function loader({ request }: Route.LoaderArgs) {
     api.getClasses(),
   ])
 
+  // Build class name lookup
+  const classMap = new Map(classes.map((c) => [c.id, c.name]))
+
   // Extract all todos from lesson plans
   const allTodos = lespannen.flatMap((lp) =>
     (lp.overview?.lessons ?? []).flatMap((lesson) =>
@@ -51,12 +54,33 @@ export async function loader({ request }: Route.LoaderArgs) {
     .filter((i): i is CalendarLessonItem => i.type === "lesson")
     .sort((a, b) => a.planned_date.localeCompare(b.planned_date))
     .slice(0, 5)
+    .map((lesson) => {
+      const lp = lespannen.find((p) => p.id === lesson.lesplan_id)
+      return { ...lesson, className: lp ? classMap.get(lp.class_id) ?? null : null }
+    })
 
   // Upcoming todos from calendar
   const upcomingTodos = calendar.items
     .filter((i): i is CalendarTodoItem => i.type === "preparation_todo" && i.status === "pending")
     .sort((a, b) => a.due_date.localeCompare(b.due_date))
     .slice(0, 3)
+
+  // Unplanned lessons (no date assigned yet)
+  const unplannedLessons = lespannen
+    .filter((lp) => lp.status === "completed")
+    .flatMap((lp) =>
+      (lp.overview?.lessons ?? [])
+        .filter((lesson) => !lesson.planned_date)
+        .map((lesson) => ({
+          id: lesson.id,
+          title: lesson.title,
+          lesson_number: lesson.lesson_number,
+          lesplan_id: lp.id,
+          lesplan_title: lp.overview?.title ?? "Lesplan",
+          className: classMap.get(lp.class_id) ?? null,
+        }))
+    )
+    .sort((a, b) => a.lesson_number - b.lesson_number)
 
   // Plan stats
   const activePlans = lespannen.filter((lp) => lp.status !== "completed" && lp.status !== "failed")
@@ -72,8 +96,22 @@ export async function loader({ request }: Route.LoaderArgs) {
     classCount: classes.length,
     upcomingLessons,
     upcomingTodos,
-    recentPlans: lespannen
-      .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
-      .slice(0, 3),
+    unplannedLessons,
   }, { headers: { "Cache-Control": "private, max-age=10" } })
+}
+
+export async function action({ request }: Route.ActionArgs) {
+  const { token } = await requireAuthContext(request)
+  const formData = await request.formData()
+  const lessonId = formData.get("lessonId") as string
+  const plannedDate = formData.get("plannedDate") as string
+
+  if (!lessonId || !plannedDate) {
+    return data({ error: "Ongeldige invoer" }, { status: 400 })
+  }
+
+  const api = createApiClient(token)
+  await api.updateLessonPlannedDate(lessonId, plannedDate)
+
+  return redirect("/dashboard")
 }

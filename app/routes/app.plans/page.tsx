@@ -1,33 +1,11 @@
 import { useState } from "react"
 import { BookOpen, Plus, ArrowRight, ChevronDown, ChevronRight } from "lucide-react"
 import { Link, useLoaderData } from "react-router"
-import type { LesplanStatus } from "~/lib/backend/types"
 import { Button } from "~/components/ui/button"
 import { Badge } from "~/components/ui/badge"
 import type { loader } from "./route"
-
-const STATUS_COPY: Record<LesplanStatus, { label: string; variant: "default" | "secondary" | "outline" | "tertiary" | "destructive" }> = {
-  pending: { label: "Wacht op overzicht", variant: "outline" },
-  generating_overview: { label: "Overzicht loopt", variant: "default" },
-  overview_ready: { label: "Klaar voor review", variant: "secondary" },
-  revising_overview: { label: "Revisie bezig", variant: "tertiary" },
-  generating_lessons: { label: "Lessen worden gemaakt", variant: "default" },
-  completed: { label: "Compleet", variant: "secondary" },
-  failed: { label: "Mislukt", variant: "destructive" },
-}
-
-const formatter = new Intl.DateTimeFormat("nl-NL", {
-  dateStyle: "medium",
-  timeStyle: "short",
-})
-
-function formatDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split("-").map(Number)
-  return new Date(year, month - 1, day).toLocaleDateString("nl-NL", {
-    day: "numeric",
-    month: "short",
-  })
-}
+import { STATUS_COPY, formatter } from "./constants"
+import { formatDate } from "./utils"
 
 export default function PlansPage() {
   const { lespannen } = useLoaderData<typeof loader>()

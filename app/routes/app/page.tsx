@@ -1,47 +1,16 @@
-import { NavLink, Outlet } from "react-router"
+import { NavLink, Outlet, useLoaderData } from "react-router"
 import { NavigationProgress } from "~/components/navigation-progress"
-import {
-  LayoutDashboard,
-  CalendarDays,
-  BookOpen,
-  ListTodo,
-  Users,
-  LogOut,
-} from "lucide-react"
+import { LogOut } from "lucide-react"
 import { LesLabLogo } from "~/components/branding/leslab-logo"
 import { OnboardingProvider } from "~/components/onboarding/onboarding-context"
 import { WelkomOverlay } from "~/components/onboarding/welkom-overlay"
-
-const navItems = [
-  {
-    to: "/dashboard",
-    label: "Overzicht",
-    icon: LayoutDashboard,
-  },
-  {
-    to: "/classes",
-    label: "Klassen",
-    icon: Users,
-  },
-  {
-    to: "/plans",
-    label: "Lessen",
-    icon: BookOpen,
-  },
-  {
-    to: "/todos",
-    label: "To Do's",
-    icon: ListTodo,
-  },
-  {
-    to: "/calendar",
-    label: "Kalender",
-    icon: CalendarDays,
-  },
-]
+import type { loader } from "./route"
+import { navItems } from "./constants"
 export default function AppLayout() {
+  const { hasLesplans } = useLoaderData<typeof loader>()
+
   return (
-    <OnboardingProvider>
+    <OnboardingProvider hasLesplans={hasLesplans}>
     <div className="min-h-screen bg-[#f8f9ff] grid grid-cols-1 lg:grid-cols-[260px_1fr]">
       <NavigationProgress />
 

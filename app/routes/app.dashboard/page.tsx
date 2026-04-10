@@ -1,4 +1,4 @@
-import { Link, useLoaderData } from "react-router"
+import { Link, useLoaderData, useFetcher } from "react-router"
 import {
   CalendarDays,
   BookOpen,
@@ -8,36 +8,11 @@ import {
   CheckCircle2,
   Users,
   Clock,
-  Sparkles,
+  CalendarPlus,
 } from "lucide-react"
-import { addDays } from "date-fns"
-import { format } from "date-fns"
-import { nl } from "date-fns/locale"
 import { Button } from "~/components/ui/button"
-import type { LesplanResponse } from "~/lib/backend/types"
 import type { loader } from "./route"
-
-function formatDateShort(dateStr: string): string {
-  const [year, month, day] = dateStr.split("-").map(Number)
-  const d = new Date(year, month - 1, day)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const tomorrow = addDays(today, 1)
-
-  if (d.getTime() === today.getTime()) return "Vandaag"
-  if (d.getTime() === tomorrow.getTime()) return "Morgen"
-  return format(d, "EEEE d MMM", { locale: nl })
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: "Wacht op overzicht",
-  generating_overview: "Overzicht loopt",
-  overview_ready: "Klaar voor review",
-  revising_overview: "Revisie bezig",
-  generating_lessons: "Lessen worden gemaakt",
-  completed: "Compleet",
-  failed: "Mislukt",
-}
+import { formatDateShort } from "./utils"
 
 export default function DashboardPage() {
   const {
@@ -50,7 +25,7 @@ export default function DashboardPage() {
     classCount,
     upcomingLessons,
     upcomingTodos,
-    recentPlans,
+    unplannedLessons,
   } = useLoaderData<typeof loader>()
 
   return (
@@ -124,7 +99,6 @@ export default function DashboardPage() {
                 <Link
                   to="/calendar"
                   prefetch="intent"
-
                   className="text-xs font-semibold text-[#2a14b4] hover:underline flex items-center gap-1"
                 >
                   Kalender
@@ -146,7 +120,6 @@ export default function DashboardPage() {
                       key={lesson.id}
                       to={`/lesplan/${lesson.lesplan_id}/les/${lesson.id}`}
                       prefetch="intent"
-
                       className="group flex items-center gap-3 px-5 py-3.5 border-b border-[#eff4ff] last:border-0 hover:bg-[#f8f9ff] transition-colors"
                     >
                       <div className="w-12 text-center shrink-0">
@@ -158,9 +131,19 @@ export default function DashboardPage() {
                         <p className="text-sm font-semibold text-[#0b1c30] truncate group-hover:text-[#2a14b4] transition-colors">
                           {lesson.title}
                         </p>
-                        <p className="text-xs text-[#5c5378]/70 truncate">
-                          {lesson.lesplan_title}
-                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <p className="text-xs text-[#5c5378]/70 truncate">
+                            {lesson.lesplan_title}
+                          </p>
+                          {lesson.className && (
+                            <>
+                              <span className="text-[#5c5378]/30">·</span>
+                              <span className="text-[10px] font-medium text-[#2a14b4]/70 bg-[#eff4ff] rounded px-1.5 py-0.5 shrink-0">
+                                {lesson.className}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                       <span className="text-xs font-medium text-[#5c5378] shrink-0 capitalize">
                         {formatDateShort(lesson.planned_date)}
@@ -171,75 +154,28 @@ export default function DashboardPage() {
               )}
             </section>
 
-            {/* Recent plans */}
-            <section className="bg-white rounded-2xl shadow-[0px_24px_40px_rgba(11,28,48,0.07)] overflow-hidden">
-              <div className="px-5 py-4 border-b border-[#eff4ff] flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#eff4ff] flex items-center justify-center">
-                    <BookOpen className="w-4 h-4 text-[#2a14b4]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[#0b1c30]">Recente plannen</p>
-                    <p className="text-[11px] text-[#5c5378]">Laatst bijgewerkt</p>
+            {/* Unplanned lessons */}
+            {unplannedLessons.length > 0 && (
+              <section className="bg-white rounded-2xl shadow-[0px_24px_40px_rgba(11,28,48,0.07)] overflow-hidden">
+                <div className="px-5 py-4 border-b border-[#eff4ff] flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#ffdf9f]/60 flex items-center justify-center">
+                      <CalendarPlus className="w-4 h-4 text-[#4c3700]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#0b1c30]">Lessen zonder datum</p>
+                      <p className="text-[11px] text-[#5c5378]">{unplannedLessons.length} {unplannedLessons.length === 1 ? "les" : "lessen"} nog in te plannen</p>
+                    </div>
                   </div>
                 </div>
-                <Link
-                  to="/plans"
-                  prefetch="intent"
 
-                  className="text-xs font-semibold text-[#2a14b4] hover:underline flex items-center gap-1"
-                >
-                  Alle plannen
-                  <ArrowRight className="w-3 h-3" />
-                </Link>
-              </div>
-
-              {recentPlans.length === 0 ? (
-                <div className="px-5 py-8 text-center">
-                  <div className="mx-auto w-10 h-10 rounded-2xl bg-[#eff4ff] flex items-center justify-center mb-3">
-                    <Sparkles className="w-5 h-5 text-[#5c5378]/50" />
-                  </div>
-                  <p className="text-sm font-semibold text-[#5c5378]">Nog geen lesplannen</p>
-                  <p className="text-xs text-[#5c5378]/60 mt-0.5">
-                    Maak je eerste lesplan om hier aan de slag te gaan.
-                  </p>
-                </div>
-              ) : (
                 <div>
-                  {(recentPlans as LesplanResponse[]).map((plan) => {
-                    const lessonCount = plan.overview?.lessons?.length ?? 0
-                    return (
-                      <Link
-                        key={plan.id}
-                        to={`/lesplan/${plan.id}`}
-                        prefetch="intent"
-
-                        className="group flex items-center gap-3 px-5 py-3.5 border-b border-[#eff4ff] last:border-0 hover:bg-[#f8f9ff] transition-colors"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-[#0b1c30] truncate group-hover:text-[#2a14b4] transition-colors">
-                            {plan.overview?.title ?? "Lesplan in opbouw"}
-                          </p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs text-[#5c5378]/70">
-                              {plan.num_lessons} lessen · {plan.lesson_duration_minutes} min
-                            </span>
-                            {lessonCount > 0 && (
-                              <span className="text-[10px] font-medium text-[#5c5378]/50">
-                                · {lessonCount} uitgewerkt
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full bg-[#eff4ff] text-[#2a14b4] shrink-0">
-                          {STATUS_LABELS[plan.status] ?? plan.status}
-                        </span>
-                      </Link>
-                    )
-                  })}
+                  {unplannedLessons.map((lesson) => (
+                    <UnplannedLessonRow key={lesson.id} lesson={lesson} />
+                  ))}
                 </div>
-              )}
-            </section>
+              </section>
+            )}
           </div>
 
           {/* Right column (hidden on mobile - content accessible via bottom nav) */}
@@ -317,25 +253,71 @@ export default function DashboardPage() {
                 </div>
               )}
             </section>
-
-            {/* Quick links */}
-            <div className="grid grid-cols-1 gap-3">
-              <QuickLink
-                to="/calendar"
-                icon={<CalendarDays className="w-5 h-5" />}
-                title="Kalender"
-                description="Bekijk je planning per dag"
-              />
-              <QuickLink
-                to="/classes"
-                icon={<Users className="w-5 h-5" />}
-                title="Klassen"
-                description="Beheer je klasprofielen"
-              />
-            </div>
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function UnplannedLessonRow({
+  lesson,
+}: {
+  lesson: {
+    id: string
+    title: string
+    lesson_number: number
+    lesplan_id: string
+    lesplan_title: string
+    className: string | null
+  }
+}) {
+  const fetcher = useFetcher()
+  const isSubmitting = fetcher.state !== "idle"
+
+  return (
+    <div className="flex items-center gap-3 px-5 py-3.5 border-b border-[#eff4ff] last:border-0">
+      <div className="w-12 text-center shrink-0">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-[#4c3700] bg-[#ffdf9f]/60 rounded px-1.5 py-0.5">
+          Les {lesson.lesson_number}
+        </p>
+      </div>
+      <div className="flex-1 min-w-0">
+        <Link
+          to={`/lesplan/${lesson.lesplan_id}/les/${lesson.id}`}
+          prefetch="intent"
+          className="text-sm font-semibold text-[#0b1c30] truncate hover:text-[#2a14b4] transition-colors block"
+        >
+          {lesson.title}
+        </Link>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <p className="text-xs text-[#5c5378]/70 truncate">
+            {lesson.lesplan_title}
+          </p>
+          {lesson.className && (
+            <>
+              <span className="text-[#5c5378]/30">·</span>
+              <span className="text-[10px] font-medium text-[#2a14b4]/70 bg-[#eff4ff] rounded px-1.5 py-0.5 shrink-0">
+                {lesson.className}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+      <fetcher.Form method="post" className="shrink-0">
+        <input type="hidden" name="lessonId" value={lesson.id} />
+        <input
+          type="date"
+          name="plannedDate"
+          disabled={isSubmitting}
+          onChange={(e) => {
+            if (e.target.value) {
+              e.target.form?.requestSubmit()
+            }
+          }}
+          className="text-xs border border-[#eff4ff] rounded-lg px-2.5 py-1.5 text-[#5c5378] bg-[#f8f9ff] hover:border-[#2a14b4]/30 focus:border-[#2a14b4] focus:ring-1 focus:ring-[#2a14b4]/20 outline-none transition-colors cursor-pointer disabled:opacity-50"
+        />
+      </fetcher.Form>
     </div>
   )
 }
@@ -366,34 +348,5 @@ function StatCard({
       <p className="text-xl sm:text-2xl font-bold tracking-tight text-[#0b1c30] mt-1">{value}</p>
       <p className="text-xs text-[#5c5378] mt-0.5">{sub}</p>
     </div>
-  )
-}
-
-function QuickLink({
-  to,
-  icon,
-  title,
-  description,
-}: {
-  to: string
-  icon: React.ReactNode
-  title: string
-  description: string
-}) {
-  return (
-    <Link
-      to={to}
-      prefetch="intent"
-      className="group flex items-center gap-3 bg-white rounded-2xl p-4 shadow-[0px_16px_32px_rgba(11,28,48,0.06)] hover:shadow-[0px_24px_40px_rgba(11,28,48,0.1)] hover:-translate-y-0.5 transition-all"
-    >
-      <div className="w-10 h-10 rounded-xl bg-[#eff4ff] flex items-center justify-center text-[#2a14b4] group-hover:bg-gradient-to-br group-hover:from-[#2a14b4] group-hover:to-[#4338ca] group-hover:text-white transition-all shrink-0">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-[#0b1c30]">{title}</p>
-        <p className="text-xs text-[#5c5378]">{description}</p>
-      </div>
-      <ArrowRight className="w-4 h-4 text-[#5c5378]/40 group-hover:text-[#2a14b4] group-hover:translate-x-0.5 transition-all shrink-0" />
-    </Link>
   )
 }

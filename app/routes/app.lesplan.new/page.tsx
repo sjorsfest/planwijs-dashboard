@@ -17,160 +17,10 @@ import {
   type Method,
   type SchoolYear,
 } from "~/components/new-plan/types"
-import type { ActionData, LoaderData } from "./route"
+import type { ActionData, SavedPlanState } from "./types"
 import type { loader, action } from "./route"
-
-type SavedPlanState = {
-  classSelectionMode: "choose" | "create"
-  selectedExistingClassId: string | null
-  selectedClassroomId: string | null
-  className_: string
-  selectedLevel: Level | null
-  selectedYear: SchoolYear | null
-  selectedCategory: string | null
-  selectedSubject: Subject | null
-  lessonCount: number | null
-  lessonDuration: number | null
-  classSize: number | null
-  classDifficulty: ClassDifficulty | null
-  classSetupConfirmed: boolean
-  curriculumConfirmed: boolean
-  selectedMethod: Method | null
-  selectedBook: Book | null
-  selectedParagraphIds: string[]
-  showSummary: boolean
-}
-
-const PLAN_STATE_KEY = "planwijs_new_plan"
-
-function normalizeSubjectCategory(category: string | null | undefined): string {
-  const trimmed = category?.trim()
-  return trimmed && trimmed.length > 0 ? trimmed : "Overig"
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === "object" && !Array.isArray(value)
-}
-
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === "string")
-}
-
-function parseSavedSubject(value: unknown): Subject | null {
-  if (!isRecord(value)) return null
-  if (
-    typeof value.id !== "string" ||
-    typeof value.slug !== "string" ||
-    typeof value.name !== "string" ||
-    typeof value.category !== "string"
-  ) {
-    return null
-  }
-
-  return {
-    id: value.id,
-    slug: value.slug,
-    name: value.name,
-    category: value.category,
-    created_at: typeof value.created_at === "string" ? value.created_at : undefined,
-    updated_at: typeof value.updated_at === "string" ? value.updated_at : undefined,
-  }
-}
-
-function parseSavedMethod(value: unknown): Method | null {
-  if (!isRecord(value)) return null
-  if (
-    typeof value.slug !== "string" ||
-    typeof value.title !== "string" ||
-    typeof value.subject !== "string" ||
-    typeof value.url !== "string"
-  ) {
-    return null
-  }
-
-  return {
-    id: typeof value.id === "string" ? value.id : undefined,
-    created_at: typeof value.created_at === "string" ? value.created_at : undefined,
-    updated_at: typeof value.updated_at === "string" ? value.updated_at : undefined,
-    slug: value.slug,
-    title: value.title,
-    subject: value.subject as Method["subject"],
-    url: value.url,
-  }
-}
-
-function parseSavedBook(value: unknown): Book | null {
-  if (!isRecord(value)) return null
-  if (
-    typeof value.slug !== "string" ||
-    typeof value.title !== "string" ||
-    typeof value.url !== "string"
-  ) {
-    return null
-  }
-
-  return {
-    id: typeof value.id === "string" ? value.id : undefined,
-    created_at: typeof value.created_at === "string" ? value.created_at : undefined,
-    updated_at: typeof value.updated_at === "string" ? value.updated_at : undefined,
-    book_id: typeof value.book_id === "number" ? value.book_id : null,
-    slug: value.slug,
-    title: value.title,
-    subject_id: typeof value.subject_id === "string" ? value.subject_id : null,
-    method_id: typeof value.method_id === "string" ? value.method_id : null,
-    edition: typeof value.edition === "string" ? value.edition : null,
-    school_years: Array.isArray(value.school_years) ? (value.school_years as Book["school_years"]) : [],
-    levels: Array.isArray(value.levels) ? (value.levels as Book["levels"]) : [],
-    cover_path: typeof value.cover_path === "string" ? value.cover_path : null,
-    cover_url: typeof value.cover_url === "string" ? value.cover_url : null,
-    url: value.url,
-    subject_slug: typeof value.subject_slug === "string" ? value.subject_slug : null,
-    subject_name: typeof value.subject_name === "string" ? value.subject_name : null,
-    subject_category: typeof value.subject_category === "string" ? value.subject_category : null,
-  }
-}
-
-function loadPlanState(): SavedPlanState | null {
-  if (typeof window === "undefined") return null
-
-  try {
-    const raw = window.localStorage.getItem(PLAN_STATE_KEY)
-    if (!raw) return null
-
-    const parsed = JSON.parse(raw) as Record<string, unknown>
-
-    return {
-      classSelectionMode: parsed.classSelectionMode === "create" ? "create" : "choose",
-      selectedExistingClassId:
-        typeof parsed.selectedExistingClassId === "string" && parsed.selectedExistingClassId.length > 0
-          ? parsed.selectedExistingClassId
-          : null,
-      selectedClassroomId:
-        typeof parsed.selectedClassroomId === "string" && parsed.selectedClassroomId.length > 0
-          ? parsed.selectedClassroomId
-          : null,
-      className_: typeof parsed.className_ === "string" ? parsed.className_ : "",
-      selectedLevel: typeof parsed.selectedLevel === "string" ? (parsed.selectedLevel as Level) : null,
-      selectedYear: typeof parsed.selectedYear === "string" ? (parsed.selectedYear as SchoolYear) : null,
-      selectedCategory: typeof parsed.selectedCategory === "string" ? parsed.selectedCategory : null,
-      selectedSubject: parseSavedSubject(parsed.selectedSubject),
-      lessonCount: typeof parsed.lessonCount === "number" ? parsed.lessonCount : null,
-      lessonDuration: typeof parsed.lessonDuration === "number" ? parsed.lessonDuration : null,
-      classSize: typeof parsed.classSize === "number" ? parsed.classSize : null,
-      classDifficulty: typeof parsed.classDifficulty === "string" ? (parsed.classDifficulty as ClassDifficulty) : null,
-      classSetupConfirmed:
-        parsed.classSetupConfirmed === true ||
-        parsed.classDetailsConfirmed === true,
-      curriculumConfirmed: parsed.curriculumConfirmed === true,
-      selectedMethod: parseSavedMethod(parsed.selectedMethod),
-      selectedBook: parseSavedBook(parsed.selectedBook),
-      selectedParagraphIds: isStringArray(parsed.selectedParagraphIds) ? parsed.selectedParagraphIds : [],
-      showSummary: parsed.showSummary === true,
-    }
-  } catch {
-    return null
-  }
-}
+import { PLAN_STATE_KEY } from "./constants"
+import { normalizeSubjectCategory, loadPlanState } from "./utils"
 
 export default function NewLesplanPage() {
   const { existingClasses, classrooms: initialClassrooms } = useLoaderData<typeof loader>()
@@ -178,9 +28,8 @@ export default function NewLesplanPage() {
   const navigation = useNavigation()
   const submit = useSubmit()
 
-  const { phase } = useOnboarding()
+  const { phase, isStepCompleted, markStepCompleted } = useOnboarding()
   const isOnboarding = phase === "voltooid"
-  const [dismissedStepIntros, setDismissedStepIntros] = useState<Set<number>>(new Set())
   const hasExistingClasses = existingClasses.length > 0
   const [classSelectionMode, setClassSelectionMode] = useState<"choose" | "create">(
     hasExistingClasses ? "choose" : "create"
@@ -892,10 +741,10 @@ export default function NewLesplanPage() {
         />
       )}
 
-      {isOnboarding && !showSummary && !dismissedStepIntros.has(step) && (
+      {isOnboarding && !showSummary && !isStepCompleted(step) && (
         <StepIntroOverlay
           step={step as 1 | 2 | 3}
-          onDismiss={() => setDismissedStepIntros((prev) => new Set([...prev, step]))}
+          onDismiss={() => markStepCompleted(step)}
         />
       )}
     </div>

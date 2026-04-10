@@ -24,8 +24,7 @@ import { useOnboarding } from "~/components/onboarding/onboarding-context"
 import { VoltooidOverlay } from "~/components/onboarding/voltooid-overlay"
 import type { ActionData } from "./route"
 import type { loader } from "./route"
-
-const SOFT_EASE = [0.22, 1, 0.36, 1] as const
+import { SOFT_EASE } from "./constants"
 
 export default function LessonSeriesReviewPage() {
   const loaderData = useLoaderData<typeof loader>()

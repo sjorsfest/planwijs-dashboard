@@ -5,15 +5,8 @@ import type { LessonPlanResponse } from "~/lib/backend/types"
 import { TodoCard } from "~/components/todos/todo-card"
 import type { SourceContext } from "~/components/lesplan/types"
 import type { loader } from "./route"
-
-const LESSON_TABS = [
-  { id: "overzicht", label: "Overzicht" },
-  { id: "tijdschema", label: "Tijdschema" },
-  { id: "notities", label: "Notities" },
-  { id: "taken", label: "Taken" },
-] as const
-
-type LessonTabId = (typeof LESSON_TABS)[number]["id"]
+import { LESSON_TABS, activityTypeStyles, type LessonTabId } from "./constants"
+import { formatPlannedDate } from "./utils"
 
 export default function LessonDetailPage() {
   const { requestId, lesson, sourceContext } = useLoaderData<typeof loader>()
@@ -73,14 +66,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function formatPlannedDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split("-").map(Number)
-  return new Date(year, month - 1, day).toLocaleDateString("nl-NL", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  })
-}
 
 function LessonHeader({ lesson }: { lesson: LessonPlanResponse }) {
   const fetcher = useFetcher()
@@ -352,13 +337,6 @@ function OverviewTab({ lesson, sourceContext }: { lesson: LessonPlanResponse; so
   )
 }
 
-const activityTypeStyles: Record<string, string> = {
-  introduction: "bg-blue-50 text-blue-700",
-  instruction: "bg-[#ffdf9f]/60 text-[#4c3700]",
-  activity: "bg-emerald-50 text-emerald-700",
-  closure: "bg-[#eff4ff] text-[#2a14b4]",
-  repetition: "bg-orange-50 text-orange-700",
-}
 
 function ActivityTypeBadge({ type }: { type: string }) {
   const style = activityTypeStyles[type.toLowerCase()] ?? "bg-[#eff4ff] text-[#464554]"
