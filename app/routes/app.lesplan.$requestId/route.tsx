@@ -3,6 +3,7 @@ export { default } from "./page"
 import { data } from "react-router"
 import { createApiClient, ApiRequestError } from "~/lib/backend/client"
 import { requireAuthContext } from "~/lib/auth.server"
+import { getSession, commitSession, getActiveTask, setActiveTask, clearActiveTask } from "~/lib/session.server"
 import type { LesplanWorkspaceLoaderData } from "~/components/lesplan/types"
 import {
   type ActionData,
@@ -13,7 +14,7 @@ import type { Route } from "./+types/route"
 export type { ActionData }
 
 export function meta() {
-  return [{ title: "Lesplan werkruimte — Planwijs" }]
+  return [{ title: "Lesplan werkruimte — Leslab" }]
 }
 
 export function headers({ loaderHeaders }: Route.HeadersArgs) {
@@ -22,13 +23,26 @@ export function headers({ loaderHeaders }: Route.HeadersArgs) {
   }
 }
 
+const TERMINAL_STATUSES = new Set(["overview_ready", "completed", "failed"])
+
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
+  const session = await getSession(request.headers.get("Cookie"))
   const api = createApiClient(token)
   const lesplan = await api.getLesplan(params.requestId)
 
   if (!lesplan) {
     throw new Response("Lesplan not found", { status: 404 })
+  }
+
+  // Read active task from session; auto-clear if lesplan reached a terminal state
+  let activeTask = getActiveTask(session, params.requestId)
+  let sessionDirty = false
+
+  if (activeTask && TERMINAL_STATUSES.has(lesplan.status)) {
+    clearActiveTask(session, params.requestId)
+    activeTask = null
+    sessionDirty = true
   }
 
   const [classroom, bookDetail] = await Promise.all([
@@ -58,6 +72,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     selectedParagraphs: lesplan.selected_paragraph_ids.map((id) => paragraphsById.get(id) ?? { id, title: id }),
   })
 
+  const headers: Record<string, string> = { "Cache-Control": "private, max-age=10" }
+  if (sessionDirty) {
+    headers["Set-Cookie"] = await commitSession(session)
+  }
+
   return data({
     requestId: lesplan.id,
     updatedAt: lesplan.updated_at,
@@ -71,11 +90,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       lessonDurationMinutes: lesplan.lesson_duration_minutes,
     },
     sourceContext,
-  } satisfies LesplanWorkspaceLoaderData, { headers: { "Cache-Control": "private, max-age=10" } })
+    activeTask,
+  } satisfies LesplanWorkspaceLoaderData, { headers })
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
   const { token } = await requireAuthContext(request)
+  const session = await getSession(request.headers.get("Cookie"))
   const api = createApiClient(token)
   const formData = await request.formData()
   const intent = formData.get("intent")
@@ -91,7 +112,10 @@ export async function action({ request, params }: Route.ActionArgs) {
         return data<ActionData>({ intent: "feedback", ok: false, error: "Voer eerst feedback in." }, { status: 400 })
       }
       const task = await api.submitFeedback(params.requestId, { items })
-      return data<ActionData>({ intent: "feedback", ok: true, task })
+      setActiveTask(session, params.requestId, task.task_id, task.task_type)
+      return data<ActionData>({ intent: "feedback", ok: true, task }, {
+        headers: { "Set-Cookie": await commitSession(session) },
+      })
     } catch (error) {
       if (error instanceof ApiRequestError) {
         return data<ActionData>({ intent: "feedback", ok: false, error: error.message }, { status: error.status })
@@ -103,7 +127,10 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (intent === "approve") {
     try {
       const task = await api.approveLesplan(params.requestId)
-      return data<ActionData>({ intent: "approve", ok: true, task })
+      setActiveTask(session, params.requestId, task.task_id, task.task_type)
+      return data<ActionData>({ intent: "approve", ok: true, task }, {
+        headers: { "Set-Cookie": await commitSession(session) },
+      })
     } catch (error) {
       if (error instanceof ApiRequestError) {
         return data<ActionData>({ intent: "approve", ok: false, error: error.message }, { status: error.status })

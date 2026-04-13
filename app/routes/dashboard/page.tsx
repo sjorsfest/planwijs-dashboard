@@ -97,7 +97,7 @@ export default function Dashboard() {
           <div className="w-7 h-7 flex items-center justify-center">
             <CalendarDays className="w-4 h-4 text-black" />
           </div>
-          <span className="font-bold text-base tracking-tight">Planwijs</span>
+          <span className="font-bold text-base tracking-tight">Leslab</span>
         </div>
 
         <Button

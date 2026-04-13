@@ -94,7 +94,7 @@ export function loadPlanState(): SavedPlanState | null {
   if (typeof window === "undefined") return null
 
   try {
-    const raw = window.localStorage.getItem("planwijs_new_plan")
+    const raw = window.localStorage.getItem("leslab_new_plan")
     if (!raw) return null
 
     const parsed = JSON.parse(raw) as Record<string, unknown>

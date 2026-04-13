@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react"
-import { Link, useFetcher, useLoaderData, useRevalidator, useSearchParams } from "react-router"
+import { Link, useFetcher, useLoaderData, useRevalidator } from "react-router"
 import { motion } from "framer-motion"
 import { AlertTriangle, ArrowLeft } from "lucide-react"
 import type { TaskStatusResponse } from "~/lib/backend/types"
@@ -9,7 +9,7 @@ import {
   reducer,
   buildStateFromLoaderData,
 } from "~/components/lesplan/reducer"
-import { getReviewStatusLabel, sectionKeyToFieldName } from "~/components/lesplan/utils"
+import { getReviewStatusLabel, sectionKeyToFieldName, translateStep } from "~/components/lesplan/utils"
 import { LessonSeriesHeader } from "~/components/lesplan/lesson-series-header"
 import { type ReviewTabId, LessonSeriesTabNav, TabPanel } from "~/components/lesplan/tab-nav"
 import { OverviewTab } from "~/components/lesplan/overview-tab"
@@ -22,29 +22,9 @@ import type { ActionData } from "./route"
 import type { loader } from "./route"
 import { SOFT_EASE } from "./constants"
 
-const TASK_STEP_LABELS: Record<string, string> = {
-  "Loading context": "Context laden...",
-  "Generating identity": "Titel en thema's genereren...",
-  "Generating learning goals": "Leerdoelen opstellen...",
-  "Generating sequence": "Lessenreeks samenstellen...",
-  "Generating teacher notes": "Docentnotities schrijven...",
-  "Persisting overview": "Opslaan...",
-  "Applying feedback": "Feedback verwerken...",
-  "Persisting changes": "Wijzigingen opslaan...",
-  "Generating lessons": "Lessen genereren...",
-  "Generating preparation": "Voorbereiding genereren...",
-  "Persisting lessons": "Lessen opslaan...",
-}
-
-function translateStep(step: string | null): string | null {
-  if (!step) return null
-  return TASK_STEP_LABELS[step] ?? step
-}
-
 export default function LessonSeriesReviewPage() {
   const loaderData = useLoaderData<typeof loader>()
   const revalidator = useRevalidator()
-  const [searchParams, setSearchParams] = useSearchParams()
   const [state, dispatch] = useReducer(reducer, loaderData, buildStateFromLoaderData)
   const [feedbackText, setFeedbackText] = useState("")
   const [activeTab, setActiveTab] = useState<ReviewTabId>("overview")
@@ -77,19 +57,15 @@ export default function LessonSeriesReviewPage() {
   const taskLastCompletedRef = useRef<number>(0)
   const hydratedAt = useMemo(() => loaderData.updatedAt, [loaderData.updatedAt])
 
-  // ─── Read initial task_id from URL params (set by lesplan.new redirect) ──
-  const initialTaskId = useRef(searchParams.get("task"))
+  // ─── Restore active task from server session (survives page reloads) ─────
+  const initialTaskRestored = useRef(false)
 
   useEffect(() => {
-    const taskId = initialTaskId.current
-    if (taskId) {
-      dispatch({ type: "task_started", taskId, taskType: "generate_overview" })
-      // Clear the ?task= param from URL without navigation
-      setSearchParams((prev) => {
-        prev.delete("task")
-        return prev
-      }, { replace: true })
-      initialTaskId.current = null
+    if (initialTaskRestored.current) return
+    initialTaskRestored.current = true
+    const task = loaderData.activeTask
+    if (task) {
+      dispatch({ type: "task_started", taskId: task.taskId, taskType: task.taskType })
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -114,7 +90,7 @@ export default function LessonSeriesReviewPage() {
       return
     }
     dispatch({ type: "feedback_submit_ack", task: feedbackFetcher.data.task, placeholderId: pending.placeholderId })
-  }, [feedbackFetcher.state, feedbackFetcher.data])
+  }, [feedbackFetcher.state, feedbackFetcher.data]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Handle approve fetcher response ─────────────────────────────────────
   useEffect(() => {
@@ -125,7 +101,7 @@ export default function LessonSeriesReviewPage() {
       return
     }
     dispatch({ type: "approve_success", task: approveFetcher.data.task })
-  }, [approveFetcher.state, approveFetcher.data])
+  }, [approveFetcher.state, approveFetcher.data]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Task polling ────────────────────────────────────────────────────────
   const activeTaskId = state.ui.activeTaskId
@@ -239,11 +215,11 @@ export default function LessonSeriesReviewPage() {
   const [loadingFields, setLoadingFields] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    if (processFeedbackFetcher.state === "idle" && processFeedbackFetcher.data) {
-      setLoadingFields(new Set())
-      if (processFeedbackFetcher.data.ok) {
-        setSectionFeedback([])
-      }
+    if (processFeedbackFetcher.state !== "idle" || !processFeedbackFetcher.data) return
+    setLoadingFields(new Set())
+    if (processFeedbackFetcher.data.ok && processFeedbackFetcher.data.task) {
+      setSectionFeedback([])
+      dispatch({ type: "task_started", taskId: processFeedbackFetcher.data.task.task_id, taskType: "apply_feedback" })
     }
   }, [processFeedbackFetcher.state, processFeedbackFetcher.data])
 
@@ -408,6 +384,11 @@ export default function LessonSeriesReviewPage() {
         canApprove={canReview}
         isApproving={state.ui.approving || approveFetcher.state !== "idle"}
         status={state.status}
+        activeTaskId={state.ui.activeTaskId}
+        activeTaskType={state.ui.activeTaskType}
+        taskProgress={state.ui.taskProgress}
+        taskCurrentStep={state.ui.taskCurrentStep}
+        taskSteps={state.ui.taskSteps}
       />
       <VoltooidOverlay />
     </div>

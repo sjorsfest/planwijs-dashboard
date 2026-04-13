@@ -13,5 +13,5 @@ export async function loader({ request }: LoaderFunctionArgs) {
 // ─── Meta ──────────────────────────────────────────────────────────────────
 
 export function meta() {
-  return [{ title: "Rooster — Planwijs" }]
+  return [{ title: "Rooster — Leslab" }]
 }

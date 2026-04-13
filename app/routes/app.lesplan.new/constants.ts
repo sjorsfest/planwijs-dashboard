@@ -1,1 +1,1 @@
-export const PLAN_STATE_KEY = "planwijs_new_plan"
+export const PLAN_STATE_KEY = "leslab_new_plan"

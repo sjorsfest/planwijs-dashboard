@@ -78,7 +78,12 @@ function TeacherNotesSection({
       open={defaultOpen}
       className="group bg-white rounded-2xl p-5 shadow-[0px_10px_24px_rgba(11,28,48,0.07)] border border-[#e8eeff]"
     >
-      <summary className="list-none flex items-center justify-between gap-4 cursor-pointer">
+      <summary
+        className="list-none flex items-center justify-between gap-4 cursor-pointer"
+        onKeyDown={(e) => {
+          if (e.key === " ") e.preventDefault()
+        }}
+      >
         <div className="flex items-center gap-3 min-w-0">
           <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#eff4ff] text-[#2a14b4]">
             <Icon className="w-3.5 h-3.5" />

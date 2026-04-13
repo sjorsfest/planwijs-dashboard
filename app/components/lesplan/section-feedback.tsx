@@ -1,5 +1,7 @@
 import { useRef, useState, useEffect } from "react"
-import { MessageSquarePlus, Send, X, MessageCircle, CheckCircle2, Sparkles, LoaderCircle, Minus } from "lucide-react"
+import { MessageSquarePlus, Send, X, MessageCircle, CheckCircle2, Sparkles, LoaderCircle, Minus, Check } from "lucide-react"
+import type { TaskStep } from "~/lib/backend/types"
+import { translateStep } from "./utils"
 import { motion, AnimatePresence } from "framer-motion"
 
 export type SectionFeedbackItem = {
@@ -132,6 +134,11 @@ export function FeedbackPanel({
   isApproving,
   isProcessing,
   status,
+  activeTaskId,
+  activeTaskType,
+  taskProgress,
+  taskCurrentStep,
+  taskSteps,
 }: {
   items: SectionFeedbackItem[]
   onRemove: (id: string) => void
@@ -141,11 +148,17 @@ export function FeedbackPanel({
   isApproving: boolean
   isProcessing: boolean
   status: string
+  activeTaskId?: string | null
+  activeTaskType?: string | null
+  taskProgress?: number
+  taskCurrentStep?: string | null
+  taskSteps?: TaskStep[]
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const [minimized, setMinimized] = useState(false)
   const hasFeedback = items.length > 0
-  const isGenerating = status === "generating_overview"
+  const hasActiveTask = Boolean(activeTaskId)
+  const isGenerating = hasActiveTask || status === "generating_overview" || status === "revising_overview" || status === "generating_lessons"
 
   if (!FEEDBACK_VISIBLE_STATUSES.has(status)) return null
 
@@ -159,8 +172,12 @@ export function FeedbackPanel({
           onClick={() => setMinimized(false)}
           className="relative flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_8px_24px_rgba(42,20,180,0.3)] hover:shadow-[0px_12px_32px_rgba(42,20,180,0.4)] transition-shadow"
         >
-          <MessageCircle className="w-5 h-5" />
-          {hasFeedback && (
+          {isGenerating ? (
+            <LoaderCircle className="w-5 h-5 animate-spin" />
+          ) : (
+            <MessageCircle className="w-5 h-5" />
+          )}
+          {!isGenerating && hasFeedback && (
             <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-white text-[#2a14b4] text-[10px] font-bold shadow-sm">
               {items.length}
             </span>
@@ -179,9 +196,21 @@ export function FeedbackPanel({
             onClick={() => setCollapsed(!collapsed)}
             className="flex items-center gap-2.5 flex-1"
           >
-            <MessageCircle className="w-4.5 h-4.5" />
-            <span className="text-sm font-semibold">Jouw feedback</span>
-            {hasFeedback && (
+            {isGenerating ? (
+              <LoaderCircle className="w-4 h-4 animate-spin" />
+            ) : (
+              <MessageCircle className="w-4.5 h-4.5" />
+            )}
+            <span className="text-sm font-semibold">
+              {isGenerating
+                ? activeTaskType === "apply_feedback"
+                  ? "Feedback verwerken…"
+                  : activeTaskType === "generate_lessons"
+                  ? "Lessen genereren…"
+                  : "Overzicht genereren…"
+                : "Jouw feedback"}
+            </span>
+            {!isGenerating && hasFeedback && (
               <span className="inline-flex items-center justify-center w-5.5 h-5.5 rounded-full bg-white/20 text-[11px] font-bold">
                 {items.length}
               </span>
@@ -200,13 +229,72 @@ export function FeedbackPanel({
         {!collapsed && (
           <>
             {isGenerating ? (
-              <div className="px-5 py-6 flex flex-col items-center">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#eff4ff] mb-3">
-                  <LoaderCircle className="w-5 h-5 text-[#2a14b4]/40 animate-spin" />
-                </div>
-                <p className="text-sm text-[#5c5378] font-medium mb-2">Overzicht wordt gegenereerd…</p>
-                <p className="text-xs text-[#5c5378]/70 leading-5 text-center">
-                  Zodra het overzicht klaar is, kun je feedback geven op de verschillende onderdelen om het lesplan te verbeteren.
+              <div className="px-5 py-5">
+                {/* Progress bar */}
+                {hasActiveTask && (taskProgress ?? 0) > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-xs font-semibold text-[#5c5378]">
+                        {translateStep(taskCurrentStep ?? null) ?? "Bezig..."}
+                      </p>
+                      <span className="text-[10px] font-semibold text-[#2a14b4] tabular-nums">{taskProgress}%</span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-[#e8eeff] overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full bg-gradient-to-r from-[#2a14b4] to-[#4338ca]"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${taskProgress}%` }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Step list */}
+                {taskSteps && taskSteps.length > 0 ? (
+                  <div className="space-y-1">
+                    {taskSteps.map((step) => {
+                      const label = translateStep(step.name) ?? step.name
+                      const isCompleted = step.status === "completed"
+                      const isRunning = step.status === "running"
+                      return (
+                        <div
+                          key={step.name}
+                          className={`flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs transition-colors ${
+                            isRunning ? "bg-[#eff4ff]" : ""
+                          }`}
+                        >
+                          {isCompleted ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          ) : isRunning ? (
+                            <LoaderCircle className="w-3.5 h-3.5 text-[#2a14b4] animate-spin shrink-0" />
+                          ) : (
+                            <span className="w-3.5 h-3.5 rounded-full border border-[#d4d0e8] shrink-0" />
+                          )}
+                          <span
+                            className={`${
+                              isCompleted
+                                ? "text-[#5c5378]/60 line-through"
+                                : isRunning
+                                ? "text-[#2a14b4] font-semibold"
+                                : "text-[#5c5378]/50"
+                            }`}
+                          >
+                            {label}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center py-2">
+                    <LoaderCircle className="w-5 h-5 text-[#2a14b4]/40 animate-spin mb-2" />
+                    <p className="text-xs text-[#5c5378]/70">Taak wordt gestart…</p>
+                  </div>
+                )}
+
+                <p className="text-[11px] text-[#5c5378]/60 leading-5 text-center mt-4">
+                  Zodra de verwerking klaar is, kun je feedback geven op de verschillende onderdelen.
                 </p>
               </div>
             ) : hasFeedback ? (

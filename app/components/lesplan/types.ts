@@ -67,6 +67,11 @@ export type LesplanThreadMessage = {
   pending?: boolean
 }
 
+export type ActiveTaskData = {
+  taskId: string
+  taskType: "generate_overview" | "apply_feedback" | "generate_lessons"
+} | null
+
 export type LesplanWorkspaceLoaderData = {
   requestId: string
   updatedAt: string
@@ -80,6 +85,7 @@ export type LesplanWorkspaceLoaderData = {
     lessonDurationMinutes: number
   }
   sourceContext: SourceContext
+  activeTask: ActiveTaskData
 }
 
 export type LesplanPageState = {

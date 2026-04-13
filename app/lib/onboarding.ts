@@ -1,7 +1,7 @@
 export type OnboardingPhase = "welkom" | "voltooid" | "dismissed"
 
-const STORAGE_KEY = "planwijs_onboarding"
-const STEPS_KEY = "planwijs_onboarding_steps"
+const STORAGE_KEY = "leslab_onboarding"
+const STEPS_KEY = "leslab_onboarding_steps"
 
 const PHASE_TRANSITIONS: Record<OnboardingPhase, OnboardingPhase> = {
   welkom: "voltooid",

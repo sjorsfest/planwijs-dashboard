@@ -3,6 +3,7 @@ export { default } from "./page"
 import { data, redirect } from "react-router"
 import { createApiClient, ApiRequestError } from "~/lib/backend/client"
 import { requireAuthContext } from "~/lib/auth.server"
+import { getSession, commitSession, setActiveTask } from "~/lib/session.server"
 import type { Method } from "~/components/new-plan/types"
 import type { Route } from "./+types/route"
 import type { ActionData, ExistingClassData, LoaderData } from "./types"
@@ -63,6 +64,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const { token } = await requireAuthContext(request)
+  const session = await getSession(request.headers.get("Cookie"))
   const formData = await request.formData()
   const rawPayload = formData.get("payload")
 
@@ -113,7 +115,10 @@ export async function action({ request }: Route.ActionArgs) {
     })
 
     const task = await api.generateOverview(lesplan.id)
-    return redirect(`/lesplan/${lesplan.id}?task=${task.task_id}`)
+    setActiveTask(session, lesplan.id, task.task_id, task.task_type)
+    return redirect(`/lesplan/${lesplan.id}`, {
+      headers: { "Set-Cookie": await commitSession(session) },
+    })
   } catch (error) {
     if (error instanceof ApiRequestError) {
       return data<ActionData>({ error: error.message }, { status: error.status })

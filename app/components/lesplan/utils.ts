@@ -190,6 +190,27 @@ export function buildSeriesSummary(overview: LesplanOverviewState, numLessons: n
   return { summary, themes, progression }
 }
 
+// ─── Task step label translations ────────────────────────────────────────
+
+export const TASK_STEP_LABELS: Record<string, string> = {
+  "Loading context": "Context laden",
+  "Generating identity": "Titel en thema's genereren",
+  "Generating learning goals": "Leerdoelen opstellen",
+  "Generating sequence": "Lessenreeks samenstellen",
+  "Generating teacher notes": "Docentnotities schrijven",
+  "Persisting overview": "Opslaan",
+  "Applying feedback": "Feedback verwerken",
+  "Persisting changes": "Wijzigingen opslaan",
+  "Generating lessons": "Lessen genereren",
+  "Generating preparation": "Voorbereiding genereren",
+  "Persisting lessons": "Lessen opslaan",
+}
+
+export function translateStep(step: string | null): string | null {
+  if (!step) return null
+  return TASK_STEP_LABELS[step] ?? step
+}
+
 const SECTION_KEY_TO_FIELD_NAME: Record<string, string> = {
   seriesamenvatting: "series_summary",
   leerdoelen: "learning_goals",
