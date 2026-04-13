@@ -41,7 +41,7 @@ const STEP_CONTENT: Record<1 | 2 | 3, StepIntroContent> = {
         icon: <Users className="w-3.5 h-3.5" />,
         label: "Aantal leerlingen",
         explanation:
-          "Bepaalt welke werkvormen we voorstellen — individueel werk, groepsopdrachten of klassikale instructie.",
+          "Bepaalt welke werkvormen we voorstellen: individueel werk, groepsopdrachten of klassikale instructie.",
       },
       {
         icon: <Clock className="w-3.5 h-3.5" />,

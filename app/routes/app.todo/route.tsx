@@ -18,7 +18,7 @@ export type UserTodoListItem = {
 }
 
 export function meta() {
-  return [{ title: "To Do's — Planwijs" }]
+  return [{ title: "To Do's | Leslab" }]
 }
 
 export function headers({ loaderHeaders }: Route.HeadersArgs) {

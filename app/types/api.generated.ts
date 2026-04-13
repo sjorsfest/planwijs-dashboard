@@ -398,6 +398,176 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/folders/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Root Folders
+         * @description List root-level folders (no parent) with their immediate children and files.
+         */
+        get: operations["list_root_folders_folders__get"];
+        put?: never;
+        /** Create Folder */
+        post: operations["create_folder_folders__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/folders/{folder_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Folder
+         * @description Get a folder with its immediate children and files.
+         */
+        get: operations["get_folder_folders__folder_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Folder
+         * @description Delete a folder. Moves contained files and subfolders to the parent (or root).
+         */
+        delete: operations["delete_folder_folders__folder_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Folder */
+        patch: operations["update_folder_folders__folder_id__patch"];
+        trace?: never;
+    };
+    "/files/upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Upload Url
+         * @description Request a signed upload URL. Creates a File record in pending state.
+         */
+        post: operations["create_upload_url_files_upload_url_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Files
+         * @description List files for the current user, optionally filtered by folder or lesplan request.
+         */
+        get: operations["list_files_files__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/{file_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get File
+         * @description Get a single file with a fresh access URL.
+         */
+        get: operations["get_file_files__file_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete File
+         * @description Delete a file record and its object from storage.
+         */
+        delete: operations["delete_file_files__file_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/{file_id}/confirm-upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm Upload
+         * @description Confirm that the file was uploaded to R2. Sets status to UPLOADED and triggers text extraction.
+         */
+        post: operations["confirm_upload_files__file_id__confirm_upload_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/{file_id}/upload-failed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark Upload Failed
+         * @description Mark a file upload as failed. Cleans up the file record.
+         */
+        post: operations["mark_upload_failed_files__file_id__upload_failed_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/{file_id}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Move File
+         * @description Move a file to a different folder (or root if folder_id is null).
+         */
+        patch: operations["move_file_files__file_id__move_patch"];
+        trace?: never;
+    };
     "/tasks/{task_id}": {
         parameters: {
             query?: never;
@@ -768,6 +938,125 @@ export interface components {
         FeedbackRequest: {
             /** Items */
             items: components["schemas"]["FeedbackItem"][];
+        };
+        /**
+         * FileBucket
+         * @enum {string}
+         */
+        FileBucket: "PUBLIC" | "PRIVATE";
+        /** FileMoveRequest */
+        FileMoveRequest: {
+            /** Folder Id */
+            folder_id?: string | null;
+        };
+        /** FileRead */
+        FileRead: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Content Type */
+            content_type: string;
+            /** Size Bytes */
+            size_bytes: number;
+            bucket: components["schemas"]["FileBucket"];
+            status: components["schemas"]["FileStatus"];
+            /** Folder Id */
+            folder_id: string | null;
+            /** Lesplan Request Id */
+            lesplan_request_id: string | null;
+            /** Has Extracted Text */
+            has_extracted_text: boolean;
+            /** Created At */
+            created_at: string;
+            /** Url */
+            url: string;
+        };
+        /**
+         * FileStatus
+         * @enum {string}
+         */
+        FileStatus: "PENDING" | "UPLOADED" | "FAILED";
+        /** FileUploadRequest */
+        FileUploadRequest: {
+            /** Filename */
+            filename: string;
+            /** Content Type */
+            content_type: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Folder Id */
+            folder_id?: string | null;
+            /** Lesplan Request Id */
+            lesplan_request_id?: string | null;
+        };
+        /** FileUploadResponse */
+        FileUploadResponse: {
+            /** File Id */
+            file_id: string;
+            /** Upload Url */
+            upload_url: string;
+            /** Upload Method */
+            upload_method: string;
+            /** Upload Headers */
+            upload_headers: {
+                [key: string]: string;
+            };
+            /** Object Key */
+            object_key: string;
+        };
+        /** FolderCreate */
+        FolderCreate: {
+            /** Name */
+            name: string;
+            /** Parent Id */
+            parent_id?: string | null;
+        };
+        /** FolderFileRead */
+        FolderFileRead: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Content Type */
+            content_type: string;
+            /** Size Bytes */
+            size_bytes: number;
+            bucket: components["schemas"]["FileBucket"];
+            /** Folder Id */
+            folder_id: string | null;
+            /** Lesplan Request Id */
+            lesplan_request_id: string | null;
+            /** Has Extracted Text */
+            has_extracted_text: boolean;
+            /** Created At */
+            created_at: string;
+            /** Url */
+            url: string;
+        };
+        /** FolderRead */
+        FolderRead: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Parent Id */
+            parent_id: string | null;
+            /** Created At */
+            created_at: string;
+            /** Updated At */
+            updated_at: string;
+            /** Children */
+            children: components["schemas"]["FolderRead"][];
+            /** Files */
+            files: components["schemas"]["FolderFileRead"][];
+        };
+        /** FolderUpdate */
+        FolderUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Parent Id */
+            parent_id?: string | null;
         };
         /** GoalCoverageItemResponse */
         GoalCoverageItemResponse: {
@@ -2460,6 +2749,374 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CalendarResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_root_folders_folders__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FolderRead"][];
+                };
+            };
+        };
+    };
+    create_folder_folders__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FolderCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FolderRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_folder_folders__folder_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                folder_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FolderRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_folder_folders__folder_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                folder_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_folder_folders__folder_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                folder_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FolderUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FolderRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_upload_url_files_upload_url_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FileUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileUploadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_files_files__get: {
+        parameters: {
+            query?: {
+                folder_id?: string | null;
+                lesplan_request_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_file_files__file_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_file_files__file_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_upload_files__file_id__confirm_upload_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_upload_failed_files__file_id__upload_failed_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    move_file_files__file_id__move_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FileMoveRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileRead"];
                 };
             };
             /** @description Validation Error */

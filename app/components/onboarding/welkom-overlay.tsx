@@ -42,11 +42,11 @@ export function WelkomOverlay() {
           {/* Content */}
           <div className="px-8 pb-8 pt-4 text-center">
             <h1 className="text-2xl font-bold text-[#0b1c30] tracking-[-0.02em] font-[family-name:var(--font-heading)]">
-              Welkom bij Planwijs!
+              Welkom bij Leslab!
             </h1>
             <p className="mt-3 text-[#464554] leading-relaxed">
               Maak in een paar stappen je eerste lesplan. Kies je klas, vak en
-              methode — wij doen de rest.
+              methode - wij doen de rest.
             </p>
 
             <div className="mt-8 flex flex-col gap-3">

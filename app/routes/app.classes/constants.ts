@@ -27,7 +27,7 @@ export const AI_IMPACT_ITEMS = [
   { field: "Niveau", description: "Bepaalt de taalcomplexiteit en het abstractieniveau van de les" },
   { field: "Schooljaar", description: "Jonger = meer structuur en modelling, ouder = meer zelfstandigheid" },
   { field: "Klasgrootte", description: "Beïnvloedt suggesties voor groepswerk en activiteiten" },
-  { field: "Klasdynamiek", description: "Hoeveelheid scaffolding — Rood = kleine stappen, Groen = standaard" },
+  { field: "Klasdynamiek", description: "Hoeveelheid scaffolding: Rood = kleine stappen, Groen = standaard" },
   { field: "Aandachtsspanne", description: "Bepaalt het lestempo en wanneer activiteitswisselingen nodig zijn" },
   { field: "Klasnotities", description: "Vrije context die de AI meeweegt bij het genereren" },
 ]

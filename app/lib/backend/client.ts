@@ -7,6 +7,10 @@ import type {
   ClassroomCreate,
   CreateLesplanRequest,
   FeedbackRequest,
+  FileRecord,
+  FileUploadUrlRequest,
+  FileUploadUrlResponse,
+  Folder,
   LesplanResponse,
   LessonPlanResponse,
   LessonPreparationTodoResponse,
@@ -336,6 +340,123 @@ class ApiClient {
       return res.json()
     } catch {
       return { start_date: startDate, end_date: endDate, items: [] }
+    }
+  }
+
+  // ─── Files ───────────────────────────────────────────────────────────
+
+  async requestUploadUrl(data: FileUploadUrlRequest): Promise<FileUploadUrlResponse> {
+    return this.requestJson<FileUploadUrlResponse>(`${API_URL}/files/upload-url`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify(data),
+    })
+  }
+
+  async listFiles(filters?: { folderId?: string; lesplanRequestId?: string }): Promise<FileRecord[]> {
+    try {
+      const url = new URL(`${API_URL}/files/`)
+      if (filters?.folderId) url.searchParams.set("folder_id", filters.folderId)
+      if (filters?.lesplanRequestId) url.searchParams.set("lesplan_request_id", filters.lesplanRequestId)
+      const res = await fetch(url.toString(), { headers: this.headers })
+      if (!res.ok) return []
+      return res.json()
+    } catch {
+      return []
+    }
+  }
+
+  async getFile(fileId: string): Promise<FileRecord | null> {
+    try {
+      const res = await fetch(`${API_URL}/files/${fileId}`, { headers: this.headers })
+      if (!res.ok) return null
+      return res.json()
+    } catch {
+      return null
+    }
+  }
+
+  async moveFile(fileId: string, folderId: string | null): Promise<FileRecord> {
+    return this.requestJson<FileRecord>(`${API_URL}/files/${fileId}/move`, {
+      method: "PATCH",
+      headers: this.headers,
+      body: JSON.stringify({ folder_id: folderId }),
+    })
+  }
+
+  async confirmUpload(fileId: string): Promise<FileRecord> {
+    return this.requestJson<FileRecord>(`${API_URL}/files/${fileId}/confirm-upload`, {
+      method: "POST",
+      headers: this.headers,
+    })
+  }
+
+  async uploadFailed(fileId: string): Promise<void> {
+    await fetch(`${API_URL}/files/${fileId}/upload-failed`, {
+      method: "POST",
+      headers: this.headers,
+    })
+  }
+
+  async deleteFile(fileId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_URL}/files/${fileId}`, {
+        method: "DELETE",
+        headers: this.headers,
+      })
+      return res.ok || res.status === 204
+    } catch {
+      return false
+    }
+  }
+
+  // ─── Folders ────────────────────────────────────────────────────────
+
+  async listFolders(): Promise<Folder[]> {
+    try {
+      const res = await fetch(`${API_URL}/folders/`, { headers: this.headers })
+      if (!res.ok) return []
+      return res.json()
+    } catch {
+      return []
+    }
+  }
+
+  async getFolder(folderId: string): Promise<Folder | null> {
+    try {
+      const res = await fetch(`${API_URL}/folders/${folderId}`, { headers: this.headers })
+      if (!res.ok) return null
+      return res.json()
+    } catch {
+      return null
+    }
+  }
+
+  async createFolder(name: string, parentId: string | null): Promise<Folder> {
+    return this.requestJson<Folder>(`${API_URL}/folders/`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({ name, parent_id: parentId }),
+    })
+  }
+
+  async updateFolder(folderId: string, data: { name?: string; parent_id?: string | null }): Promise<Folder> {
+    return this.requestJson<Folder>(`${API_URL}/folders/${folderId}`, {
+      method: "PATCH",
+      headers: this.headers,
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteFolder(folderId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_URL}/folders/${folderId}`, {
+        method: "DELETE",
+        headers: this.headers,
+      })
+      return res.ok || res.status === 204
+    } catch {
+      return false
     }
   }
 

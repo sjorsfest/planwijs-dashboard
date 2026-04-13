@@ -4,6 +4,7 @@ import {
   BookOpen,
   ListTodo,
   Users,
+  FileText,
 } from "lucide-react"
 
 export const navItems = [
@@ -21,6 +22,11 @@ export const navItems = [
     to: "/plans",
     label: "Lessen",
     icon: BookOpen,
+  },
+  {
+    to: "/documents",
+    label: "Documenten",
+    icon: FileText,
   },
   {
     to: "/todos",

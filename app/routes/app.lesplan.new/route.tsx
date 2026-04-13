@@ -12,7 +12,7 @@ import { parseSubmittedPayload, hasClassId, getLatestLesplanByClassId } from "./
 export type { ActionData, ExistingClassData, LoaderData }
 
 export function meta() {
-  return [{ title: "Nieuw lesplan — Planwijs" }]
+  return [{ title: "Nieuw lesplan | Leslab" }]
 }
 
 export function headers({ loaderHeaders }: Route.HeadersArgs) {

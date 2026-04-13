@@ -31,7 +31,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 // ─── Meta ──────────────────────────────────────────────────────────────────
 
 export function meta(_: Route.MetaArgs) {
-  return [{ title: "Kalender — Leslab" }]
+  return [{ title: "Kalender | Leslab" }]
 }
 
 export function headers({ loaderHeaders }: Route.HeadersArgs) {

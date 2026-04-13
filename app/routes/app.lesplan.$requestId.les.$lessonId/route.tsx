@@ -7,8 +7,8 @@ import type { SourceContext } from "~/components/lesplan/types"
 import type { Route } from "./+types/route"
 
 export function meta({ data: loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: "Les — Planwijs" }]
-  return [{ title: `Les ${loaderData.lesson.lesson_number}: ${loaderData.lesson.title} — Planwijs` }]
+  if (!loaderData) return [{ title: "Les | Leslab" }]
+  return [{ title: `Les ${loaderData.lesson.lesson_number}: ${loaderData.lesson.title} | Leslab` }]
 }
 
 export function headers({ loaderHeaders }: Route.HeadersArgs) {

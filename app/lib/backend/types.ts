@@ -91,6 +91,47 @@ export type CalendarResponse = {
 
 export type UpdateLessonPreparationTodoRequest = components["schemas"]["UpdateLessonPreparationTodoRequest"]
 
+// ─── File types ───────────────────────────────────────────────────────────
+
+export type FileUploadUrlRequest = {
+  filename: string
+  content_type: string
+  size_bytes: number
+  folder_id?: string
+  lesplan_request_id?: string
+}
+
+export type FileUploadUrlResponse = {
+  file_id: string
+  upload_url: string
+  upload_method: string
+  upload_headers: Record<string, string>
+  object_key: string
+}
+
+export type FileRecord = {
+  id: string
+  name: string
+  content_type: string
+  size_bytes: number
+  bucket: string
+  folder_id: string | null
+  lesplan_request_id: string | null
+  status: "PENDING" | "UPLOADED" | "FAILED"
+  created_at: string
+  url: string
+}
+
+export type Folder = {
+  id: string
+  name: string
+  parent_id: string | null
+  created_at: string
+  updated_at: string
+  children: Folder[]
+  files: FileRecord[]
+}
+
 // ─── Task queue types ─────────────────────────────────────────────────────
 
 export type TaskSubmittedResponse = {

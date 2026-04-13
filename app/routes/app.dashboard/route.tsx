@@ -8,7 +8,7 @@ import { requireAuthContext } from "~/lib/auth.server"
 import type { Route } from "./+types/route"
 
 export function meta() {
-  return [{ title: "Dashboard — Planwijs" }]
+  return [{ title: "Dashboard | Leslab" }]
 }
 
 export function headers({ loaderHeaders }: Route.HeadersArgs) {

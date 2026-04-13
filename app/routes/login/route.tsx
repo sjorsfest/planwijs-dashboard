@@ -5,8 +5,8 @@ import type { Route } from "./+types/route"
 
 export function meta(_: Route.MetaArgs) {
   return [
-    { title: "Inloggen — Planwijs" },
-    { name: "description", content: "Log in op Planwijs om je lesplannen te beheren." },
+    { title: "Inloggen | Leslab" },
+    { name: "description", content: "Log in op Leslab om je lesplannen te beheren." },
   ]
 }
 

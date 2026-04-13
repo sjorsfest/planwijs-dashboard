@@ -14,7 +14,7 @@ import type { Route } from "./+types/route"
 export type { ActionData }
 
 export function meta() {
-  return [{ title: "Lesplan werkruimte — Leslab" }]
+  return [{ title: "Lesplan werkruimte | Leslab" }]
 }
 
 export function headers({ loaderHeaders }: Route.HeadersArgs) {

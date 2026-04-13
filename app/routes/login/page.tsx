@@ -104,7 +104,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="px-10 py-5 bg-[#f8f9ff] flex-shrink-0">
-          <p className="text-xs text-[#464554]/50">© {new Date().getFullYear()} Planwijs</p>
+          <p className="text-xs text-[#464554]/50">© {new Date().getFullYear()} Leslab</p>
         </div>
 
       </div>
