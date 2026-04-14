@@ -55,8 +55,6 @@ export default function LessonSeriesReviewPage() {
   const pendingFeedbackRef = useRef<PendingFeedbackRequest | null>(null)
   const pollingStartedAtRef = useRef<number | null>(null)
   const taskLastCompletedRef = useRef<number>(0)
-  const hydratedAt = useMemo(() => loaderData.updatedAt, [loaderData.updatedAt])
-
   // ─── Restore active task from server session (survives page reloads) ─────
   const initialTaskRestored = useRef(false)
 
@@ -70,9 +68,13 @@ export default function LessonSeriesReviewPage() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Hydrate state from loader data ──────────────────────────────────────
+  // Re-hydrate when revalidator finishes so intermediate overview updates
+  // become visible even when LesplanRequest.updated_at hasn't changed.
   useEffect(() => {
-    dispatch({ type: "hydrate", payload: loaderData })
-  }, [hydratedAt, loaderData])
+    if (revalidator.state === "idle") {
+      dispatch({ type: "hydrate", payload: loaderData })
+    }
+  }, [revalidator.state, loaderData])
 
   // ─── Handle feedback fetcher response ────────────────────────────────────
   useEffect(() => {
@@ -265,6 +267,14 @@ export default function LessonSeriesReviewPage() {
     state.status === "generating_overview" ||
     state.status === "revising_overview" ||
     state.ui.activeTaskId !== null
+  // Only expose completed steps when the revalidator is idle, so sections
+  // wait for fresh data before switching from skeleton to content.
+  const completedSteps = useMemo(
+    () => revalidator.state === "idle"
+      ? new Set(state.ui.taskSteps.filter((s) => s.status === "completed").map((s) => s.name))
+      : new Set<string>(),
+    [state.ui.taskSteps, revalidator.state],
+  )
   const canReview = state.status === "overview_ready"
   const isGeneratingLessons = state.status === "generating_lessons"
   const statusCopy = activeTaskId && state.ui.taskCurrentStep
@@ -343,6 +353,7 @@ export default function LessonSeriesReviewPage() {
             request={state.request}
             sourceContext={state.sourceContext}
             isStreaming={isProcessing}
+            completedSteps={completedSteps}
             reviewStatusLabel={reviewStatusLabel}
             onSectionFeedback={handleSectionFeedback}
             loadingFields={loadingFields}
@@ -357,6 +368,7 @@ export default function LessonSeriesReviewPage() {
             requestId={state.requestId}
             expectedLessonCount={state.request.numLessons}
             isStreaming={isProcessing}
+            completedSteps={completedSteps}
             isGeneratingLessons={isGeneratingLessons}
             onSectionFeedback={handleSectionFeedback}
             loadingFields={loadingFields}

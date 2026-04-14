@@ -12,6 +12,7 @@ export function LessonSequenceTab({
   requestId,
   expectedLessonCount,
   isStreaming,
+  completedSteps,
   isGeneratingLessons,
   onSectionFeedback,
   loadingFields,
@@ -22,6 +23,7 @@ export function LessonSequenceTab({
   requestId: string
   expectedLessonCount: number
   isStreaming: boolean
+  completedSteps: Set<string>
   isGeneratingLessons: boolean
   onSectionFeedback: (item: Omit<SectionFeedbackItem, "id" | "createdAt">) => void
   loadingFields: Set<string>
@@ -30,7 +32,9 @@ export function LessonSequenceTab({
   const [expandedLessons, setExpandedLessons] = useState<number[]>([])
   const items = overview?.lesson_outline ?? []
   const keyKnowledge = overview?.key_knowledge ?? []
-  const showLessonOutline = !isStreaming && !loadingFields.has("lesson_outline") && items.length >= expectedLessonCount
+  const noActiveTask = completedSteps.size === 0 && !isStreaming
+  const sequenceReady = noActiveTask || completedSteps.has("Generating sequence")
+  const showLessonOutline = !loadingFields.has("lesson_outline") && sequenceReady && items.length >= expectedLessonCount
 
   function toggleExpanded(lessonNumber: number) {
     setExpandedLessons((current) =>

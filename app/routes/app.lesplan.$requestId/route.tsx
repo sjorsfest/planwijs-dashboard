@@ -72,7 +72,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     selectedParagraphs: lesplan.selected_paragraph_ids.map((id) => paragraphsById.get(id) ?? { id, title: id }),
   })
 
-  const headers: Record<string, string> = { "Cache-Control": "private, max-age=10" }
+  const cacheControl = TERMINAL_STATUSES.has(lesplan.status)
+    ? "private, max-age=10"
+    : "private, no-cache"
+  const headers: Record<string, string> = { "Cache-Control": cacheControl }
   if (sessionDirty) {
     headers["Set-Cookie"] = await commitSession(session)
   }

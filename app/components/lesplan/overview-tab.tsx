@@ -10,6 +10,7 @@ export function OverviewTab({
   request,
   sourceContext,
   isStreaming,
+  completedSteps,
   reviewStatusLabel,
   onSectionFeedback,
   loadingFields,
@@ -19,6 +20,7 @@ export function OverviewTab({
   request: LesplanPageState["request"]
   sourceContext: SourceContext
   isStreaming: boolean
+  completedSteps: Set<string>
   reviewStatusLabel: string
   onSectionFeedback: (item: Omit<SectionFeedbackItem, "id" | "createdAt">) => void
   loadingFields: Set<string>
@@ -30,8 +32,12 @@ export function OverviewTab({
   const visibleKnowledge = showAllKnowledge ? keyKnowledge : keyKnowledge.slice(0, 5)
   const hiddenKnowledgeCount = Math.max(keyKnowledge.length - 5, 0)
   const summary = buildSeriesSummary(overview, request.numLessons)
-  const showGoals = !isStreaming && !loadingFields.has("learning_goals") && goals.length > 0
-  const showKeyKnowledge = !isStreaming && !loadingFields.has("key_knowledge") && keyKnowledge.length > 0
+  // Show sections only when their generating step has completed (or no task is active)
+  const noActiveTask = completedSteps.size === 0 && !isStreaming
+  const goalsReady = noActiveTask || completedSteps.has("Generating learning goals")
+  const sequenceReady = noActiveTask || completedSteps.has("Generating sequence")
+  const showGoals = !loadingFields.has("learning_goals") && goalsReady && goals.length > 0
+  const showKeyKnowledge = !loadingFields.has("key_knowledge") && sequenceReady && keyKnowledge.length > 0
   const showSummary = !loadingFields.has("series_summary")
 
   return (
