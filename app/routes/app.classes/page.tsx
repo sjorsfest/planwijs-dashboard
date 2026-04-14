@@ -13,6 +13,7 @@ import {
   ChevronUp,
   MapPin,
   Plus,
+  Loader2,
 } from "lucide-react"
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion"
 import type { Class, Classroom } from "~/lib/backend/types"
@@ -1059,6 +1060,7 @@ function ClassCard({
 }: ClassCardProps) {
   const fetcher = useFetcher()
   const isSubmitting = fetcher.state !== "idle"
+  const isDeleteSubmitting = fetcher.state !== "idle" && fetcher.formData?.get("_action") === "delete"
 
   function handleDelete() {
     const formData = new FormData()
@@ -1072,8 +1074,16 @@ function ClassCard({
     <motion.div
       layout
       transition={{ layout: SUBTLE_LAYOUT_TRANSITION }}
-      className="bg-white rounded-2xl shadow-[0px_24px_40px_rgba(11,28,48,0.07)] overflow-hidden"
+      className={cn(
+        "bg-white rounded-2xl shadow-[0px_24px_40px_rgba(11,28,48,0.07)] overflow-hidden relative",
+        isDeleteSubmitting && "pointer-events-none"
+      )}
     >
+      {isDeleteSubmitting && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 rounded-2xl">
+          <Loader2 className="w-5 h-5 text-red-500 animate-spin" />
+        </div>
+      )}
       {/* ── View mode ── */}
       <div className="p-5">
         {/* Header */}
@@ -1529,6 +1539,7 @@ function ClassroomCard({
   onSaved,
 }: ClassroomCardProps) {
   const fetcher = useFetcher()
+  const isDeleteSubmitting = fetcher.state !== "idle" && fetcher.formData?.get("_action") === "deleteClassroom"
 
   function handleDelete() {
     const formData = new FormData()
@@ -1542,8 +1553,16 @@ function ClassroomCard({
     <motion.div
       layout
       transition={{ layout: SUBTLE_LAYOUT_TRANSITION }}
-      className="bg-white rounded-2xl shadow-[0px_24px_40px_rgba(11,28,48,0.07)] overflow-hidden"
+      className={cn(
+        "bg-white rounded-2xl shadow-[0px_24px_40px_rgba(11,28,48,0.07)] overflow-hidden relative",
+        isDeleteSubmitting && "pointer-events-none"
+      )}
     >
+      {isDeleteSubmitting && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 rounded-2xl">
+          <Loader2 className="w-5 h-5 text-red-500 animate-spin" />
+        </div>
+      )}
       <div className="p-5">
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-3">

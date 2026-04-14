@@ -159,7 +159,7 @@ export default function LessonSeriesReviewPage() {
         }
 
         // Continue polling
-        timerId = window.setTimeout(poll, 1_500)
+        timerId = window.setTimeout(poll, 5_000)
       } catch {
         if (cancelled) return
         consecutiveErrors++
