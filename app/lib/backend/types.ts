@@ -24,9 +24,7 @@ export type LesplanOverviewResponse = components["schemas"]["LesplanOverviewResp
 export type LesplanResponse = components["schemas"]["LesplanResponse"] & {
   feedback_messages: FeedbackMessageResponse[]
 }
-export type CreateLesplanRequest = components["schemas"]["CreateLesplanRequest"] & {
-  classroom_id?: string | null
-}
+export type CreateLesplanRequest = components["schemas"]["CreateLesplanRequest"]
 export type FeedbackItem = components["schemas"]["FeedbackItem"]
 export type FeedbackRequest = components["schemas"]["FeedbackRequest"]
 export type Subject = {

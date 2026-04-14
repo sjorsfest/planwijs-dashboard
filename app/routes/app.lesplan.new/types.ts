@@ -26,6 +26,7 @@ export type SavedPlanState = {
   selectedMethod: Method | null
   selectedBook: Book | null
   selectedParagraphIds: string[]
+  selectedFileIds: string[]
   showSummary: boolean
 }
 
@@ -57,4 +58,5 @@ export type SubmittedPlanPayload = {
   classDifficulty: ClassDifficulty
   selectedBookId: string
   selectedParagraphIds: string[]
+  selectedFileIds: string[]
 }

@@ -12,6 +12,7 @@ export default [
   route("api/classrooms", "routes/api.classrooms/route.tsx"),
   route("api/files/upload-url", "routes/api.files.upload-url/route.tsx"),
   route("api/files/:fileId", "routes/api.files.$fileId/route.tsx"),
+  route("api/file-list", "routes/api.file-list/route.tsx"),
   route("api/tasks/:taskId", "routes/api.tasks.$taskId/route.ts"),
   layout("routes/app/route.tsx", [
     route("dashboard", "routes/app.dashboard/route.tsx"),

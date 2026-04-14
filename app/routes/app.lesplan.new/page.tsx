@@ -56,6 +56,7 @@ export default function NewLesplanPage() {
   const [comboQuery, setComboQuery] = useState("")
   const [comboOpen, setComboOpen] = useState(false)
   const [selectedParagraphIds, setSelectedParagraphIds] = useState<string[]>([])
+  const [selectedFileIds, setSelectedFileIds] = useState<string[]>([])
   const [showSummary, setShowSummary] = useState(false)
   const [draftHydrated, setDraftHydrated] = useState(false)
 
@@ -165,6 +166,7 @@ export default function NewLesplanPage() {
     setSelectedMethod(saved.selectedMethod)
     setSelectedBook(saved.selectedBook)
     setSelectedParagraphIds(saved.selectedParagraphIds)
+    setSelectedFileIds(saved.selectedFileIds)
     setShowSummary(saved.showSummary)
     setDraftHydrated(true)
   }, [existingClasses, hasExistingClasses])
@@ -318,6 +320,7 @@ export default function NewLesplanPage() {
       selectedMethod,
       selectedBook,
       selectedParagraphIds,
+      selectedFileIds,
       showSummary,
     }
 
@@ -340,6 +343,7 @@ export default function NewLesplanPage() {
     selectedMethod,
     selectedBook,
     selectedParagraphIds,
+    selectedFileIds,
     showSummary,
     draftHydrated,
   ])
@@ -606,6 +610,7 @@ export default function NewLesplanPage() {
         classDifficulty,
         selectedBookId: selectedBook.id,
         selectedParagraphIds,
+        selectedFileIds,
       })
     )
 
@@ -714,6 +719,8 @@ export default function NewLesplanPage() {
           isChapterPartiallySelected={isChapterPartiallySelected}
           onLessonCountChange={setLessonCount}
           onContinueToSummary={() => setShowSummary(true)}
+          selectedFileIds={selectedFileIds}
+          onFileIdsChange={setSelectedFileIds}
         />
       )}
 
@@ -733,6 +740,7 @@ export default function NewLesplanPage() {
           selectedBook={selectedBook}
           bookDetail={bookDetail}
           selectedParagraphIds={selectedParagraphIds}
+          selectedFileIds={selectedFileIds}
           onBack={() => setShowSummary(false)}
           onConfirm={handleCreateLesplan}
           submitting={isSubmitting}

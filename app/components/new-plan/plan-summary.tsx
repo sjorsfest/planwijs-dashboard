@@ -1,6 +1,7 @@
+import { useEffect, useState } from "react"
 import { motion, type Variants } from "framer-motion"
-import { ArrowLeft, ArrowRight, BookOpen, LoaderCircle } from "lucide-react"
-import type { Book, BookDetail, Subject } from "~/lib/backend/types"
+import { ArrowLeft, ArrowRight, BookOpen, FileText, LoaderCircle } from "lucide-react"
+import type { Book, BookDetail, FileRecord, Folder, Subject } from "~/lib/backend/types"
 import { SubjectBadge } from "~/components/ui/subject-badge"
 import type { ClassDifficulty, Level, Method, SchoolYear } from "./types"
 import { cn } from "~/lib/utils"
@@ -18,6 +19,7 @@ interface Props {
   selectedBook: Book
   bookDetail: BookDetail | null
   selectedParagraphIds: string[]
+  selectedFileIds: string[]
   onBack: () => void
   onConfirm: () => void
   submitting?: boolean
@@ -54,12 +56,29 @@ export function PlanSummary({
   selectedBook,
   bookDetail,
   selectedParagraphIds,
+  selectedFileIds,
   onBack,
   onConfirm,
   submitting = false,
   submitError = null,
   submitLabel = "Maak lesplan",
 }: Props) {
+  const [attachedFiles, setAttachedFiles] = useState<FileRecord[]>([])
+
+  useEffect(() => {
+    if (selectedFileIds.length === 0) {
+      setAttachedFiles([])
+      return
+    }
+    fetch("/api/file-list")
+      .then((res) => (res.ok ? res.json() : { folders: [], rootFiles: [] }))
+      .then((data: { folders: Folder[]; rootFiles: FileRecord[] }) => {
+        const allFiles = [...data.rootFiles, ...collectFolderFiles(data.folders)]
+        setAttachedFiles(allFiles.filter((f) => selectedFileIds.includes(f.id)))
+      })
+      .catch(() => setAttachedFiles([]))
+  }, [selectedFileIds])
+
   const chapterBreakdown = (bookDetail?.chapters ?? [])
     .map((chapter) => ({
       chapter,
@@ -191,6 +210,36 @@ export function PlanSummary({
         </div>
       </motion.div>
 
+      {attachedFiles.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.5 }}
+          className="bg-white rounded-2xl shadow-[0px_24px_40px_rgba(11,28,48,0.07)] overflow-hidden mt-4"
+        >
+          <div className="flex items-center justify-between px-5 py-3.5 bg-[#eff4ff]">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-[#464554]/60">Bijlagen</p>
+            <span className="text-xs font-semibold bg-[#2a14b4]/10 text-[#2a14b4] px-3 py-1 rounded-full">
+              {attachedFiles.length} {attachedFiles.length === 1 ? "document" : "documenten"}
+            </span>
+          </div>
+          <div className="divide-y divide-[#eff4ff]">
+            {attachedFiles.map((file, index) => (
+              <motion.div
+                key={file.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.53 + index * 0.05 }}
+                className="px-5 py-3 flex items-center gap-3"
+              >
+                <FileText className="w-4 h-4 text-[#5c5378] flex-shrink-0" />
+                <p className="text-sm font-medium text-[#0b1c30] truncate">{file.name}</p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -234,6 +283,15 @@ export function PlanSummary({
       </motion.div>
     </motion.div>
   )
+}
+
+function collectFolderFiles(folders: Folder[]): FileRecord[] {
+  const files: FileRecord[] = []
+  for (const folder of folders) {
+    files.push(...folder.files)
+    files.push(...collectFolderFiles(folder.children))
+  }
+  return files
 }
 
 function StatBlock({

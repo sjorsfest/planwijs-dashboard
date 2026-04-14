@@ -125,6 +125,7 @@ export function loadPlanState(): SavedPlanState | null {
       selectedMethod: parseSavedMethod(parsed.selectedMethod),
       selectedBook: parseSavedBook(parsed.selectedBook),
       selectedParagraphIds: isStringArray(parsed.selectedParagraphIds) ? parsed.selectedParagraphIds : [],
+      selectedFileIds: isStringArray(parsed.selectedFileIds) ? parsed.selectedFileIds : [],
       showSummary: parsed.showSummary === true,
     }
   } catch {
@@ -171,6 +172,7 @@ export function parseSubmittedPayload(value: unknown): SubmittedPlanPayload | nu
     classDifficulty: value.classDifficulty as SubmittedPlanPayload["classDifficulty"],
     selectedBookId: value.selectedBookId,
     selectedParagraphIds: value.selectedParagraphIds,
+    selectedFileIds: isStringArray(value.selectedFileIds) ? value.selectedFileIds : [],
   }
 }
 

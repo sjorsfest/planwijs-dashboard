@@ -112,6 +112,7 @@ export async function action({ request }: Route.ActionArgs) {
       num_lessons: payload.lessonCount,
       lesson_duration_minutes: payload.lessonDuration,
       classroom_id: payload.selectedClassroomId,
+      ...(payload.selectedFileIds.length > 0 ? { file_ids: payload.selectedFileIds } : {}),
     })
 
     const task = await api.generateOverview(lesplan.id)

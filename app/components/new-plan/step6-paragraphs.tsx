@@ -6,6 +6,7 @@ import { Button } from "~/components/ui/button"
 import { SubjectBadge } from "~/components/ui/subject-badge"
 import { cn } from "~/lib/utils"
 import type { Chapter, Paragraph } from "./types"
+import { DocumentPicker } from "./document-picker"
 
 interface Props {
   selectedSubjectName: string
@@ -27,6 +28,8 @@ interface Props {
   isChapterPartiallySelected: (chapter: Chapter) => boolean
   onLessonCountChange: (value: number | null) => void
   onContinueToSummary: () => void
+  selectedFileIds: string[]
+  onFileIdsChange: (ids: string[]) => void
   backLink?: ReactNode
 }
 
@@ -52,6 +55,8 @@ export function Step6Paragraphs({
   isChapterPartiallySelected,
   onLessonCountChange,
   onContinueToSummary,
+  selectedFileIds,
+  onFileIdsChange,
   backLink,
 }: Props) {
   const comboRef = useRef<HTMLDivElement>(null)
@@ -374,6 +379,11 @@ export function Step6Paragraphs({
               )
             })}
           </div>
+
+          <DocumentPicker
+            selectedFileIds={selectedFileIds}
+            onFileIdsChange={onFileIdsChange}
+          />
 
           <div className="mt-8">
             <Button

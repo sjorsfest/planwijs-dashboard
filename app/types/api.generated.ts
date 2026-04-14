@@ -908,6 +908,10 @@ export interface components {
             num_lessons: number;
             /** Lesson Duration Minutes */
             lesson_duration_minutes: number;
+            /** Classroom Id */
+            classroom_id?: string | null;
+            /** File Ids */
+            file_ids?: string[];
         };
         /** CreateLessonPreparationTodoRequest */
         CreateLessonPreparationTodoRequest: {
