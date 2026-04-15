@@ -30,7 +30,11 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (intent === "create") {
     const body = JSON.parse(formData.get("body") as string)
-    await api.createClass(body)
+    const fileIds: string[] = JSON.parse((formData.get("fileIds") as string) || "[]")
+    const created = await api.createClass(body)
+    if (fileIds.length > 0 && created.id) {
+      await Promise.all(fileIds.map((fid) => api.updateFile(fid, { class_id: created.id! })))
+    }
     return { ok: true }
   }
 

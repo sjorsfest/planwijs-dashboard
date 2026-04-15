@@ -97,6 +97,7 @@ export type FileUploadUrlRequest = {
   size_bytes: number
   folder_id?: string
   lesplan_request_id?: string
+  class_id?: string
 }
 
 export type FileUploadUrlResponse = {
@@ -115,6 +116,7 @@ export type FileRecord = {
   bucket: string
   folder_id: string | null
   lesplan_request_id: string | null
+  class_id: string | null
   status: "PENDING" | "UPLOADED" | "FAILED"
   created_at: string
   url: string

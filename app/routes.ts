@@ -13,6 +13,7 @@ export default [
   route("api/files/upload-url", "routes/api.files.upload-url/route.tsx"),
   route("api/files/:fileId", "routes/api.files.$fileId/route.tsx"),
   route("api/file-list", "routes/api.file-list/route.tsx"),
+  route("api/class-files/:classId", "routes/api.class-files.$classId/route.tsx"),
   route("api/tasks/:taskId", "routes/api.tasks.$taskId/route.ts"),
   layout("routes/app/route.tsx", [
     route("dashboard", "routes/app.dashboard/route.tsx"),

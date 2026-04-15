@@ -95,19 +95,7 @@ export default function NewLesplanPage() {
     bookDetailFetcher.state === "loading" ||
     (selectedBook !== null && bookDetailFetcher.data === undefined)
 
-  const filteredBooks = books.filter((book) => {
-    const yearOk =
-      !selectedYear ||
-      (book.school_years ?? []).length === 0 ||
-      (book.school_years ?? []).includes(selectedYear) ||
-      (book.school_years ?? []).includes("Unknown")
-    const levelOk =
-      !selectedLevel ||
-      (book.levels ?? []).length === 0 ||
-      (book.levels ?? []).includes(selectedLevel) ||
-      (book.levels ?? []).includes("Unknown")
-    return yearOk && levelOk
-  })
+  const filteredBooks = books
 
   const classSetupValid =
     (selectedExistingClassId !== null || className_.trim().length > 0) &&
@@ -195,6 +183,8 @@ export default function NewLesplanPage() {
     const params = new URLSearchParams()
     if (selectedMethod.id) params.set("method_id", selectedMethod.id)
     if (selectedSubject?.id) params.set("subject_id", selectedSubject.id)
+    if (selectedLevel) params.set("level", selectedLevel)
+    if (selectedYear) params.set("year", selectedYear)
     booksFetcher.load(`/api/books?${params.toString()}`)
   }, [selectedMethod, selectedSubject, booksFetcher.data, booksFetcher.state])
 
@@ -513,6 +503,8 @@ export default function NewLesplanPage() {
     const params = new URLSearchParams()
     if (method.id) params.set("method_id", method.id)
     if (selectedSubject?.id) params.set("subject_id", selectedSubject.id)
+    if (selectedLevel) params.set("level", selectedLevel)
+    if (selectedYear) params.set("year", selectedYear)
     booksFetcher.load(`/api/books?${params.toString()}`)
   }
 

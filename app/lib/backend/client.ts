@@ -353,17 +353,26 @@ class ApiClient {
     })
   }
 
-  async listFiles(filters?: { folderId?: string; lesplanRequestId?: string }): Promise<FileRecord[]> {
+  async listFiles(filters?: { folderId?: string; lesplanRequestId?: string; classId?: string }): Promise<FileRecord[]> {
     try {
       const url = new URL(`${API_URL}/files/`)
       if (filters?.folderId) url.searchParams.set("folder_id", filters.folderId)
       if (filters?.lesplanRequestId) url.searchParams.set("lesplan_request_id", filters.lesplanRequestId)
+      if (filters?.classId) url.searchParams.set("class_id", filters.classId)
       const res = await fetch(url.toString(), { headers: this.headers })
       if (!res.ok) return []
       return res.json()
     } catch {
       return []
     }
+  }
+
+  async updateFile(fileId: string, data: { class_id: string | null }): Promise<FileRecord> {
+    return this.requestJson<FileRecord>(`${API_URL}/files/${fileId}`, {
+      method: "PATCH",
+      headers: this.headers,
+      body: JSON.stringify(data),
+    })
   }
 
   async getFile(fileId: string): Promise<FileRecord | null> {

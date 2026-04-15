@@ -21,5 +21,10 @@ export async function action({ request, params }: Route.ActionArgs) {
     return data(null, { status: 204 })
   }
 
+  if (intent === "update-class-link") {
+    const result = await api.updateFile(fileId, { class_id: body.class_id ?? null })
+    return data(result)
+  }
+
   return data({ error: "Unknown intent" }, { status: 400 })
 }
