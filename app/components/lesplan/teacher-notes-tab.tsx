@@ -74,29 +74,24 @@ function TeacherNotesSection({
   const paragraphs = content ? splitIntoParagraphs(content, 2) : []
 
   return (
-    <details
-      open={defaultOpen}
-      className="group bg-white rounded-2xl p-5 shadow-[0px_10px_24px_rgba(11,28,48,0.07)] border border-[#e8eeff]"
-    >
-      <summary
-        className="list-none flex items-center justify-between gap-4 cursor-pointer"
-        onKeyDown={(e) => {
-          if (e.key === " ") e.preventDefault()
-        }}
+    <div className="relative">
+      <details
+        open={defaultOpen}
+        className="group bg-white rounded-2xl p-5 shadow-[0px_10px_24px_rgba(11,28,48,0.07)] border border-[#e8eeff]"
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#eff4ff] text-[#2a14b4]">
-            <Icon className="w-3.5 h-3.5" />
-          </span>
-          <SectionLabel>{title}</SectionLabel>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span onClick={(e) => e.stopPropagation()}>
-            <SectionFeedbackButton sectionKey={sectionKey} sectionLabel={title} onSubmit={onSectionFeedback} disabled={feedbackDisabled} />
-          </span>
-          <ChevronRight className="w-4 h-4 text-[#5c5378] transition-transform group-open:rotate-90" />
-        </div>
-      </summary>
+        <summary className="list-none flex items-center justify-between gap-4 cursor-pointer">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#eff4ff] text-[#2a14b4]">
+              <Icon className="w-3.5 h-3.5" />
+            </span>
+            <SectionLabel>{title}</SectionLabel>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {/* Spacer for the feedback button positioned outside summary */}
+            <span className="w-7 h-7" />
+            <ChevronRight className="w-4 h-4 text-[#5c5378] transition-transform group-open:rotate-90" />
+          </div>
+        </summary>
       <div className="mt-4 max-w-3xl space-y-3">
         {paragraphs.length > 0 ? (
           paragraphs.map((paragraph, index) => (
@@ -111,6 +106,11 @@ function TeacherNotesSection({
           <p className="text-sm text-[#5c5378]/70">Nog geen notities beschikbaar voor dit onderdeel.</p>
         )}
       </div>
-    </details>
+      </details>
+      {/* Feedback button lives outside <details>/<summary> so interactions never toggle the section */}
+      <div className="absolute top-5 right-[calc(1.25rem+1.5rem+0.375rem)] z-10">
+        <SectionFeedbackButton sectionKey={sectionKey} sectionLabel={title} onSubmit={onSectionFeedback} disabled={feedbackDisabled} />
+      </div>
+    </div>
   )
 }
