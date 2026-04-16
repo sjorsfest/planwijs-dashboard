@@ -163,7 +163,7 @@ export function summarizeBuildsOn(buildsOn: string): string {
   if (!buildsOn.trim()) return "Bouwt voort op eerdere context uit de reeks."
   const lessonMatch = buildsOn.match(/les\s*\d+/i)
   if (lessonMatch) return `Bouwt voort op ${lessonMatch[0].toLowerCase()}.`
-  return `Bouwt voort op ${truncateText(buildsOn, 78)}`
+  return `Bouwt voort op ${buildsOn.toLowerCase()}`
 }
 
 export function buildSeriesSummary(overview: LesplanOverviewState, numLessons: number) {

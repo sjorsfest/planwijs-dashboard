@@ -33,9 +33,10 @@ export function OverviewTab({
   const hiddenKnowledgeCount = Math.max(keyKnowledge.length - 5, 0)
   const summary = buildSeriesSummary(overview, request.numLessons)
   // Show sections only when their generating step has completed (or no task is active)
+  const isFeedbackTask = loadingFields.size > 0
   const noActiveTask = completedSteps.size === 0 && !isStreaming
-  const goalsReady = noActiveTask || completedSteps.has("Generating learning goals")
-  const sequenceReady = noActiveTask || completedSteps.has("Generating sequence")
+  const goalsReady = noActiveTask || isFeedbackTask || completedSteps.has("Generating learning goals")
+  const sequenceReady = noActiveTask || isFeedbackTask || completedSteps.has("Generating sequence")
   const showGoals = !loadingFields.has("learning_goals") && goalsReady && goals.length > 0
   const showKeyKnowledge = !loadingFields.has("key_knowledge") && sequenceReady && keyKnowledge.length > 0
   const showSummary = !loadingFields.has("series_summary")

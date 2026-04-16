@@ -110,12 +110,13 @@ function LessonSequenceCard({
   onSectionFeedback: (item: Omit<SectionFeedbackItem, "id" | "createdAt">) => void
   feedbackDisabled?: boolean
 }) {
+  const [showFullHint, setShowFullHint] = useState(false)
   const summary = truncateText(splitSentences(item.description).slice(0, 2).join(" "), 220)
-  const teachingHint = truncateText(
+  const fullTeachingHint =
     item.teaching_approach_hint ??
-      "Korte activering, gerichte uitleg, begeleide verwerking en een afsluitende check op begrip.",
-    180
-  )
+    "Korte activering, gerichte uitleg, begeleide verwerking en een afsluitende check op begrip."
+  const isHintTruncated = fullTeachingHint.length > 100
+  const teachingHint = showFullHint ? fullTeachingHint : truncateText(fullTeachingHint, 100)
 
   return (
     <article className="relative">
@@ -155,6 +156,15 @@ function LessonSequenceCard({
           <p className="mt-2 text-sm text-[#464554] leading-6">{summary || "Nog geen samenvatting beschikbaar."}</p>
           <p className="mt-2 text-xs text-[#2a14b4]/85 leading-5">
             <span className="font-semibold">Aanpak:</span> {teachingHint}
+            {isHintTruncated && (
+              <button
+                type="button"
+                onClick={() => setShowFullHint(!showFullHint)}
+                className="ml-1 font-semibold text-[#2a14b4] hover:underline"
+              >
+                {showFullHint ? "lees minder" : "lees meer"}
+              </button>
+            )}
           </p>
 
           {tags.length > 0 && (

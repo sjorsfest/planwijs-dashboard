@@ -218,12 +218,23 @@ export default function LessonSeriesReviewPage() {
 
   useEffect(() => {
     if (processFeedbackFetcher.state !== "idle" || !processFeedbackFetcher.data) return
-    setLoadingFields(new Set())
     if (processFeedbackFetcher.data.ok && processFeedbackFetcher.data.task) {
       setSectionFeedback([])
       dispatch({ type: "task_started", taskId: processFeedbackFetcher.data.task.task_id, taskType: "apply_feedback" })
+    } else {
+      // Only clear loading fields if the feedback submission failed
+      setLoadingFields(new Set())
     }
   }, [processFeedbackFetcher.state, processFeedbackFetcher.data])
+
+  // Clear loadingFields when the feedback task finishes (completes or fails)
+  const prevActiveTaskId = useRef(activeTaskId)
+  useEffect(() => {
+    if (prevActiveTaskId.current && !activeTaskId && loadingFields.size > 0) {
+      setLoadingFields(new Set())
+    }
+    prevActiveTaskId.current = activeTaskId
+  }, [activeTaskId, loadingFields.size])
 
   function handleProcessFeedback() {
     if (sectionFeedback.length === 0 || processFeedbackFetcher.state !== "idle") return
