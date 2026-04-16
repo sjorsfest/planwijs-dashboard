@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react"
 import { LesLabLogo } from "~/components/branding/leslab-logo"
 import { OnboardingProvider } from "~/components/onboarding/onboarding-context"
 import { WelkomOverlay } from "~/components/onboarding/welkom-overlay"
+import { FeedbackPanel } from "~/components/feedback/feedback-panel"
 import type { loader } from "./route"
 import { navItems } from "./constants"
 export default function AppLayout() {
@@ -119,6 +120,7 @@ export default function AppLayout() {
       </nav>
     </div>
     <WelkomOverlay />
+    <FeedbackPanel />
     </OnboardingProvider>
   )
 }

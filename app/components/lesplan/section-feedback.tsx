@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react"
-import { MessageSquarePlus, Send, X, MessageCircle, CheckCircle2, Sparkles, LoaderCircle, Minus, Check } from "lucide-react"
+import { Bot, Send, X, MessageCircle, CheckCircle2, Sparkles, LoaderCircle, Minus, Check } from "lucide-react"
 import type { TaskStep } from "~/lib/backend/types"
 import { translateStep } from "./utils"
 import { motion, AnimatePresence } from "framer-motion"
@@ -60,9 +60,9 @@ export function SectionFeedbackButton({
         onClick={() => !disabled && setOpen(!open)}
         disabled={disabled}
         className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${disabled ? "text-[#5c5378]/20 cursor-not-allowed" : "text-[#5c5378]/50 hover:text-[#2a14b4] hover:bg-[#eff4ff]"}`}
-        title={`Feedback geven op ${sectionLabel}`}
+        title={`AI aanpassing voorstellen voor ${sectionLabel}`}
       >
-        <MessageSquarePlus className="w-4 h-4" />
+        <Bot className="w-4 h-4" />
       </button>
 
       <AnimatePresence>
@@ -76,7 +76,7 @@ export function SectionFeedbackButton({
           >
             <div className="flex items-center justify-between mb-2">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5c5378]/70">
-                Feedback: {sectionLabel}
+                AI aanpassing: {sectionLabel}
               </p>
               <button
                 type="button"
@@ -96,7 +96,7 @@ export function SectionFeedbackButton({
                   handleSubmit()
                 }
               }}
-              placeholder="Wat kan er beter?"
+              placeholder="Beschrijf wat de AI moet aanpassen..."
               rows={3}
               className="w-full rounded-lg border border-[#e8eeff] bg-[#f8f9ff] px-3 py-2 text-sm text-[#464554] placeholder:text-[#5c5378]/40 focus:outline-none focus:ring-2 focus:ring-[#2a14b4]/20 focus:border-[#2a14b4]/30 resize-none"
             />
@@ -208,7 +208,7 @@ export function FeedbackPanel({
                   : activeTaskType === "generate_lessons"
                   ? "Lessen genereren…"
                   : "Overzicht genereren…"
-                : "Jouw feedback"}
+                : "AI aanpassingen"}
             </span>
             {!isGenerating && hasFeedback && (
               <span className="inline-flex items-center justify-center w-5.5 h-5.5 rounded-full bg-white/20 text-[11px] font-bold">
@@ -325,20 +325,20 @@ export function FeedbackPanel({
             ) : (
               <div className="px-5 py-6 flex flex-col items-center">
                 <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#eff4ff] mb-3">
-                  <MessageSquarePlus className="w-5 h-5 text-[#2a14b4]/40" />
+                  <Bot className="w-5 h-5 text-[#2a14b4]/40" />
                 </div>
-                <p className="text-sm text-[#5c5378] font-medium mb-3">Nog geen feedback</p>
+                <p className="text-sm text-[#5c5378] font-medium mb-3">Geen aanpassingen</p>
                 <div className="w-full rounded-xl bg-[#f8f9ff] border border-[#e8eeff] px-4 py-3 space-y-2.5">
                   <div className="flex items-start gap-2.5">
                     <span className="shrink-0 w-5 h-5 rounded-full bg-[#eff4ff] text-[#2a14b4] text-[10px] font-bold flex items-center justify-center mt-0.5">1</span>
                     <p className="text-xs text-[#5c5378]/70 leading-5">
-                      Klik op het <MessageSquarePlus className="w-3 h-3 inline -mt-0.5 text-[#2a14b4]/50" /> icoon bij een sectie om feedback toe te voegen
+                      Klik op het <Bot className="w-3 h-3 inline -mt-0.5 text-[#2a14b4]/50" /> icoon bij een sectie om aan te geven wat de AI moet aanpassen
                     </p>
                   </div>
                   <div className="flex items-start gap-2.5">
                     <span className="shrink-0 w-5 h-5 rounded-full bg-[#eff4ff] text-[#2a14b4] text-[10px] font-bold flex items-center justify-center mt-0.5">2</span>
                     <p className="text-xs text-[#5c5378]/70 leading-5">
-                      AI verwerkt jouw opmerkingen tot een geüpdatete versie van het lesplan
+                      De AI past het lesplan aan op basis van jouw instructies
                     </p>
                   </div>
                 </div>

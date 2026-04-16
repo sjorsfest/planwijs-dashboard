@@ -469,6 +469,90 @@ class ApiClient {
     }
   }
 
+  // ─── Test Feedback ───────────────────────────────────────────────────
+
+  async listTestFeedback(): Promise<unknown[]> {
+    try {
+      const res = await fetch(`${API_URL}/test-feedback/`, { headers: this.headers })
+      if (!res.ok) return []
+      return res.json()
+    } catch {
+      return []
+    }
+  }
+
+  async getTestFeedback(id: string): Promise<unknown | null> {
+    try {
+      const res = await fetch(`${API_URL}/test-feedback/${id}`, { headers: this.headers })
+      if (!res.ok) return null
+      return res.json()
+    } catch {
+      return null
+    }
+  }
+
+  async createTestFeedback(data: {
+    route: string
+    name: string
+    description: string
+    type: "BUG" | "SUGGESTION" | "OTHER"
+  }): Promise<unknown> {
+    return this.requestJson(`${API_URL}/test-feedback/`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteTestFeedback(id: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_URL}/test-feedback/${id}`, {
+        method: "DELETE",
+        headers: this.headers,
+      })
+      return res.ok || res.status === 204
+    } catch {
+      return false
+    }
+  }
+
+  async toggleTestFeedbackVote(id: string): Promise<{ voted: boolean; vote_count: number }> {
+    return this.requestJson(`${API_URL}/test-feedback/${id}/vote`, {
+      method: "POST",
+      headers: this.headers,
+    })
+  }
+
+  async listTestFeedbackComments(id: string): Promise<unknown[]> {
+    try {
+      const res = await fetch(`${API_URL}/test-feedback/${id}/comments`, { headers: this.headers })
+      if (!res.ok) return []
+      return res.json()
+    } catch {
+      return []
+    }
+  }
+
+  async createTestFeedbackComment(id: string, text: string): Promise<unknown> {
+    return this.requestJson(`${API_URL}/test-feedback/${id}/comments`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({ text }),
+    })
+  }
+
+  async deleteTestFeedbackComment(commentId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_URL}/test-feedback/comments/${commentId}`, {
+        method: "DELETE",
+        headers: this.headers,
+      })
+      return res.ok || res.status === 204
+    } catch {
+      return false
+    }
+  }
+
   // ─── Lessons & Todos ──────────────────────────────────────────────────
 
   async updateLessonPlannedDate(lessonId: string, plannedDate: string | null): Promise<LessonPlanResponse> {
