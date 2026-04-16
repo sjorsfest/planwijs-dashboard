@@ -54,19 +54,25 @@ function firstName(name: string): string {
   return name.split(" ")[0]
 }
 
-function timeAgo(dateString: string): string {
-  const now = new Date()
-  const date = new Date(dateString)
-  const diffMs = now.getTime() - date.getTime()
-  const diffMin = Math.floor(diffMs / 60000)
-  if (diffMin < 1) return "zojuist"
-  if (diffMin < 60) return `${diffMin}m geleden`
-  const diffHrs = Math.floor(diffMin / 60)
-  if (diffHrs < 24) return `${diffHrs}u geleden`
-  const diffDays = Math.floor(diffHrs / 24)
-  if (diffDays < 30) return `${diffDays}d geleden`
-  return date.toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" })
+/** Replace UUIDs and long IDs in a path with readable placeholders. */
+function sanitizeRoute(path: string): string {
+  const segments = path.split("/")
+  const routeNames: Record<string, string> = {
+    lesplan: ":lesplanId",
+    les: ":lessonId",
+  }
+  return segments
+    .map((seg, i) => {
+      // Match UUIDs or long hex/alphanumeric IDs (8+ chars)
+      if (/^[0-9a-f]{8,}/i.test(seg) || /^[a-z0-9_-]{20,}$/i.test(seg)) {
+        const prev = segments[i - 1]
+        return prev && routeNames[prev] ? routeNames[prev] : ":id"
+      }
+      return seg
+    })
+    .join("/")
 }
+
 
 const TYPE_CONFIG: Record<
   FeedbackType,
@@ -414,11 +420,9 @@ function FeedbackCard({
             {config.label}
           </Badge>
         </div>
-        <p className="text-[11px] text-[#5c5378] mt-0.5 truncate">{feedback.route}</p>
+        <p className="text-[11px] text-[#5c5378] mt-0.5 line-clamp-1">{feedback.description}</p>
         <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#5c5378]">
           <span>{firstName(feedback.user_name)}</span>
-          <span>·</span>
-          <span>{timeAgo(feedback.created_at)}</span>
           <span>·</span>
           <span className="flex items-center gap-0.5">
             <MessageSquare className="w-3 h-3" />
@@ -519,7 +523,7 @@ function DetailView({
             </div>
             <p className="text-[11px] text-[#5c5378] mt-1">Route: {feedback.route}</p>
             <p className="text-[11px] text-[#5c5378]">
-              {firstName(feedback.user_name)} · {timeAgo(feedback.created_at)}
+              {firstName(feedback.user_name)}
             </p>
           </div>
           <button
@@ -574,8 +578,6 @@ function DetailView({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-[11px] text-[#5c5378]">
                     <span className="font-semibold text-[#0b1c30]">{firstName(comment.user_name)}</span>
-                    <span>·</span>
-                    <span>{timeAgo(comment.created_at)}</span>
                   </div>
                   <button
                     onClick={() => handleDeleteComment(comment.id)}
@@ -637,7 +639,7 @@ function NewFeedbackForm({
   const [type, setType] = useState<FeedbackType>("SUGGESTION")
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
-  const [route, setRoute] = useState(currentRoute)
+  const route = sanitizeRoute(currentRoute)
 
   const isSubmitting = fetcher.state !== "idle"
 
@@ -696,12 +698,10 @@ function NewFeedbackForm({
           </div>
         </div>
 
-        {/* Route */}
-        <div>
-          <label className="text-xs font-semibold text-[#0b1c30] mb-1.5 block">
-            Route / pagina
-          </label>
-          <Input value={route} onChange={(e) => setRoute(e.target.value)} placeholder="/dashboard" />
+        {/* Route (read-only) */}
+        <div className="flex items-center gap-2 rounded-xl bg-[#eff4ff] px-3 py-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[#5c5378]">Pagina:</span>
+          <span className="text-xs font-medium text-[#0b1c30] truncate">{route}</span>
         </div>
 
         {/* Title */}
