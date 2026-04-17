@@ -115,7 +115,6 @@ export function loadPlanState(): SavedPlanState | null {
       selectedCategory: typeof parsed.selectedCategory === "string" ? parsed.selectedCategory : null,
       selectedSubject: parseSavedSubject(parsed.selectedSubject),
       lessonCount: typeof parsed.lessonCount === "number" ? parsed.lessonCount : null,
-      lessonDuration: typeof parsed.lessonDuration === "number" ? parsed.lessonDuration : null,
       classSize: typeof parsed.classSize === "number" ? parsed.classSize : null,
       classDifficulty: typeof parsed.classDifficulty === "string" ? (parsed.classDifficulty as SavedPlanState["classDifficulty"]) : null,
       classSetupConfirmed:
@@ -143,7 +142,6 @@ export function parseSubmittedPayload(value: unknown): SubmittedPlanPayload | nu
     typeof value.selectedLevel !== "string" ||
     typeof value.selectedYear !== "string" ||
     typeof value.lessonCount !== "number" ||
-    typeof value.lessonDuration !== "number" ||
     typeof value.classSize !== "number" ||
     typeof value.classDifficulty !== "string" ||
     typeof value.selectedBookId !== "string" ||
@@ -167,7 +165,6 @@ export function parseSubmittedPayload(value: unknown): SubmittedPlanPayload | nu
     selectedYear: value.selectedYear as SubmittedPlanPayload["selectedYear"],
     selectedSubject: subject,
     lessonCount: value.lessonCount,
-    lessonDuration: value.lessonDuration,
     classSize: value.classSize,
     classDifficulty: value.classDifficulty as SubmittedPlanPayload["classDifficulty"],
     selectedBookId: value.selectedBookId,

@@ -12,7 +12,6 @@ interface Props {
   selectedYear: SchoolYear
   selectedSubject: Subject
   lessonCount: number
-  lessonDuration: number
   classSize: number
   classDifficulty: ClassDifficulty
   selectedMethod: Method
@@ -49,7 +48,6 @@ export function PlanSummary({
   selectedYear,
   selectedSubject,
   lessonCount,
-  lessonDuration,
   classSize,
   classDifficulty,
   selectedMethod,
@@ -157,7 +155,6 @@ export function PlanSummary({
 
         <StatBlock label="Lessen" variants={fadeUp}>
           <p className="text-xl font-bold text-[#0b1c30] leading-tight">{lessonCount}×</p>
-          <p className="text-sm text-[#464554] mt-1">{lessonDuration} min per les</p>
         </StatBlock>
 
         <StatBlock label="Methode" variants={fadeUp}>

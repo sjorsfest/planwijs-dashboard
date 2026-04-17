@@ -17,7 +17,6 @@ export type FeedbackMessageResponse = {
 export type LessonPlanResponse = components["schemas"]["LessonPlanResponse"]
 export type LessonPreparationTodoResponse = components["schemas"]["LessonPreparationTodoResponse"]
 export type LessonPreparationStatus = components["schemas"]["LessonPreparationStatus"]
-export type ClassSupportChallenge = components["schemas"]["ClassSupportChallenge"]
 export type Classroom = components["schemas"]["Classroom"]
 export type ClassroomCreate = components["schemas"]["ClassroomCreate"]
 export type LesplanOverviewResponse = components["schemas"]["LesplanOverviewResponse"]
@@ -88,6 +87,38 @@ export type CalendarResponse = {
 }
 
 export type UpdateLessonPreparationTodoRequest = components["schemas"]["UpdateLessonPreparationTodoRequest"]
+
+// ─── School config types ─────────────────────────────────────────────────
+
+export type SchoolConfigResponse = components["schemas"]["SchoolConfigResponse"]
+export type SchoolConfigUpdate = components["schemas"]["SchoolConfigUpdate"]
+export type SchoolType = components["schemas"]["SchoolType"]
+
+export const SCHOOL_TYPES: SchoolType[] = [
+  "REGULIER",
+  "MONTESSORI",
+  "DALTON",
+  "JENAPLAN",
+  "VRIJE_SCHOOL",
+  "TECHNASIUM",
+  "TWEETALIG",
+  "ANDERS",
+]
+
+export const SCHOOL_TYPE_LABELS: Record<SchoolType, string> = {
+  REGULIER: "Regulier",
+  MONTESSORI: "Montessori",
+  DALTON: "Dalton",
+  JENAPLAN: "Jenaplan",
+  VRIJE_SCHOOL: "Vrije school",
+  TECHNASIUM: "Technasium",
+  TWEETALIG: "Tweetalig",
+  ANDERS: "Anders",
+}
+
+// ─── User subject types ──────────────────────────────────────────────────
+
+export type UserSubject = Subject
 
 // ─── File types ───────────────────────────────────────────────────────────
 

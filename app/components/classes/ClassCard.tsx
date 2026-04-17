@@ -16,7 +16,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion"
 import type { Class, FileRecord } from "~/lib/backend/types"
 import { Button } from "~/components/ui/button"
-import { Badge } from "~/components/ui/badge"
 import {
   Select,
   SelectContent,
@@ -24,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select"
-import { SubjectIcon } from "~/components/ui/subject-badge"
 import {
   LEVELS,
   SCHOOL_YEARS,
@@ -32,7 +30,6 @@ import {
   type Level,
   type SchoolYear,
   type ClassDifficulty,
-  type ClassSupportChallenge,
 } from "~/components/new-plan/types"
 import { cn } from "~/lib/utils"
 import {
@@ -42,7 +39,6 @@ import {
   SOFT_EASE,
   SUBTLE_EASE,
   SUBTLE_LAYOUT_TRANSITION,
-  SUBJECTS,
   type FieldHintContent,
 } from "../../routes/app.classes/constants"
 import { ClassDocumentPicker } from "./ClassDocumentPicker"
@@ -51,6 +47,7 @@ import { ClassDocumentPicker } from "./ClassDocumentPicker"
 
 interface ClassCardProps {
   cls: Class
+  availableLevels: Level[]
   isEditing: boolean
   isDeleting: boolean
   onEdit: () => void
@@ -62,6 +59,7 @@ interface ClassCardProps {
 
 export function ClassCard({
   cls,
+  availableLevels,
   isEditing,
   isDeleting,
   onEdit,
@@ -101,12 +99,9 @@ export function ClassCard({
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2a14b4] to-[#4338ca] flex items-center justify-center flex-shrink-0 shadow-[0px_4px_10px_rgba(42,20,180,0.25)]">
-              <SubjectIcon subjectName={cls.subject} className="w-4.5 h-4.5 text-white" />
-            </div>
             <div className="min-w-0">
               <p className="text-sm font-bold text-[#0b1c30] truncate">{cls.name}</p>
-              <p className="text-xs text-[#464554]">{cls.subject} · {cls.level} · {cls.school_year}</p>
+              <p className="text-xs text-[#464554]">{cls.level} · {cls.school_year}</p>
             </div>
           </div>
 
@@ -167,13 +162,6 @@ export function ClassCard({
               <span>{cls.attention_span_minutes} min aandachtsspanne</span>
             </div>
           )}
-          {cls.support_challenge != null && (
-            <div className="flex items-center gap-1.5">
-              <Badge variant="secondary" className="text-[10px] font-semibold">
-                {cls.support_challenge}
-              </Badge>
-            </div>
-          )}
           {cls.class_notes && (
             <p className="text-xs text-[#464554] line-clamp-2 mt-1">{cls.class_notes}</p>
           )}
@@ -194,7 +182,7 @@ export function ClassCard({
             className="overflow-hidden"
           >
             <div className="border-t border-[#eff4ff]">
-              <EditForm cls={cls} onSaved={onSaved} onCancel={onCancelEdit} />
+              <EditForm cls={cls} availableLevels={availableLevels} onSaved={onSaved} onCancel={onCancelEdit} />
             </div>
           </motion.div>
         )}
@@ -269,18 +257,16 @@ function FieldHintLabel({ label, hint }: { label: string; hint: FieldHintContent
 
 // ── Edit Form ───────────────────────────────────────────────
 
-function EditForm({ cls, onSaved, onCancel }: { cls: Class; onSaved: () => void; onCancel: () => void }) {
+function EditForm({ cls, availableLevels, onSaved, onCancel }: { cls: Class; availableLevels: Level[]; onSaved: () => void; onCancel: () => void }) {
   const fetcher = useFetcher()
   const isSubmitting = fetcher.state !== "idle"
 
   const [name, setName] = useState(cls.name)
-  const [subject, setSubject] = useState<string>(cls.subject)
   const [level, setLevel] = useState<Level>(cls.level)
   const [schoolYear, setSchoolYear] = useState<SchoolYear>(cls.school_year)
   const [size, setSize] = useState<number>(cls.size)
   const [difficulty, setDifficulty] = useState<ClassDifficulty | null>(cls.difficulty ?? null)
   const [attentionSpan, setAttentionSpan] = useState<number | null>(cls.attention_span_minutes ?? null)
-  const [supportChallenge, setSupportChallenge] = useState<ClassSupportChallenge | null>(cls.support_challenge ?? null)
   const [classNotes, setClassNotes] = useState<string>(cls.class_notes ?? "")
   const [showAiInfo, setShowAiInfo] = useState(false)
   const [linkedFiles, setLinkedFiles] = useState<FileRecord[]>([])
@@ -299,13 +285,11 @@ function EditForm({ cls, onSaved, onCancel }: { cls: Class; onSaved: () => void;
   function handleSave() {
     const body: Record<string, unknown> = {
       name: name.trim(),
-      subject,
       level,
       school_year: schoolYear,
       size,
       difficulty: difficulty || null,
       attention_span_minutes: attentionSpan || null,
-      support_challenge: supportChallenge || null,
       class_notes: classNotes.trim() || null,
     }
 
@@ -331,30 +315,6 @@ function EditForm({ cls, onSaved, onCancel }: { cls: Class; onSaved: () => void;
         />
       </label>
 
-      {/* Subject */}
-      <label className="block">
-        <span className="block text-xs font-medium text-[#464554] mb-1.5">Vak</span>
-        <Select value={subject} onValueChange={setSubject}>
-          <SelectTrigger className="h-10 rounded-xl border border-transparent bg-[#dce9ff] px-3 text-sm font-medium text-[#0b1c30] focus:ring-2 focus:ring-[#2a14b4]/35 focus:ring-offset-0">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent
-            className="rounded-xl border border-[#c7d6f5] bg-[#f8fbff] p-1 text-[#0b1c30] shadow-[0px_20px_32px_rgba(11,28,48,0.18)]"
-            position="popper"
-          >
-            {SUBJECTS.map((s) => (
-              <SelectItem
-                key={s}
-                value={s}
-                className="rounded-lg py-2 pl-8 pr-3 text-sm font-medium text-[#0b1c30] focus:bg-[#dce9ff] focus:text-[#0b1c30]"
-              >
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </label>
-
       {/* Level & Year */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block">
@@ -370,7 +330,7 @@ function EditForm({ cls, onSaved, onCancel }: { cls: Class; onSaved: () => void;
               className="rounded-xl border border-[#c7d6f5] bg-[#f8fbff] p-1 text-[#0b1c30] shadow-[0px_20px_32px_rgba(11,28,48,0.18)]"
               position="popper"
             >
-              {LEVELS.map((l) => (
+              {(availableLevels.length > 0 ? availableLevels : LEVELS).map((l) => (
                 <SelectItem
                   key={l}
                   value={l}
@@ -385,7 +345,7 @@ function EditForm({ cls, onSaved, onCancel }: { cls: Class; onSaved: () => void;
 
         <label className="block">
           <FieldHintLabel
-            label="Schooljaar"
+            label="Leerjaar"
             hint={FIELD_HINTS.schoolYear}
           />
           <Select value={schoolYear} onValueChange={(v) => setSchoolYear(v as SchoolYear)}>

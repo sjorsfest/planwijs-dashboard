@@ -4,7 +4,6 @@ import { data, redirect } from "react-router"
 import { createApiClient, ApiRequestError } from "~/lib/backend/client"
 import { requireAuthContext } from "~/lib/auth.server"
 import { getSession, commitSession, setActiveTask } from "~/lib/session.server"
-import type { Method } from "~/components/new-plan/types"
 import type { Route } from "./+types/route"
 import type { ActionData, ExistingClassData, LoaderData } from "./types"
 import { parseSubmittedPayload, hasClassId, getLatestLesplanByClassId } from "./utils"
@@ -25,10 +24,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
 
   const api = createApiClient(token)
-  const [classes, lespannen, classrooms] = await Promise.all([
+  const [classes, lespannen, classrooms, schoolConfig, userSubjects] = await Promise.all([
     api.getClasses(),
     api.listLespannen(),
     api.getClassrooms(),
+    api.getSchoolConfig(),
+    api.getUserSubjects(),
   ])
 
   const latestByClassId = getLatestLesplanByClassId(lespannen)
@@ -41,14 +42,12 @@ export async function loader({ request }: Route.LoaderArgs) {
       return {
         id: classroom.id,
         name: classroom.name,
-        subject: classroom.subject,
         level: classroom.level,
         schoolYear: classroom.school_year,
         size: classroom.size,
         difficulty: classroom.difficulty ?? null,
         latestLesplanUpdatedAt: latestLesplan?.updated_at ?? null,
         latestLesplanBookId: latestLesplan?.book_id ?? null,
-        latestLesplanLessonDuration: latestLesplan?.lesson_duration_minutes ?? null,
         latestLesplanNumLessons: latestLesplan?.num_lessons ?? null,
       }
     })
@@ -56,10 +55,11 @@ export async function loader({ request }: Route.LoaderArgs) {
       const left = a.latestLesplanUpdatedAt ? new Date(a.latestLesplanUpdatedAt).getTime() : 0
       const right = b.latestLesplanUpdatedAt ? new Date(b.latestLesplanUpdatedAt).getTime() : 0
       if (right !== left) return right - left
-      return a.subject.localeCompare(b.subject, "nl")
+      return a.name.localeCompare(b.name, "nl")
     })
 
-  return data<LoaderData>({ existingClasses, classrooms }, { headers: { "Cache-Control": "private, max-age=10" } })
+  const schoolLevels = schoolConfig?.levels ?? []
+  return data<LoaderData>({ existingClasses, classrooms, schoolLevels, userSubjects }, { headers: { "Cache-Control": "private, max-age=10" } })
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -91,7 +91,6 @@ export async function action({ request }: Route.ActionArgs) {
     if (!classId) {
       const classroom = await api.createClass({
         name: payload.className_,
-        subject: payload.selectedSubject.name as Method["subject"],
         level: payload.selectedLevel,
         school_year: payload.selectedYear,
         size: payload.classSize,
@@ -110,7 +109,6 @@ export async function action({ request }: Route.ActionArgs) {
       book_id: payload.selectedBookId,
       selected_paragraph_ids: payload.selectedParagraphIds,
       num_lessons: payload.lessonCount,
-      lesson_duration_minutes: payload.lessonDuration,
       classroom_id: payload.selectedClassroomId,
       ...(payload.selectedFileIds.length > 0 ? { file_ids: payload.selectedFileIds } : {}),
     })

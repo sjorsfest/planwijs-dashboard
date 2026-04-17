@@ -9,7 +9,6 @@ import { LEVELS, SCHOOL_YEARS, getDisabledYears, type ClassDifficulty, type Leve
 export interface ExistingClassOption {
   id: string
   name: string
-  subject: string
   level: Level
   schoolYear: SchoolYear
   size: number
@@ -19,13 +18,13 @@ export interface ExistingClassOption {
 
 interface Props {
   existingClasses: ExistingClassOption[]
+  availableLevels: Level[]
   showCreateForm: boolean
   selectedExistingClassId: string | null
   className_: string
   selectedLevel: Level | null
   selectedYear: SchoolYear | null
   classSize: number | null
-  lessonDuration: number | null
   classDifficulty: ClassDifficulty | null
   onCreateNew: () => void
   onExistingClassSelect: (classId: string) => void
@@ -34,7 +33,6 @@ interface Props {
   onLevelSelect: (level: Level) => void
   onYearSelect: (year: SchoolYear) => void
   onClassSizeChange: (value: number | null) => void
-  onLessonDurationChange: (value: number | null) => void
   onClassDifficultyChange: (value: ClassDifficulty) => void
   onConfirm: () => void
   canContinue: boolean
@@ -42,17 +40,15 @@ interface Props {
   backLink?: ReactNode
 }
 
-const LESSON_DURATION_OPTIONS = [45, 50, 60, 90]
-
 export function Step1ClassSetup({
   existingClasses,
+  availableLevels,
   showCreateForm,
   selectedExistingClassId,
   className_,
   selectedLevel,
   selectedYear,
   classSize,
-  lessonDuration,
   classDifficulty,
   onCreateNew,
   onExistingClassSelect,
@@ -61,7 +57,6 @@ export function Step1ClassSetup({
   onLevelSelect,
   onYearSelect,
   onClassSizeChange,
-  onLessonDurationChange,
   onClassDifficultyChange,
   onConfirm,
   canContinue,
@@ -102,7 +97,7 @@ export function Step1ClassSetup({
                 </button>
               </div>
               <p className="mt-1 text-xs text-[#464554]">
-                {selectedExistingClass.subject} · {selectedExistingClass.level} · {selectedExistingClass.schoolYear} · {selectedExistingClass.size} leerlingen
+                {selectedExistingClass.level} · {selectedExistingClass.schoolYear} · {selectedExistingClass.size} leerlingen
               </p>
               <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1">
                 <span
@@ -151,7 +146,7 @@ export function Step1ClassSetup({
                     )}
                   </div>
                   <p className="mt-1 text-xs text-[#464554]">
-                    {existingClass.subject} · {existingClass.level} · {existingClass.schoolYear} · {existingClass.size} leerlingen
+                    {existingClass.level} · {existingClass.schoolYear} · {existingClass.size} leerlingen
                   </p>
                   <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1">
                     <span
@@ -182,6 +177,15 @@ export function Step1ClassSetup({
         </div>
       ) : (
         <div className="space-y-4">
+          {existingClasses.length > 0 && (
+            <button
+              onClick={onDeselectExistingClass}
+              className="flex items-center gap-2 text-sm font-semibold text-[#5c5378] hover:text-[#2a14b4] transition-colors"
+            >
+              <ArrowRight className="w-4 h-4 rotate-180" />
+              Bestaande klas selecteren
+            </button>
+          )}
           <div className="bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
             <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-4">Klas basis</p>
             <label className="block mb-3">
@@ -205,7 +209,7 @@ export function Step1ClassSetup({
                     className="rounded-xl border border-[#c7d6f5] bg-[#f8fbff] p-1 text-[#0b1c30] shadow-[0px_20px_32px_rgba(11,28,48,0.18)]"
                     position="popper"
                   >
-                    {LEVELS.map((level) => (
+                    {(availableLevels.length > 0 ? availableLevels : LEVELS).map((level) => (
                       <SelectItem
                         key={level}
                         value={level}
@@ -219,10 +223,10 @@ export function Step1ClassSetup({
               </label>
 
               <label className="block">
-                <span className="block text-xs font-medium text-[#464554] mb-1.5">Schooljaar</span>
+                <span className="block text-xs font-medium text-[#464554] mb-1.5">Leerjaar</span>
                 <Select value={selectedYear ?? undefined} onValueChange={(value) => onYearSelect(value as SchoolYear)}>
                   <SelectTrigger className="h-10 rounded-xl border border-[#a89eef] bg-[#dce9ff] px-3 text-sm font-medium text-[#0b1c30] focus:ring-2 focus:ring-[#2a14b4]/35 focus:ring-offset-0">
-                    <SelectValue placeholder="Kies een schooljaar" />
+                    <SelectValue placeholder="Kies een Leerjaar" />
                   </SelectTrigger>
                   <SelectContent
                     className="rounded-xl border border-[#c7d6f5] bg-[#f8fbff] p-1 text-[#0b1c30] shadow-[0px_20px_32px_rgba(11,28,48,0.18)]"
@@ -245,8 +249,7 @@ export function Step1ClassSetup({
           </div>
 
         <div className="bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-4">Klasgrootte & lestijd</p>
-          <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-4">Klasgrootte</p>
             <label className="block">
               <span className="block text-xs font-medium text-[#464554] mb-1.5">Aantal leerlingen</span>
               <input
@@ -258,52 +261,9 @@ export function Step1ClassSetup({
                   onClassSizeChange(e.target.value === "" ? null : Math.max(1, parseInt(e.target.value, 10) || 1))
                 }
                 placeholder="bijv. 24"
-                className="w-full h-10 rounded-xl bg-[#dce9ff] px-3 text-sm font-semibold text-[#0b1c30] outline-none focus:ring-2 focus:ring-[#2a14b4]/35"
+                className="w-full max-w-[200px] h-10 rounded-xl bg-[#dce9ff] px-3 text-sm font-semibold text-[#0b1c30] outline-none focus:ring-2 focus:ring-[#2a14b4]/35"
               />
             </label>
-
-            <div>
-              <p className="text-xs font-medium text-[#464554] mb-1.5">Lesduur (minuten)</p>
-              <div className="flex flex-wrap gap-2">
-                {LESSON_DURATION_OPTIONS.map((duration) => (
-                  <button
-                    key={duration}
-                    onClick={() => onLessonDurationChange(duration)}
-                    className={cn(
-                      "px-3 py-2 text-sm font-semibold rounded-lg transition-all",
-                      lessonDuration === duration
-                        ? "bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_4px_12px_rgba(42,20,180,0.25)]"
-                        : "bg-[#eff4ff] text-[#0b1c30] hover:bg-[#dce9ff]"
-                    )}
-                  >
-                    {duration} min
-                  </button>
-                ))}
-                <button
-                  onClick={() => onLessonDurationChange(lessonDuration ?? 75)}
-                  className={cn(
-                    "px-3 py-2 text-sm font-semibold rounded-lg transition-all",
-                    lessonDuration !== null && !LESSON_DURATION_OPTIONS.includes(lessonDuration)
-                      ? "bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_4px_12px_rgba(42,20,180,0.25)]"
-                      : "bg-[#eff4ff] text-[#0b1c30] hover:bg-[#dce9ff]"
-                  )}
-                >
-                  Anders
-                </button>
-                <input
-                  type="number"
-                  min={1}
-                  max={240}
-                  value={lessonDuration !== null && !LESSON_DURATION_OPTIONS.includes(lessonDuration) ? lessonDuration : ""}
-                  onChange={(e) =>
-                    onLessonDurationChange(e.target.value === "" ? null : Math.max(1, parseInt(e.target.value, 10) || 1))
-                  }
-                  placeholder="bijv. 75"
-                  className="w-24 h-10 rounded-lg bg-[#dce9ff] px-3 text-sm font-semibold text-[#0b1c30] outline-none focus:ring-2 focus:ring-[#2a14b4]/35"
-                />
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">

@@ -126,37 +126,6 @@ export function Step6Paragraphs({
         </div>
       </div>
 
-      <div className="mb-6 bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
-        <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-3">Aantal lessen</p>
-        <div className="flex flex-wrap gap-2">
-          {LESSON_COUNT_OPTIONS.map((count) => (
-            <button
-              key={count}
-              onClick={() => onLessonCountChange(count)}
-              className={cn(
-                "px-3 py-2 text-sm font-semibold rounded-lg transition-all",
-                lessonCount === count
-                  ? "bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_4px_12px_rgba(42,20,180,0.25)]"
-                  : "bg-[#eff4ff] text-[#0b1c30] hover:bg-[#dce9ff]"
-              )}
-            >
-              {count} lessen
-            </button>
-          ))}
-          <input
-            type="number"
-            min={1}
-            max={99}
-            value={lessonCount !== null && !LESSON_COUNT_OPTIONS.includes(lessonCount) ? lessonCount : ""}
-            onChange={(e) =>
-              onLessonCountChange(e.target.value === "" ? null : Math.max(1, parseInt(e.target.value, 10) || 1))
-            }
-            placeholder="Anders"
-            className="w-24 h-10 rounded-lg bg-[#dce9ff] px-3 text-sm font-semibold text-[#0b1c30] outline-none focus:ring-2 focus:ring-[#2a14b4]/35"
-          />
-        </div>
-      </div>
-
       {bookDetailLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -169,6 +138,34 @@ export function Step6Paragraphs({
         <EmptyState message="Geen hoofdstukken gevonden voor dit boek." />
       ) : (
         <>
+          <div className="mb-6 bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-3">Aantal lessen</p>
+            <div className="flex flex-wrap gap-2">
+              {LESSON_COUNT_OPTIONS.map((count) => (
+                <button key={count} onClick={() => onLessonCountChange(count)}
+                  className={cn("px-3 py-2 text-sm font-semibold rounded-lg transition-all",
+                    lessonCount === count ? "bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_4px_12px_rgba(42,20,180,0.25)]" : "bg-[#eff4ff] text-[#0b1c30] hover:bg-[#dce9ff]"
+                  )}>
+                  {count} lessen
+                </button>
+              ))}
+              <input type="number" min={1} max={99}
+                value={lessonCount !== null && lessonCount !== -1 && !LESSON_COUNT_OPTIONS.includes(lessonCount) ? lessonCount : ""}
+                onChange={(e) => onLessonCountChange(e.target.value === "" ? null : Math.max(1, parseInt(e.target.value, 10) || 1))}
+                placeholder="Anders"
+                className="w-24 h-10 rounded-lg bg-[#dce9ff] px-3 text-sm font-semibold text-[#0b1c30] outline-none focus:ring-2 focus:ring-[#2a14b4]/35"
+              />
+            </div>
+            <button onClick={() => onLessonCountChange(-1)}
+              className={cn("mt-2 px-3 py-2 text-sm font-semibold rounded-lg transition-all",
+                lessonCount === -1
+                  ? "bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_4px_12px_rgba(42,20,180,0.25)]"
+                  : "bg-[#eff4ff] text-[#0b1c30] hover:bg-[#dce9ff]"
+              )}>
+              1 les per paragraaf{selectedParagraphIds.length > 0 ? ` (${selectedParagraphIds.length} lessen)` : ""}
+            </button>
+          </div>
+
           {/* Combo select */}
           <div className="mb-6" ref={comboRef}>
             <p className="text-xs font-semibold uppercase tracking-widest text-[#464554]/60 mb-2">Snel zoeken</p>
@@ -270,26 +267,28 @@ export function Step6Paragraphs({
           {/* Accordion */}
           <div className="space-y-2">
             {bookDetail.chapters.map((chapter) => {
+              const isEmpty = chapter.paragraphs.length === 0
               const isOpen = openChapters.includes(chapter.id)
-              const chapterFull = isChapterFullySelected(chapter)
-              const chapterPartial = isChapterPartiallySelected(chapter)
+              const chapterFull = !isEmpty && isChapterFullySelected(chapter)
+              const chapterPartial = !isEmpty && isChapterPartiallySelected(chapter)
               return (
                 <div key={chapter.id} className={cn(
                   "rounded-2xl overflow-hidden",
-                  chapterFull ? "shadow-[0px_8px_20px_rgba(42,20,180,0.12)]" : "shadow-[0px_4px_12px_rgba(11,28,48,0.06)]"
+                  isEmpty ? "opacity-50" : chapterFull ? "shadow-[0px_8px_20px_rgba(42,20,180,0.12)]" : "shadow-[0px_4px_12px_rgba(11,28,48,0.06)]"
                 )}>
                   <div className={cn(
                     "flex items-stretch",
-                    chapterFull ? "bg-[#dce9ff]" : chapterPartial ? "bg-[#ffdf9f]/30" : "bg-white"
+                    isEmpty ? "bg-[#f0f0f0]" : chapterFull ? "bg-[#dce9ff]" : chapterPartial ? "bg-[#ffdf9f]/30" : "bg-white"
                   )}>
                     <button
                       type="button"
-                      onClick={() => onToggleChapter(chapter)}
+                      onClick={() => { if (!isEmpty) onToggleChapter(chapter) }}
+                      disabled={isEmpty}
                       className={cn(
                         "flex items-center justify-center w-11 flex-shrink-0 transition-colors",
-                        chapterFull ? "hover:bg-[#2a14b4]/10" : "hover:bg-[#0b1c30]/5"
+                        isEmpty ? "cursor-not-allowed" : chapterFull ? "hover:bg-[#2a14b4]/10" : "hover:bg-[#0b1c30]/5"
                       )}
-                      title={chapterFull ? "Deselecteer hoofdstuk" : "Selecteer heel hoofdstuk"}
+                      title={isEmpty ? "Geen paragrafen beschikbaar" : chapterFull ? "Deselecteer hoofdstuk" : "Selecteer heel hoofdstuk"}
                     >
                       <div className={cn(
                         "w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-all",
@@ -306,26 +305,32 @@ export function Step6Paragraphs({
 
                     <button
                       type="button"
-                      onClick={() => onToggleAccordion(chapter.id)}
-                      className="flex-1 flex items-center justify-between px-4 py-3 text-left"
+                      onClick={() => { if (!isEmpty) onToggleAccordion(chapter.id) }}
+                      disabled={isEmpty}
+                      className={cn(
+                        "flex-1 flex items-center justify-between px-4 py-3 text-left",
+                        isEmpty && "cursor-not-allowed"
+                      )}
                     >
                       <div className="flex items-center gap-3">
                         <span className={cn("text-xs font-semibold w-6 flex-shrink-0", chapterFull ? "text-[#2a14b4]/60" : "text-[#464554]/40")}>
                           {chapter.index}
                         </span>
-                        <span className="font-semibold text-sm text-[#0b1c30]">{chapter.title}</span>
-                        <span className={cn("text-xs", chapterFull ? "text-[#2a14b4]/70" : chapterPartial ? "text-[#4c3700]" : "text-[#464554]/50")}>
-                          {chapterFull
+                        <span className={cn("font-semibold text-sm", isEmpty ? "text-[#464554]/60" : "text-[#0b1c30]")}>{chapter.title}</span>
+                        <span className={cn("text-xs", isEmpty ? "text-[#464554]/40" : chapterFull ? "text-[#2a14b4]/70" : chapterPartial ? "text-[#4c3700]" : "text-[#464554]/50")}>
+                          {isEmpty
+                            ? "Geen paragrafen"
+                            : chapterFull
                             ? "Alles geselecteerd"
                             : chapterPartial
                             ? `${chapter.paragraphs.filter((p) => isParagraphSelected(p.id)).length}/${chapter.paragraphs.length} geselecteerd`
                             : `${chapter.paragraphs.length} paragrafen`}
                         </span>
                       </div>
-                      {isOpen
+                      {!isEmpty && (isOpen
                         ? <ChevronDown className={cn("w-4 h-4 flex-shrink-0", chapterFull ? "text-[#2a14b4]/60" : "text-[#464554]/40")} />
                         : <ChevronRight className={cn("w-4 h-4 flex-shrink-0", chapterFull ? "text-[#2a14b4]/60" : "text-[#464554]/40")} />
-                      }
+                      )}
                     </button>
                   </div>
 
@@ -387,7 +392,7 @@ export function Step6Paragraphs({
 
           <div className="mt-8">
             <Button
-              disabled={selectedParagraphIds.length === 0 || lessonCount === null || lessonCount < 1}
+              disabled={selectedParagraphIds.length === 0 || lessonCount === null || (lessonCount < 1 && lessonCount !== -1)}
               className="gap-2"
               onClick={onContinueToSummary}
             >

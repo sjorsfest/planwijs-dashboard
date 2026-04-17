@@ -9,7 +9,8 @@
       "Bash(npm install:*)",
       "Bash(wc -l /Users/jeroenmeij/Desktop/personal/planwijs-dashboard/app/components/new-plan/*.tsx)",
       "Bash(grep -E \"reducer.ts$\")",
-      "Bash(find /Users/jeroenmeij/Desktop/personal/planwijs-dashboard -name .env* -o -name *.env)"
+      "Bash(find /Users/jeroenmeij/Desktop/personal/planwijs-dashboard -name .env* -o -name *.env)",
+      "Read(//Level:.*{|Level:.*\\\\|/,/;/**)"
     ]
   }
 }

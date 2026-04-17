@@ -1,5 +1,5 @@
-import type { ReactNode } from "react"
-import { ArrowRight, BookOpen } from "lucide-react"
+import { useState, type ReactNode } from "react"
+import { ArrowRight, BookOpen, ChevronDown } from "lucide-react"
 import type { Book, Subject } from "~/lib/backend/types"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
@@ -10,6 +10,7 @@ import type { Level, Method, SchoolYear } from "./types"
 interface Props {
   selectedLevel: Level
   selectedYear: SchoolYear
+  userSubjects: Subject[]
   selectedCategory: string | null
   selectedSubject: Subject | null
   selectedMethod: Method | null
@@ -36,6 +37,7 @@ function getBookKey(book: Book) {
 export function Step2Subject({
   selectedLevel,
   selectedYear,
+  userSubjects,
   selectedCategory,
   selectedSubject,
   selectedMethod,
@@ -54,15 +56,28 @@ export function Step2Subject({
   canContinue,
   backLink,
 }: Props) {
-  const categoryMap = subjects.reduce<Record<string, Subject[]>>((acc, subject) => {
+  const [showAllSubjects, setShowAllSubjects] = useState(false)
+  const hasUserSubjects = userSubjects.length > 0
+  const userSubjectIds = new Set(userSubjects.map((s) => s.id))
+
+  // Is the selected subject one of the user's subjects?
+  const selectedIsUserSubject = selectedSubject ? userSubjectIds.has(selectedSubject.id) : false
+
+  // When browsing "other" subjects, build category map from non-user subjects
+  const otherSubjects = subjects.filter((s) => !userSubjectIds.has(s.id))
+  const categoryMap = otherSubjects.reduce<Record<string, Subject[]>>((acc, subject) => {
     const category = subject.category?.trim() || "Overig"
     ;(acc[category] ??= []).push(subject)
     return acc
   }, {})
-
   const categories = Object.keys(categoryMap).sort((a, b) => a.localeCompare(b, "nl"))
   const visibleSubjects = selectedCategory ? (categoryMap[selectedCategory] ?? []) : []
+
   const selectedBookKey = selectedBook ? getBookKey(selectedBook) : null
+
+  // Show the "other subjects" browser when toggled, or when user has selected
+  // a non-user subject (so they can still see the category context)
+  const showBrowser = showAllSubjects || (selectedSubject !== null && !selectedIsUserSubject)
 
   return (
     <>
@@ -80,63 +95,30 @@ export function Step2Subject({
           </Badge>
         </div>
         <h1 className="text-4xl font-bold mb-1.5 text-[#0b1c30]">Vak, methode en boek</h1>
-        <p className="text-sm text-[#464554]">Kies eerst een categorie, daarna een vak, methode en passend boek.</p>
+        <p className="text-sm text-[#464554]">
+          {hasUserSubjects
+            ? "Kies een van je vakken, of blader door alle beschikbare vakken."
+            : "Kies eerst een categorie, daarna een vak, methode en passend boek."}
+        </p>
       </div>
 
       <div className="space-y-4">
-        <div className="bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-3">1. Categorie</p>
-          {subjectsLoading ? (
-            <div className="flex flex-wrap gap-2">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-8 w-24 rounded-lg bg-[#eff4ff] animate-pulse" />
-              ))}
-            </div>
-          ) : categories.length === 0 ? (
-            <EmptyState message="Geen categorieen gevonden." />
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => onCategorySelect(category)}
-                  className={cn(
-                    "px-3 py-2 text-sm font-semibold rounded-lg transition-all",
-                    selectedCategory === category
-                      ? "bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_4px_12px_rgba(42,20,180,0.25)]"
-                      : "bg-[#eff4ff] text-[#0b1c30] hover:bg-[#dce9ff]"
-                  )}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-3">2. Vak</p>
-          {!selectedCategory ? (
-            <p className="text-sm text-[#464554]">Kies eerst een categorie om vakken te zien.</p>
-          ) : subjectsLoading ? (
+        {/* ── User subjects quick-pick ── */}
+        {hasUserSubjects && (
+          <div className="bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-3">Jouw vakken</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-12 rounded-xl bg-[#eff4ff] animate-pulse" />
-              ))}
-            </div>
-          ) : visibleSubjects.length === 0 ? (
-            <EmptyState message="Geen vakken gevonden in deze categorie." />
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {visibleSubjects
+              {userSubjects
                 .sort((a, b) => a.name.localeCompare(b.name, "nl"))
                 .map((subject) => {
                   const selected = selectedSubject?.id === subject.id
-
                   return (
                     <button
                       key={subject.id}
-                      onClick={() => onSubjectSelect(subject)}
+                      onClick={() => {
+                        setShowAllSubjects(false)
+                        onSubjectSelect(subject)
+                      }}
                       className={cn(
                         "rounded-xl px-4 py-3 text-left transition-all border",
                         selected
@@ -159,11 +141,121 @@ export function Step2Subject({
                   )
                 })}
             </div>
-          )}
-        </div>
 
+            {/* Toggle for other subjects */}
+            {!showBrowser && (
+              <button
+                onClick={() => setShowAllSubjects(true)}
+                className="mt-3 flex items-center gap-1.5 text-sm font-semibold text-[#5c5378] hover:text-[#2a14b4] transition-colors"
+              >
+                <ChevronDown className="w-4 h-4" />
+                Ander vak kiezen
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ── Full category/subject browser ── */}
+        {(showBrowser || !hasUserSubjects) && (
+          <>
+            <div className="bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#464554]">
+                  {hasUserSubjects ? "Alle vakken - Categorie" : "1. Categorie"}
+                </p>
+                {hasUserSubjects && (
+                  <button
+                    onClick={() => setShowAllSubjects(false)}
+                    className="text-xs font-semibold text-[#5c5378] hover:text-[#2a14b4] transition-colors"
+                  >
+                    Sluiten
+                  </button>
+                )}
+              </div>
+              {subjectsLoading ? (
+                <div className="flex flex-wrap gap-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="h-8 w-24 rounded-lg bg-[#eff4ff] animate-pulse" />
+                  ))}
+                </div>
+              ) : categories.length === 0 ? (
+                <EmptyState message="Geen categorieen gevonden." />
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => onCategorySelect(category)}
+                      className={cn(
+                        "px-3 py-2 text-sm font-semibold rounded-lg transition-all",
+                        selectedCategory === category
+                          ? "bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_4px_12px_rgba(42,20,180,0.25)]"
+                          : "bg-[#eff4ff] text-[#0b1c30] hover:bg-[#dce9ff]"
+                      )}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-3">
+                {hasUserSubjects ? "Alle vakken - Vak" : "2. Vak"}
+              </p>
+              {!selectedCategory ? (
+                <p className="text-sm text-[#464554]">Kies eerst een categorie om vakken te zien.</p>
+              ) : subjectsLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="h-12 rounded-xl bg-[#eff4ff] animate-pulse" />
+                  ))}
+                </div>
+              ) : visibleSubjects.length === 0 ? (
+                <EmptyState message="Geen vakken gevonden in deze categorie." />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {visibleSubjects
+                    .sort((a, b) => a.name.localeCompare(b.name, "nl"))
+                    .map((subject) => {
+                      const selected = selectedSubject?.id === subject.id
+                      return (
+                        <button
+                          key={subject.id}
+                          onClick={() => onSubjectSelect(subject)}
+                          className={cn(
+                            "rounded-xl px-4 py-3 text-left transition-all border",
+                            selected
+                              ? "border-[#2a14b4] bg-[#eff4ff] shadow-[0px_8px_24px_rgba(42,20,180,0.16)]"
+                              : "border-[#e6e8f3] bg-[#f8f9ff] hover:bg-[#eff4ff]"
+                          )}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span
+                              className={cn(
+                                "w-7 h-7 rounded-lg inline-flex items-center justify-center",
+                                selected ? "bg-[#2a14b4]/10 text-[#2a14b4]" : "bg-[#dce9ff] text-[#5c5378]"
+                              )}
+                            >
+                              <SubjectIcon subjectName={subject.name} className="w-4 h-4" />
+                            </span>
+                            <p className="text-sm font-semibold text-[#0b1c30] leading-tight">{subject.name}</p>
+                          </div>
+                        </button>
+                      )
+                    })}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* ── Method picker ── */}
         <div className="bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-3">3. Methode</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-3">
+            {hasUserSubjects ? "Methode" : "3. Methode"}
+          </p>
           {!selectedSubject ? (
             <p className="text-sm text-[#464554]">Kies eerst een vak om methodes te laden.</p>
           ) : methodsLoading ? (
@@ -198,8 +290,11 @@ export function Step2Subject({
           )}
         </div>
 
+        {/* ── Book picker ── */}
         <div className="bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-3">4. Boek</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-3">
+            {hasUserSubjects ? "Boek" : "4. Boek"}
+          </p>
           {!selectedMethod ? (
             <p className="text-sm text-[#464554]">Kies eerst een methode om boeken te tonen.</p>
           ) : booksLoading ? (

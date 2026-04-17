@@ -20,17 +20,18 @@ import {
 } from "~/components/new-plan/types"
 import {
   SUBTLE_LAYOUT_TRANSITION,
-  SUBJECTS,
 } from "../../routes/app.classes/constants"
 import { ClassDocumentPicker } from "./ClassDocumentPicker"
 
 interface CreateClassCardProps {
+  availableLevels: Level[]
   isCreating: boolean
   onToggle: () => void
   onCreated: () => void
 }
 
 export function CreateClassCard({
+  availableLevels,
   isCreating,
   onToggle,
   onCreated,
@@ -39,8 +40,7 @@ export function CreateClassCard({
   const isSubmitting = fetcher.state !== "idle"
 
   const [name, setName] = useState("")
-  const [subject, setSubject] = useState<string>("Nederlands")
-  const [level, setLevel] = useState<Level>("Havo")
+  const [level, setLevel] = useState<Level>(availableLevels.length > 0 ? availableLevels[0] : "Havo")
   const [schoolYear, setSchoolYear] = useState<SchoolYear>("1e jaar")
   const [size, setSize] = useState<number>(25)
   const [classNotes, setClassNotes] = useState("")
@@ -52,7 +52,6 @@ export function CreateClassCard({
     if (!name.trim()) return
     const body = {
       name: name.trim(),
-      subject,
       level,
       school_year: schoolYear,
       size,
@@ -114,29 +113,6 @@ export function CreateClassCard({
           />
         </label>
 
-        <label className="block">
-          <span className="block text-xs font-medium text-[#464554] mb-1.5">Vak</span>
-          <Select value={subject} onValueChange={setSubject}>
-            <SelectTrigger className="h-10 rounded-xl border border-transparent bg-[#dce9ff] px-3 text-sm font-medium text-[#0b1c30] focus:ring-2 focus:ring-[#2a14b4]/35 focus:ring-offset-0">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent
-              className="rounded-xl border border-[#c7d6f5] bg-[#f8fbff] p-1 text-[#0b1c30] shadow-[0px_20px_32px_rgba(11,28,48,0.18)]"
-              position="popper"
-            >
-              {SUBJECTS.map((s) => (
-                <SelectItem
-                  key={s}
-                  value={s}
-                  className="rounded-lg py-2 pl-8 pr-3 text-sm font-medium text-[#0b1c30] focus:bg-[#dce9ff] focus:text-[#0b1c30]"
-                >
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </label>
-
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="block text-xs font-medium text-[#464554] mb-1.5">Niveau</span>
@@ -148,7 +124,7 @@ export function CreateClassCard({
                 className="rounded-xl border border-[#c7d6f5] bg-[#f8fbff] p-1 text-[#0b1c30] shadow-[0px_20px_32px_rgba(11,28,48,0.18)]"
                 position="popper"
               >
-                {LEVELS.map((l) => (
+                {(availableLevels.length > 0 ? availableLevels : LEVELS).map((l) => (
                   <SelectItem
                     key={l}
                     value={l}
@@ -162,7 +138,7 @@ export function CreateClassCard({
           </label>
 
           <label className="block">
-            <span className="block text-xs font-medium text-[#464554] mb-1.5">Schooljaar</span>
+            <span className="block text-xs font-medium text-[#464554] mb-1.5">Leerjaar</span>
             <Select value={schoolYear} onValueChange={(v) => setSchoolYear(v as SchoolYear)}>
               <SelectTrigger className="h-10 rounded-xl border border-transparent bg-[#dce9ff] px-3 text-sm font-medium text-[#0b1c30] focus:ring-2 focus:ring-[#2a14b4]/35 focus:ring-offset-0">
                 <SelectValue />

@@ -23,7 +23,7 @@ import { PLAN_STATE_KEY } from "./constants"
 import { normalizeSubjectCategory, loadPlanState } from "./utils"
 
 export default function NewLesplanPage() {
-  const { existingClasses, classrooms: initialClassrooms } = useLoaderData<typeof loader>()
+  const { existingClasses, classrooms: initialClassrooms, schoolLevels, userSubjects } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>() as ActionData | undefined
   const navigation = useNavigation()
   const submit = useSubmit()
@@ -46,7 +46,6 @@ export default function NewLesplanPage() {
   const [classSetupConfirmed, setClassSetupConfirmed] = useState(false)
   const [curriculumConfirmed, setCurriculumConfirmed] = useState(false)
   const [lessonCount, setLessonCount] = useState<number | null>(null)
-  const [lessonDuration, setLessonDuration] = useState<number | null>(null)
   const [classSize, setClassSize] = useState<number | null>(null)
   const [classDifficulty, setClassDifficulty] = useState<ClassDifficulty | null>(null)
   const [className_, setClassName] = useState("")
@@ -101,8 +100,6 @@ export default function NewLesplanPage() {
     (selectedExistingClassId !== null || className_.trim().length > 0) &&
     selectedLevel !== null &&
     selectedYear !== null &&
-    lessonDuration !== null &&
-    lessonDuration > 0 &&
     classSize !== null &&
     classSize > 0 &&
     classDifficulty !== null
@@ -114,7 +111,7 @@ export default function NewLesplanPage() {
 
   const contentValid =
     lessonCount !== null &&
-    lessonCount > 0 &&
+    (lessonCount > 0 || lessonCount === -1) &&
     selectedParagraphIds.length > 0
 
   const step = !classSetupConfirmed ? 1 : !curriculumConfirmed ? 2 : 3
@@ -148,7 +145,6 @@ export default function NewLesplanPage() {
     setClassSetupConfirmed(saved.classSetupConfirmed)
     setCurriculumConfirmed(saved.curriculumConfirmed)
     setLessonCount(saved.lessonCount)
-    setLessonDuration(saved.lessonDuration)
     setClassSize(saved.classSize)
     setClassDifficulty(saved.classDifficulty)
     setSelectedMethod(saved.selectedMethod)
@@ -203,14 +199,9 @@ export default function NewLesplanPage() {
         ? existingClassBook
         : null
 
-    const subjectFromBook = prefillBookData?.subject_id
+    const prefilledSubject = prefillBookData?.subject_id
       ? subjects.find((subject) => subject.id === prefillBookData.subject_id)
       : null
-    const subjectFromClass = selectedExistingClass
-      ? subjects.find((subject) => subject.name === selectedExistingClass.subject)
-      : null
-
-    const prefilledSubject = subjectFromBook ?? subjectFromClass
     if (!prefilledSubject) return
 
     handleSubjectSelect(prefilledSubject)
@@ -302,7 +293,6 @@ export default function NewLesplanPage() {
       selectedCategory,
       selectedSubject,
       lessonCount,
-      lessonDuration,
       classSize,
       classDifficulty,
       classSetupConfirmed,
@@ -325,7 +315,6 @@ export default function NewLesplanPage() {
     selectedCategory,
     selectedSubject,
     lessonCount,
-    lessonDuration,
     classSize,
     classDifficulty,
     classSetupConfirmed,
@@ -407,7 +396,6 @@ export default function NewLesplanPage() {
     setSelectedYear(existingClass.schoolYear)
     setClassSize(existingClass.size)
     setClassDifficulty(existingClass.difficulty ?? "Groen")
-    setLessonDuration(existingClass.latestLesplanLessonDuration ?? 50)
     setLessonCount(existingClass.latestLesplanNumLessons ?? null)
 
     setClassSetupConfirmed(false)
@@ -577,7 +565,6 @@ export default function NewLesplanPage() {
       !selectedYear ||
       !selectedSubject ||
       !lessonCount ||
-      !lessonDuration ||
       !classSize ||
       !classDifficulty ||
       !selectedBook?.id ||
@@ -585,6 +572,8 @@ export default function NewLesplanPage() {
     ) {
       return
     }
+
+    const resolvedLessonCount = lessonCount === -1 ? selectedParagraphIds.length : lessonCount
 
     const formData = new FormData()
     formData.set(
@@ -596,8 +585,7 @@ export default function NewLesplanPage() {
         selectedLevel,
         selectedYear,
         selectedSubject,
-        lessonCount,
-        lessonDuration,
+        lessonCount: resolvedLessonCount,
         classSize,
         classDifficulty,
         selectedBookId: selectedBook.id,
@@ -614,13 +602,13 @@ export default function NewLesplanPage() {
       {step === 1 && (
         <Step1ClassSetup
           existingClasses={existingClasses}
+          availableLevels={schoolLevels}
           showCreateForm={showCreateClassForm}
           selectedExistingClassId={selectedExistingClassId}
           className_={className_}
           selectedLevel={selectedLevel}
           selectedYear={selectedYear}
           classSize={classSize}
-          lessonDuration={lessonDuration}
           classDifficulty={classDifficulty}
           onCreateNew={handleCreateNewClass}
           onExistingClassSelect={handleExistingClassSelect}
@@ -633,7 +621,6 @@ export default function NewLesplanPage() {
           onLevelSelect={handleLevelSelect}
           onYearSelect={handleYearSelect}
           onClassSizeChange={setClassSize}
-          onLessonDurationChange={setLessonDuration}
           onClassDifficultyChange={setClassDifficulty}
           onConfirm={handleConfirmStep1}
           canContinue={classSetupValid}
@@ -660,6 +647,7 @@ export default function NewLesplanPage() {
               Terug
             </button>
           }
+          userSubjects={userSubjects}
           selectedLevel={selectedLevel}
           selectedYear={selectedYear}
           selectedCategory={selectedCategory}
@@ -718,14 +706,13 @@ export default function NewLesplanPage() {
 
       {showSummary && selectedBook && selectedSubject &&
         selectedMethod && selectedLevel && selectedYear &&
-        classDifficulty && lessonCount && lessonDuration && classSize && (
+        classDifficulty && lessonCount && classSize && (
         <PlanSummary
           className_={selectedExistingClass?.name ?? className_}
           selectedLevel={selectedLevel}
           selectedYear={selectedYear}
           selectedSubject={selectedSubject}
-          lessonCount={lessonCount}
-          lessonDuration={lessonDuration}
+          lessonCount={lessonCount === -1 ? selectedParagraphIds.length : lessonCount}
           classSize={classSize}
           classDifficulty={classDifficulty}
           selectedMethod={selectedMethod}

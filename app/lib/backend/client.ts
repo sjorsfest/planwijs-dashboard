@@ -15,10 +15,14 @@ import type {
   LessonPlanResponse,
   LessonPreparationTodoResponse,
   Method,
+  SchoolConfigResponse,
+  SchoolConfigUpdate,
   Subject,
   TaskSubmittedResponse,
   TaskStatusResponse,
   UpdateLessonPreparationTodoRequest,
+  User,
+  UserSubject,
 } from "./types"
 
 const API_URL = process.env.API_URL || "http://localhost:8000"
@@ -121,6 +125,54 @@ class ApiClient {
     } catch {
       return false
     }
+  }
+
+  // ─── User Profile ───────────────────────────────────────────────────
+
+  async getMe(): Promise<User> {
+    return this.requestJson<User>(`${API_URL}/users/me`, {
+      headers: this.headers,
+    })
+  }
+
+  // ─── School Config ───────────────────────────────────────────────────
+
+  async getSchoolConfig(): Promise<SchoolConfigResponse | null> {
+    try {
+      const res = await fetch(`${API_URL}/school-config/`, { headers: this.headers })
+      if (!res.ok) return null
+      return res.json()
+    } catch {
+      return null
+    }
+  }
+
+  async updateSchoolConfig(data: SchoolConfigUpdate): Promise<SchoolConfigResponse> {
+    return this.requestJson<SchoolConfigResponse>(`${API_URL}/school-config/`, {
+      method: "PUT",
+      headers: this.headers,
+      body: JSON.stringify(data),
+    })
+  }
+
+  // ─── User Subjects ─────────────────────────────────────────────────────
+
+  async getUserSubjects(): Promise<UserSubject[]> {
+    try {
+      const res = await fetch(`${API_URL}/users/me/subjects`, { headers: this.headers })
+      if (!res.ok) return []
+      return res.json()
+    } catch {
+      return []
+    }
+  }
+
+  async updateUserSubjects(subjectIds: string[]): Promise<UserSubject[]> {
+    return this.requestJson<UserSubject[]>(`${API_URL}/users/me/subjects`, {
+      method: "PUT",
+      headers: this.headers,
+      body: JSON.stringify({ subject_ids: subjectIds }),
+    })
   }
 
   // ─── Subjects / Methods / Books ───────────────────────────────────────

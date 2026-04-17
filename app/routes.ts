@@ -26,6 +26,7 @@ export default [
     route("lesplan/new", "routes/app.lesplan.new/route.tsx"),
     route("lesplan/:requestId", "routes/app.lesplan.$requestId/route.tsx"),
     route("lesplan/:requestId/les/:lessonId", "routes/app.lesplan.$requestId.les.$lessonId/route.tsx"),
+    route("settings", "routes/app.settings/route.tsx"),
   ]),
   route("api/feedback", "routes/app.feedback/route.tsx"),
 ] satisfies RouteConfig

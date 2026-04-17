@@ -56,6 +56,24 @@ export interface paths {
         patch: operations["update_current_user_users_me_patch"];
         trace?: never;
     };
+    "/users/me/subjects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get My Subjects */
+        get: operations["get_my_subjects_users_me_subjects_get"];
+        /** Set My Subjects */
+        put: operations["set_my_subjects_users_me_subjects_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/classrooms/": {
         parameters: {
             query?: never;
@@ -811,6 +829,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/school-config/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get School Config */
+        get: operations["get_school_config_school_config__get"];
+        /** Upsert School Config */
+        put: operations["upsert_school_config_school_config__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/test-feedback/": {
         parameters: {
             query?: never;
@@ -1134,8 +1170,6 @@ export interface components {
             /** Name */
             name: string;
             /** @default Unknown */
-            subject: components["schemas"]["app__models__enums__Subject"];
-            /** @default Unknown */
             level: components["schemas"]["Level"];
             /** @default Unknown */
             school_year: components["schemas"]["SchoolYear"];
@@ -1148,8 +1182,6 @@ export interface components {
              * @description Geschatte maximale aandachtsspanne in minuten voordat leerlingen een activiteitswisseling nodig hebben.
              */
             attention_span_minutes?: number | null;
-            /** @description Meer ondersteuning = meer scaffolding en begeleiding; Gebalanceerd = standaard; Meer uitdaging = complexere taken en meer zelfstandigheid. */
-            support_challenge?: components["schemas"]["ClassSupportChallenge"] | null;
             /**
              * Class Notes
              * @description Vrije notities van de docent over de klas (bijv. bijzonderheden, werkhouding, samenstelling).
@@ -1168,12 +1200,6 @@ export interface components {
          * @enum {string}
          */
         ClassDifficulty: "Groen" | "Oranje" | "Rood";
-        /**
-         * ClassSupportChallenge
-         * @description Hoeveel ondersteuning of uitdaging de klas nodig heeft.
-         * @enum {string}
-         */
-        ClassSupportChallenge: "Meer ondersteuning" | "Gebalanceerd" | "Meer uitdaging";
         /** Classroom */
         Classroom: {
             /** Id */
@@ -1245,8 +1271,6 @@ export interface components {
             selected_paragraph_ids: string[];
             /** Num Lessons */
             num_lessons: number;
-            /** Lesson Duration Minutes */
-            lesson_duration_minutes: number;
             /** Classroom Id */
             classroom_id?: string | null;
             /** File Ids */
@@ -1754,16 +1778,63 @@ export interface components {
             /** Synopsis */
             synopsis: string | null;
         };
+        /** SchoolConfigResponse */
+        SchoolConfigResponse: {
+            /** Id */
+            id: string;
+            /** Organization Id */
+            organization_id?: string | null;
+            /** User Id */
+            user_id?: string | null;
+            /** Default Lesson Duration Minutes */
+            default_lesson_duration_minutes: number;
+            /** Levels */
+            levels: components["schemas"]["Level"][];
+            school_type?: components["schemas"]["SchoolType"] | null;
+            /** Context Notes */
+            context_notes?: string | null;
+        };
+        /** SchoolConfigUpdate */
+        SchoolConfigUpdate: {
+            /** Default Lesson Duration Minutes */
+            default_lesson_duration_minutes?: number | null;
+            /** Levels */
+            levels?: components["schemas"]["Level"][] | null;
+            school_type?: components["schemas"]["SchoolType"] | null;
+            /** Context Notes */
+            context_notes?: string | null;
+        };
+        /**
+         * SchoolType
+         * @enum {string}
+         */
+        SchoolType: "REGULIER" | "MONTESSORI" | "DALTON" | "JENAPLAN" | "VRIJE_SCHOOL" | "TECHNASIUM" | "TWEETALIG" | "ANDERS";
         /**
          * SchoolYear
          * @enum {string}
          */
         SchoolYear: "1e jaar" | "2e jaar" | "3e jaar" | "4e jaar" | "5e jaar" | "6e jaar" | "Unknown";
+        /** SetUserSubjectsRequest */
+        SetUserSubjectsRequest: {
+            /** Subject Ids */
+            subject_ids: string[];
+        };
         /**
          * SubjectCategory
          * @enum {string}
          */
         SubjectCategory: "Talen" | "Exacte vakken" | "Mens- en maatschappijvakken" | "Economie en bedrijf";
+        /** SubjectResponse */
+        SubjectResponse: {
+            /** Id */
+            id: string;
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+            /** Category */
+            category: string;
+        };
         /** TaskState */
         TaskState: {
             /** Task Id */
@@ -2045,6 +2116,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["User"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_my_subjects_users_me_subjects_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectResponse"][];
+                };
+            };
+        };
+    };
+    set_my_subjects_users_me_subjects_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetUserSubjectsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectResponse"][];
                 };
             };
             /** @description Validation Error */
@@ -2530,7 +2654,6 @@ export interface operations {
     list_classes_classes__get: {
         parameters: {
             query?: {
-                subject?: components["schemas"]["app__models__enums__Subject"] | null;
                 level?: components["schemas"]["Level"] | null;
                 school_year?: components["schemas"]["SchoolYear"] | null;
                 difficulty?: components["schemas"]["ClassDifficulty"] | null;
@@ -4146,6 +4269,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InviteRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_school_config_school_config__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolConfigResponse"] | null;
+                };
+            };
+        };
+    };
+    upsert_school_config_school_config__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SchoolConfigUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolConfigResponse"];
                 };
             };
             /** @description Validation Error */

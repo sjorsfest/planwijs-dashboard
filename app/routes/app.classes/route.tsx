@@ -18,8 +18,9 @@ export function headers({ loaderHeaders }: Route.HeadersArgs) {
 export async function loader({ request }: Route.LoaderArgs) {
   const { token } = await requireAuthContext(request)
   const api = createApiClient(token)
-  const [classes, classrooms] = await Promise.all([api.getClasses(), api.getClassrooms()])
-  return data({ classes, classrooms }, { headers: { "Cache-Control": "private, max-age=10" } })
+  const [classes, classrooms, schoolConfig] = await Promise.all([api.getClasses(), api.getClassrooms(), api.getSchoolConfig()])
+  const schoolLevels = schoolConfig?.levels ?? []
+  return data({ classes, classrooms, schoolLevels }, { headers: { "Cache-Control": "private, max-age=10" } })
 }
 
 export async function action({ request }: Route.ActionArgs) {

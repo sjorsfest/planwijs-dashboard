@@ -8,12 +8,10 @@ import type { ClassDifficulty } from "./types"
 interface Props {
   selectedSubjectName: string
   lessonCount: number | null
-  lessonDuration: number | null
   classSize: number | null
   classDifficulty: ClassDifficulty | null
   classDetailsValid: boolean
   onLessonCountChange: (value: number | null) => void
-  onLessonDurationChange: (value: number | null) => void
   onClassSizeChange: (value: number | null) => void
   onClassDifficultyChange: (value: ClassDifficulty) => void
   onConfirm: () => void
@@ -22,12 +20,10 @@ interface Props {
 export function Step3ClassDetails({
   selectedSubjectName,
   lessonCount,
-  lessonDuration,
   classSize,
   classDifficulty,
   classDetailsValid,
   onLessonCountChange,
-  onLessonDurationChange,
   onClassSizeChange,
   onClassDifficultyChange,
   onConfirm,
@@ -54,53 +50,19 @@ export function Step3ClassDetails({
       <div className="space-y-4">
         <div className="bg-white rounded-2xl p-5 shadow-[0px_24px_40px_rgba(11,28,48,0.07)]">
           <p className="text-xs font-semibold uppercase tracking-widest text-[#464554] mb-3">Lessen</p>
-          <div className="flex flex-wrap gap-6">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-[#464554]">Aantal lessen</label>
-              <input
-                type="number"
-                min={1}
-                max={99}
-                value={lessonCount ?? ""}
-                onChange={(e) =>
-                  onLessonCountChange(e.target.value === "" ? null : Math.max(1, parseInt(e.target.value) || 1))
-                }
-                placeholder="bijv. 4"
-                className="w-28 bg-[#d3e4fe] rounded-md px-3 py-2 text-sm font-semibold text-[#0b1c30] outline-none focus:ring-2 focus:ring-[#2a14b4]/40 focus:bg-[#d5d9e0] transition-all"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-[#464554]">Duur per les (minuten)</label>
-              <div className="flex flex-wrap gap-2">
-                {[45, 50, 60, 90].map((min) => (
-                  <button
-                    key={min}
-                    onClick={() => onLessonDurationChange(min)}
-                    className={cn(
-                      "px-4 py-2 text-sm font-semibold rounded-lg transition-all",
-                      lessonDuration === min
-                        ? "bg-gradient-to-br from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_4px_12px_rgba(42,20,180,0.3)]"
-                        : "bg-[#eff4ff] text-[#0b1c30] hover:bg-[#dce9ff]"
-                    )}
-                  >
-                    {min} min
-                  </button>
-                ))}
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    min={1}
-                    max={240}
-                    value={lessonDuration !== null && ![45, 50, 60, 90].includes(lessonDuration) ? lessonDuration : ""}
-                    onChange={(e) =>
-                      onLessonDurationChange(e.target.value === "" ? null : Math.max(1, parseInt(e.target.value) || 1))
-                    }
-                    placeholder="Anders"
-                    className="w-20 bg-[#d3e4fe] rounded-md px-3 py-2 text-sm font-semibold text-[#0b1c30] outline-none focus:ring-2 focus:ring-[#2a14b4]/40 focus:bg-[#d5d9e0] transition-all"
-                  />
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-[#464554]">Aantal lessen</label>
+            <input
+              type="number"
+              min={1}
+              max={99}
+              value={lessonCount ?? ""}
+              onChange={(e) =>
+                onLessonCountChange(e.target.value === "" ? null : Math.max(1, parseInt(e.target.value) || 1))
+              }
+              placeholder="bijv. 4"
+              className="w-28 bg-[#d3e4fe] rounded-md px-3 py-2 text-sm font-semibold text-[#0b1c30] outline-none focus:ring-2 focus:ring-[#2a14b4]/40 focus:bg-[#d5d9e0] transition-all"
+            />
           </div>
         </div>
 

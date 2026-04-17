@@ -14,7 +14,7 @@ import { ClassCard } from "~/components/classes/ClassCard"
 import { ClassroomCard } from "~/components/classes/ClassroomCard"
 
 export default function ClassesPage() {
-  const { classes, classrooms } = useLoaderData<typeof loader>()
+  const { classes, classrooms, schoolLevels } = useLoaderData<typeof loader>()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const selectedId = editingId
@@ -80,7 +80,7 @@ export default function ClassesPage() {
         {/* Klassen tab */}
         <TabsContent value="klassen">
           {classes.length === 0 ? (
-            <EmptyClassesState />
+            <EmptyClassesState availableLevels={schoolLevels} />
           ) : (
             <LayoutGroup>
               <motion.div
@@ -104,6 +104,7 @@ export default function ClassesPage() {
                   >
                     <ClassCard
                       cls={cls}
+                      availableLevels={schoolLevels}
                       isEditing={editingId === cls.id}
                       isDeleting={deletingId === cls.id}
                       onEdit={() => {
@@ -122,6 +123,7 @@ export default function ClassesPage() {
                 ))}
                 {!isFocusedEditView && (
                   <CreateClassCard
+                    availableLevels={schoolLevels}
                     isCreating={creatingClass}
                     onToggle={() => setCreatingClass(!creatingClass)}
                     onCreated={() => setCreatingClass(false)}

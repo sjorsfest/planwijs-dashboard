@@ -33,7 +33,7 @@ const STEP_CONTENT: Record<1 | 2 | 3, StepIntroContent> = {
     fields: [
       {
         icon: <Layers className="w-3.5 h-3.5" />,
-        label: "Niveau & schooljaar",
+        label: "Niveau & Leerjaar",
         explanation:
           "Bepaalt welke boeken en methodes beschikbaar zijn, en op welk cognitief niveau de lesstof wordt aangeboden.",
       },
@@ -86,7 +86,7 @@ const STEP_CONTENT: Record<1 | 2 | 3, StepIntroContent> = {
         icon: <BookOpen className="w-3.5 h-3.5" />,
         label: "Boek",
         explanation:
-          "Het specifieke boek binnen de methode. We filteren automatisch op jouw niveau en schooljaar. Hieruit selecteer je straks de paragrafen.",
+          "Het specifieke boek binnen de methode. We filteren automatisch op jouw niveau en Leerjaar. Hieruit selecteer je straks de paragrafen.",
       },
     ],
     buttonLabel: "Begrepen",
