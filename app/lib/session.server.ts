@@ -21,7 +21,7 @@ export const { getSession, commitSession, destroySession } = storage
 
 type StoredTask = {
   taskId: string
-  taskType: "generate_overview" | "apply_feedback" | "generate_lessons"
+  taskType: "generate_overview" | "apply_feedback" | "generate_lessons" | "apply_lesson_feedback"
 }
 
 function taskKey(resourceId: string) {

@@ -84,6 +84,11 @@ export function TodoCard({ todo, context }: TodoCardProps) {
             >
               {isDone ? "Gedaan" : "Te doen"}
             </span>
+            {todo.outdated && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.1em] bg-orange-50 text-orange-700 border border-orange-200">
+                Verouderd
+              </span>
+            )}
             <ChevronDown
               className={`w-4 h-4 text-[#5c5378]/40 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
             />

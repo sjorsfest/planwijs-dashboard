@@ -69,7 +69,7 @@ export type LesplanThreadMessage = {
 
 export type ActiveTaskData = {
   taskId: string
-  taskType: "generate_overview" | "apply_feedback" | "generate_lessons"
+  taskType: "generate_overview" | "apply_feedback" | "generate_lessons" | "apply_lesson_feedback"
 } | null
 
 export type LesplanWorkspaceLoaderData = {
@@ -98,7 +98,7 @@ export type LesplanPageState = {
   lessons: LessonPlanResponse[]
   ui: {
     activeTaskId: string | null
-    activeTaskType: "generate_overview" | "apply_feedback" | "generate_lessons" | null
+    activeTaskType: "generate_overview" | "apply_feedback" | "generate_lessons" | "apply_lesson_feedback" | null
     taskProgress: number
     taskCurrentStep: string | null
     taskSteps: TaskStep[]

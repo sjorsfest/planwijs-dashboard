@@ -399,6 +399,23 @@ export interface paths {
         patch: operations["update_lesson_preparation_todo_lesplan_preparation_todos__todo_id__patch"];
         trace?: never;
     };
+    "/lesplan/lessons/{lesson_id}/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Lesson Feedback */
+        post: operations["submit_lesson_feedback_lesplan_lessons__lesson_id__feedback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/calendar/": {
         parameters: {
             query?: never;
@@ -1591,7 +1608,7 @@ export interface components {
          * LesplanStatus
          * @enum {string}
          */
-        LesplanStatus: "pending" | "generating_overview" | "overview_ready" | "revising_overview" | "generating_lessons" | "completed" | "failed";
+        LesplanStatus: "pending" | "generating_overview" | "overview_ready" | "revising_overview" | "generating_lessons" | "completed" | "revising_lesson" | "failed";
         /** LessonOutlineItemResponse */
         LessonOutlineItemResponse: {
             /** Lesson Number */
@@ -1676,6 +1693,8 @@ export interface components {
             status: string;
             /** Due Date */
             due_date: string | null;
+            /** Outdated */
+            outdated: boolean;
             /**
              * Created At
              * Format: date-time
@@ -3335,6 +3354,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LessonPreparationTodoResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_lesson_feedback_lesplan_lessons__lesson_id__feedback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lesson_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskSubmittedResponse"];
                 };
             };
             /** @description Validation Error */

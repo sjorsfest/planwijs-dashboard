@@ -168,7 +168,7 @@ export type Folder = {
 export type TaskSubmittedResponse = {
   task_id: string
   resource_id: string
-  task_type: "generate_overview" | "apply_feedback" | "generate_lessons"
+  task_type: "generate_overview" | "apply_feedback" | "generate_lessons" | "apply_lesson_feedback"
   status: "queued"
 }
 
@@ -181,7 +181,7 @@ export type TaskStep = {
 
 export type TaskStatusResponse = {
   task_id: string
-  task_type: "generate_overview" | "apply_feedback" | "generate_lessons"
+  task_type: "generate_overview" | "apply_feedback" | "generate_lessons" | "apply_lesson_feedback"
   resource_id: string
   status: "queued" | "running" | "completed" | "failed"
   current_step: string | null

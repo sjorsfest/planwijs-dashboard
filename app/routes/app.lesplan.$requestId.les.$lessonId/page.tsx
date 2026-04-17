@@ -1,16 +1,210 @@
-import { useRef, useState } from "react"
-import { Link, useFetcher, useLoaderData } from "react-router"
-import { ArrowLeft, Calendar, CheckCircle2, Circle, Loader2, Pencil, X } from "lucide-react"
-import type { LessonPlanResponse } from "~/lib/backend/types"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { Link, useFetcher, useLoaderData, useRevalidator } from "react-router"
+import {
+  ArrowLeft,
+  Bot,
+  Calendar,
+  Check,
+  CheckCircle2,
+  Circle,
+  Loader2,
+  LoaderCircle,
+  MessageCircle,
+  Minus,
+  Pencil,
+  Sparkles,
+  X,
+} from "lucide-react"
+import { motion } from "framer-motion"
+import type { LessonPlanResponse, TaskStatusResponse, TaskStep } from "~/lib/backend/types"
 import { TodoCard } from "~/components/todos/todo-card"
+import { SectionFeedbackButton, type SectionFeedbackItem } from "~/components/lesplan/section-feedback"
+import { translateStep } from "~/components/lesplan/utils"
 import type { SourceContext } from "~/components/lesplan/types"
 import type { loader } from "./route"
 import { LESSON_TABS, activityTypeStyles, type LessonTabId } from "./constants"
+import { lessonSectionKeyToFieldName } from "./constants"
 import { formatPlannedDate } from "./utils"
 
+type ActionData = {
+  intent?: string
+  ok: boolean
+  task?: { task_id: string; resource_id: string; task_type: string }
+  error?: string
+}
+
 export default function LessonDetailPage() {
-  const { requestId, lesson, sourceContext } = useLoaderData<typeof loader>()
+  const { requestId, lesson, sourceContext, lesplanStatus, activeTask } = useLoaderData<typeof loader>()
   const [activeTab, setActiveTab] = useState<LessonTabId>("overzicht")
+
+  // ─── Feedback state ──────────────────────────────────────────────────
+  const [sectionFeedback, setSectionFeedback] = useState<SectionFeedbackItem[]>([])
+  const [loadingFields, setLoadingFields] = useState<Set<string>>(new Set())
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(activeTask?.taskId ?? null)
+  const [taskProgress, setTaskProgress] = useState(0)
+  const [taskCurrentStep, setTaskCurrentStep] = useState<string | null>(null)
+  const [taskSteps, setTaskSteps] = useState<TaskStep[]>([])
+  const [lastError, setLastError] = useState<string | undefined>()
+
+  const feedbackFetcher = useFetcher<ActionData>()
+  const revalidator = useRevalidator()
+  const taskLastCompletedRef = useRef(0)
+  const consecutiveErrorsRef = useRef(0)
+
+  const isRevising = lesplanStatus === "revising_lesson" || activeTaskId !== null
+
+  // ─── Restore task from loader on mount ───────────────────────────────
+  const initialTaskRestoredRef = useRef(false)
+  useEffect(() => {
+    if (initialTaskRestoredRef.current) return
+    initialTaskRestoredRef.current = true
+    if (activeTask?.taskId) {
+      setActiveTaskId(activeTask.taskId)
+
+    }
+  }, [activeTask])
+
+  // ─── Task polling ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!activeTaskId) return
+    let cancelled = false
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/tasks/${activeTaskId}`)
+        if (cancelled) return
+        if (res.status === 404) {
+          setActiveTaskId(null)
+
+          setLoadingFields(new Set())
+          revalidator.revalidate()
+          return
+        }
+        if (!res.ok) {
+          consecutiveErrorsRef.current++
+          if (consecutiveErrorsRef.current >= 5) {
+            setActiveTaskId(null)
+  
+            setLoadingFields(new Set())
+            setLastError("Verbinding met de server verloren")
+          }
+          return
+        }
+        consecutiveErrorsRef.current = 0
+        const taskStatus: TaskStatusResponse = await res.json()
+        setTaskProgress(taskStatus.progress_pct)
+        setTaskCurrentStep(taskStatus.current_step)
+        setTaskSteps(taskStatus.steps)
+
+        const completedCount = taskStatus.steps.filter((s) => s.status === "completed").length
+        if (completedCount > taskLastCompletedRef.current) {
+          taskLastCompletedRef.current = completedCount
+          revalidator.revalidate()
+        }
+
+        if (taskStatus.status === "completed") {
+          setActiveTaskId(null)
+
+          setTaskProgress(0)
+          setTaskCurrentStep(null)
+          setTaskSteps([])
+          setLoadingFields(new Set())
+          taskLastCompletedRef.current = 0
+          revalidator.revalidate()
+          return
+        }
+        if (taskStatus.status === "failed") {
+          setActiveTaskId(null)
+
+          setTaskProgress(0)
+          setTaskCurrentStep(null)
+          setTaskSteps([])
+          setLoadingFields(new Set())
+          taskLastCompletedRef.current = 0
+          setLastError(taskStatus.error ?? "Er ging iets mis bij het verwerken van de feedback")
+          revalidator.revalidate()
+          return
+        }
+      } catch {
+        consecutiveErrorsRef.current++
+        if (consecutiveErrorsRef.current >= 5) {
+          setActiveTaskId(null)
+
+          setLoadingFields(new Set())
+          setLastError("Verbinding met de server verloren")
+        }
+      }
+    }
+
+    poll()
+    const interval = setInterval(poll, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [activeTaskId, revalidator])
+
+  // ─── Fallback polling when revising but no task id ───────────────────
+  useEffect(() => {
+    if (activeTaskId) return
+    if (lesplanStatus !== "revising_lesson") return
+    const interval = setInterval(() => revalidator.revalidate(), 5000)
+    return () => clearInterval(interval)
+  }, [activeTaskId, lesplanStatus, revalidator])
+
+  // ─── Handle fetcher response ─────────────────────────────────────────
+  useEffect(() => {
+    if (feedbackFetcher.state !== "idle" || !feedbackFetcher.data) return
+    const result = feedbackFetcher.data
+    if (result.ok && result.task) {
+      setActiveTaskId(result.task.task_id)
+      setSectionFeedback([])
+      taskLastCompletedRef.current = 0
+      consecutiveErrorsRef.current = 0
+    } else if (!result.ok) {
+      setLoadingFields(new Set())
+      setLastError(result.error ?? "Er ging iets mis")
+    }
+  }, [feedbackFetcher.state, feedbackFetcher.data])
+
+  // ─── Callbacks ───────────────────────────────────────────────────────
+  const handleSectionFeedback = useCallback(
+    (item: Omit<SectionFeedbackItem, "id" | "createdAt">) => {
+      setSectionFeedback((prev) => [
+        ...prev,
+        {
+          ...item,
+          id: `sf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          createdAt: new Date().toISOString(),
+        },
+      ])
+    },
+    []
+  )
+
+  const handleRemoveFeedback = useCallback((id: string) => {
+    setSectionFeedback((prev) => prev.filter((item) => item.id !== id))
+  }, [])
+
+  const handleProcessFeedback = useCallback(() => {
+    if (sectionFeedback.length === 0) return
+    const items = sectionFeedback.map((item) => ({
+      field_name: lessonSectionKeyToFieldName(item.sectionKey),
+      specific_part: item.sectionLabel,
+      user_feedback: item.message,
+    }))
+
+    const affectedFields = new Set(items.map((item) => item.field_name))
+    setLoadingFields(affectedFields)
+
+    const formData = new FormData()
+    formData.set("intent", "lesson-feedback")
+    formData.set("lessonId", lesson.id)
+    formData.set("items", JSON.stringify(items))
+    feedbackFetcher.submit(formData, { method: "post" })
+  }, [sectionFeedback, lesson.id, feedbackFetcher])
+
+  const showFeedbackPanel = sectionFeedback.length > 0 || activeTaskId !== null || lesplanStatus === "revising_lesson"
 
   return (
     <div className="min-h-screen bg-[#f8f9ff]">
@@ -30,9 +224,29 @@ export default function LessonDetailPage() {
         </span>
       </div>
 
+      {/* Error banner */}
+      {lastError && (
+        <div className="px-8 pt-4 max-w-5xl">
+          <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-red-800">{lastError}</p>
+            <button
+              type="button"
+              onClick={() => setLastError(undefined)}
+              className="text-red-400 hover:text-red-600 transition-colors text-xs font-semibold uppercase"
+            >
+              Sluiten
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header card */}
       <div className="px-8 py-8 max-w-5xl">
-        <LessonHeader lesson={lesson} />
+        <LessonHeader
+          lesson={lesson}
+          onSectionFeedback={handleSectionFeedback}
+          isRevising={isRevising}
+        />
       </div>
 
       {/* Tab nav */}
@@ -41,24 +255,56 @@ export default function LessonDetailPage() {
       {/* Tab content */}
       <div className="px-8 py-6 max-w-5xl">
         <TabPanel id="overzicht" activeTab={activeTab}>
-          <OverviewTab lesson={lesson} sourceContext={sourceContext} />
+          <OverviewTab
+            lesson={lesson}
+            sourceContext={sourceContext}
+            onSectionFeedback={handleSectionFeedback}
+            isRevising={isRevising}
+            loadingFields={loadingFields}
+          />
         </TabPanel>
 
         <TabPanel id="tijdschema" activeTab={activeTab}>
-          <TimeschemaTab lesson={lesson} />
+          <TimeschemaTab
+            lesson={lesson}
+            onSectionFeedback={handleSectionFeedback}
+            isRevising={isRevising}
+            loadingFields={loadingFields}
+          />
         </TabPanel>
 
         <TabPanel id="notities" activeTab={activeTab}>
-          <NotesTab lesson={lesson} />
+          <NotesTab
+            lesson={lesson}
+            onSectionFeedback={handleSectionFeedback}
+            isRevising={isRevising}
+            loadingFields={loadingFields}
+          />
         </TabPanel>
 
         <TabPanel id="taken" activeTab={activeTab}>
           <TakenTab lesson={lesson} />
         </TabPanel>
       </div>
+
+      {/* Feedback panel */}
+      {showFeedbackPanel && (
+        <LessonFeedbackPanel
+          items={sectionFeedback}
+          onRemove={handleRemoveFeedback}
+          onProcessFeedback={handleProcessFeedback}
+          isProcessing={feedbackFetcher.state !== "idle"}
+          activeTaskId={activeTaskId}
+          taskProgress={taskProgress}
+          taskCurrentStep={taskCurrentStep}
+          taskSteps={taskSteps}
+        />
+      )}
     </div>
   )
 }
+
+// ─── Shared components ──────────────────────────────────────────────────────
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -66,8 +312,59 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
+function SectionHeader({
+  label,
+  sectionKey,
+  sectionLabel,
+  onSectionFeedback,
+  isRevising,
+}: {
+  label: string
+  sectionKey: string
+  sectionLabel: string
+  onSectionFeedback: (item: Omit<SectionFeedbackItem, "id" | "createdAt">) => void
+  isRevising: boolean
+}) {
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <SectionLabel>{label}</SectionLabel>
+      <SectionFeedbackButton
+        sectionKey={sectionKey}
+        sectionLabel={sectionLabel}
+        onSubmit={onSectionFeedback}
+        disabled={isRevising}
+      />
+    </div>
+  )
+}
 
-function LessonHeader({ lesson }: { lesson: LessonPlanResponse }) {
+function SectionSkeleton() {
+  return (
+    <div className="animate-pulse space-y-3">
+      <div className="h-4 bg-[#e8eeff] rounded w-3/4" />
+      <div className="h-4 bg-[#e8eeff] rounded w-1/2" />
+      <div className="h-4 bg-[#e8eeff] rounded w-5/8" />
+    </div>
+  )
+}
+
+// ─── Tab components ─────────────────────────────────────────────────────────
+
+type FeedbackProps = {
+  onSectionFeedback: (item: Omit<SectionFeedbackItem, "id" | "createdAt">) => void
+  isRevising: boolean
+  loadingFields: Set<string>
+}
+
+function LessonHeader({
+  lesson,
+  onSectionFeedback,
+  isRevising,
+}: {
+  lesson: LessonPlanResponse
+  onSectionFeedback: (item: Omit<SectionFeedbackItem, "id" | "createdAt">) => void
+  isRevising: boolean
+}) {
   const fetcher = useFetcher()
   const [editing, setEditing] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -109,9 +406,17 @@ function LessonHeader({ lesson }: { lesson: LessonPlanResponse }) {
           {lesson.lesson_number}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]/70 mb-0.5">
-            Les {lesson.lesson_number}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]/70 mb-0.5">
+              Les {lesson.lesson_number}
+            </p>
+            <SectionFeedbackButton
+              sectionKey="title"
+              sectionLabel="Titel"
+              onSubmit={onSectionFeedback}
+              disabled={isRevising}
+            />
+          </div>
           <h1 className="text-3xl font-bold tracking-tight text-[#0b1c30] leading-tight">{lesson.title}</h1>
           <div className="flex items-center gap-1.5 mt-2">
             <Calendar className="w-3.5 h-3.5 text-[#5c5378]/50" />
@@ -300,23 +605,37 @@ function TabPanel({
   )
 }
 
-function OverviewTab({ lesson, sourceContext }: { lesson: LessonPlanResponse; sourceContext: SourceContext }) {
+function OverviewTab({
+  lesson,
+  sourceContext,
+  onSectionFeedback,
+  isRevising,
+  loadingFields,
+}: { lesson: LessonPlanResponse; sourceContext: SourceContext } & FeedbackProps) {
   const paragraphsById = new Map((sourceContext.selectedParagraphs ?? []).map((p) => [p.id, p.title]))
 
   return (
     <div className="space-y-5">
       <section className="bg-white rounded-2xl p-6 shadow-[0px_10px_24px_rgba(11,28,48,0.07)] border border-[#e8eeff]">
-        <div className="mb-4">
-          <SectionLabel>Leerdoelen</SectionLabel>
-        </div>
-        <ul className="space-y-2.5">
-          {lesson.learning_objectives.map((obj, i) => (
-            <li key={i} className="flex items-start gap-2.5 text-sm text-[#464554] font-medium">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-              <span>{obj}</span>
-            </li>
-          ))}
-        </ul>
+        <SectionHeader
+          label="Leerdoelen"
+          sectionKey="leerdoelen"
+          sectionLabel="Leerdoelen"
+          onSectionFeedback={onSectionFeedback}
+          isRevising={isRevising}
+        />
+        {loadingFields.has("learning_objectives") ? (
+          <SectionSkeleton />
+        ) : (
+          <ul className="space-y-2.5">
+            {lesson.learning_objectives.map((obj, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm text-[#464554] font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                <span>{obj}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {lesson.covered_paragraph_ids.length > 0 && (
@@ -337,7 +656,6 @@ function OverviewTab({ lesson, sourceContext }: { lesson: LessonPlanResponse; so
   )
 }
 
-
 function ActivityTypeBadge({ type }: { type: string }) {
   const style = activityTypeStyles[type.toLowerCase()] ?? "bg-[#eff4ff] text-[#464554]"
   return (
@@ -347,77 +665,115 @@ function ActivityTypeBadge({ type }: { type: string }) {
   )
 }
 
-function TimeschemaTab({ lesson }: { lesson: LessonPlanResponse }) {
+function TimeschemaTab({
+  lesson,
+  onSectionFeedback,
+  isRevising,
+  loadingFields,
+}: { lesson: LessonPlanResponse } & FeedbackProps) {
   return (
     <div className="space-y-5">
       <section className="bg-white rounded-2xl shadow-[0px_10px_24px_rgba(11,28,48,0.07)] border border-[#e8eeff] overflow-hidden">
         <div className="px-6 pt-5 pb-4">
-          <SectionLabel>Tijdschema</SectionLabel>
+          <SectionHeader
+            label="Tijdschema"
+            sectionKey="tijdschema"
+            sectionLabel="Tijdschema"
+            onSectionFeedback={onSectionFeedback}
+            isRevising={isRevising}
+          />
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-sm">
-            <thead>
-              <tr className="bg-[#eff4ff]">
-                {["Tijd", "Activiteit", "Beschrijving", "Type"].map((h, i, arr) => (
-                  <th
-                    key={h}
-                    className={`px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]`}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {lesson.time_sections.map((section, i) => (
-                <tr
-                  key={i}
-                  className="border-t border-[#eff4ff] hover:bg-[#f8f9ff] transition-colors"
-                >
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    <span className="font-bold text-[#0b1c30] tabular-nums">{section.start_min}–{section.end_min}</span>
-                    <span className="text-[#5c5378]/60 font-medium text-xs ml-1">min</span>
-                  </td>
-                  <td className="px-5 py-4 font-semibold text-[#0b1c30]">{section.activity}</td>
-                  <td className="px-5 py-4 text-[#464554] leading-6">{section.description}</td>
-                  <td className="px-5 py-4">
-                    <ActivityTypeBadge type={section.activity_type} />
-                  </td>
+        {loadingFields.has("time_sections") ? (
+          <div className="px-6 pb-6">
+            <SectionSkeleton />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px] text-sm">
+              <thead>
+                <tr className="bg-[#eff4ff]">
+                  {["Tijd", "Activiteit", "Beschrijving", "Type"].map((h) => (
+                    <th
+                      key={h}
+                      className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5c5378]"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white">
+                {lesson.time_sections.map((section, i) => (
+                  <tr
+                    key={i}
+                    className="border-t border-[#eff4ff] hover:bg-[#f8f9ff] transition-colors"
+                  >
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <span className="font-bold text-[#0b1c30] tabular-nums">{section.start_min}-{section.end_min}</span>
+                      <span className="text-[#5c5378]/60 font-medium text-xs ml-1">min</span>
+                    </td>
+                    <td className="px-5 py-4 font-semibold text-[#0b1c30]">{section.activity}</td>
+                    <td className="px-5 py-4 text-[#464554] leading-6">{section.description}</td>
+                    <td className="px-5 py-4">
+                      <ActivityTypeBadge type={section.activity_type} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   )
 }
 
-function NotesTab({ lesson }: { lesson: LessonPlanResponse }) {
+function NotesTab({
+  lesson,
+  onSectionFeedback,
+  isRevising,
+  loadingFields,
+}: { lesson: LessonPlanResponse } & FeedbackProps) {
   return (
     <div className="space-y-5">
       <section className="bg-white rounded-2xl p-6 shadow-[0px_10px_24px_rgba(11,28,48,0.07)] border border-[#e8eeff]">
-        <div className="mb-4">
-          <SectionLabel>Aantekeningen voor de docent</SectionLabel>
-        </div>
-        <div className="bg-[#ffdf9f]/40 rounded-xl p-4 border-l-4 border-[#f9bd22]">
-          <p className="text-sm leading-6 text-[#4c3700] font-medium whitespace-pre-wrap">{lesson.teacher_notes}</p>
-        </div>
+        <SectionHeader
+          label="Aantekeningen voor de docent"
+          sectionKey="docentnotities"
+          sectionLabel="Docentnotities"
+          onSectionFeedback={onSectionFeedback}
+          isRevising={isRevising}
+        />
+        {loadingFields.has("teacher_notes") ? (
+          <SectionSkeleton />
+        ) : (
+          <div className="bg-[#ffdf9f]/40 rounded-xl p-4 border-l-4 border-[#f9bd22]">
+            <p className="text-sm leading-6 text-[#4c3700] font-medium whitespace-pre-wrap">{lesson.teacher_notes}</p>
+          </div>
+        )}
       </section>
 
       {lesson.required_materials.length > 0 && (
         <section className="bg-white rounded-2xl p-6 shadow-[0px_10px_24px_rgba(11,28,48,0.07)] border border-[#e8eeff]">
-          <div className="mb-4">
-            <SectionLabel>Benodigdheden</SectionLabel>
-          </div>
-          <ul className="space-y-2">
-            {lesson.required_materials.map((mat, i) => (
-              <li key={i} className="flex items-center gap-2.5 text-sm text-[#464554] font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#5c5378]/40 shrink-0" />
-                {mat}
-              </li>
-            ))}
-          </ul>
+          <SectionHeader
+            label="Benodigdheden"
+            sectionKey="benodigdheden"
+            sectionLabel="Benodigdheden"
+            onSectionFeedback={onSectionFeedback}
+            isRevising={isRevising}
+          />
+          {loadingFields.has("required_materials") ? (
+            <SectionSkeleton />
+          ) : (
+            <ul className="space-y-2">
+              {lesson.required_materials.map((mat, i) => (
+                <li key={i} className="flex items-center gap-2.5 text-sm text-[#464554] font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#5c5378]/40 shrink-0" />
+                  {mat}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
     </div>
@@ -442,6 +798,232 @@ function TakenTab({ lesson }: { lesson: LessonPlanResponse }) {
       {lesson.preparation_todos.map((todo) => (
         <TodoCard key={todo.id} todo={todo} />
       ))}
+    </div>
+  )
+}
+
+// ─── Lesson Feedback Panel ──────────────────────────────────────────────────
+
+function LessonFeedbackPanel({
+  items,
+  onRemove,
+  onProcessFeedback,
+  isProcessing,
+  activeTaskId,
+  taskProgress,
+  taskCurrentStep,
+  taskSteps,
+}: {
+  items: SectionFeedbackItem[]
+  onRemove: (id: string) => void
+  onProcessFeedback: () => void
+  isProcessing: boolean
+  activeTaskId: string | null
+  taskProgress: number
+  taskCurrentStep: string | null
+  taskSteps: TaskStep[]
+}) {
+  const [collapsed, setCollapsed] = useState(false)
+  const [minimized, setMinimized] = useState(false)
+  const hasFeedback = items.length > 0
+  const hasActiveTask = Boolean(activeTaskId)
+  const isGenerating = hasActiveTask
+
+  if (minimized) {
+    return (
+      <div className="fixed bottom-6 right-6 z-50">
+        <motion.button
+          type="button"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          onClick={() => setMinimized(false)}
+          className="relative flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-[#2a14b4] to-[#4338ca] text-white shadow-[0px_8px_24px_rgba(42,20,180,0.3)] hover:shadow-[0px_12px_32px_rgba(42,20,180,0.4)] transition-shadow"
+        >
+          {isGenerating ? (
+            <LoaderCircle className="w-5 h-5 animate-spin" />
+          ) : (
+            <MessageCircle className="w-5 h-5" />
+          )}
+          {!isGenerating && hasFeedback && (
+            <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-white text-[#2a14b4] text-[10px] font-bold shadow-sm">
+              {items.length}
+            </span>
+          )}
+        </motion.button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 w-96">
+      <div className="bg-white rounded-2xl shadow-[0px_16px_48px_rgba(11,28,48,0.14)] border border-[#e8eeff] overflow-hidden">
+        <div className="flex items-center justify-between gap-3 px-5 py-3.5 bg-gradient-to-r from-[#2a14b4] to-[#4338ca] text-white">
+          <button
+            type="button"
+            onClick={() => setCollapsed(!collapsed)}
+            className="flex items-center gap-2.5 flex-1"
+          >
+            {isGenerating ? (
+              <LoaderCircle className="w-4 h-4 animate-spin" />
+            ) : (
+              <MessageCircle className="w-4.5 h-4.5" />
+            )}
+            <span className="text-sm font-semibold">
+              {isGenerating ? "Feedback verwerken…" : "AI aanpassingen"}
+            </span>
+            {!isGenerating && hasFeedback && (
+              <span className="inline-flex items-center justify-center w-5.5 h-5.5 rounded-full bg-white/20 text-[11px] font-bold">
+                {items.length}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMinimized(true)}
+            className="flex items-center justify-center w-6 h-6 rounded-md hover:bg-white/15 transition-colors"
+            title="Minimaliseren"
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {!collapsed && (
+          <>
+            {isGenerating ? (
+              <div className="px-5 py-5">
+                {hasActiveTask && taskProgress > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-xs font-semibold text-[#5c5378]">
+                        {translateStep(taskCurrentStep) ?? "Bezig..."}
+                      </p>
+                      <span className="text-[10px] font-semibold text-[#2a14b4] tabular-nums">{taskProgress}%</span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-[#e8eeff] overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full bg-gradient-to-r from-[#2a14b4] to-[#4338ca]"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${taskProgress}%` }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {taskSteps.length > 0 ? (
+                  <div className="space-y-1">
+                    {taskSteps.map((step) => {
+                      const label = translateStep(step.name) ?? step.name
+                      const isCompleted = step.status === "completed"
+                      const isRunning = step.status === "running"
+                      return (
+                        <div
+                          key={step.name}
+                          className={`flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs transition-colors ${
+                            isRunning ? "bg-[#eff4ff]" : ""
+                          }`}
+                        >
+                          {isCompleted ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          ) : isRunning ? (
+                            <LoaderCircle className="w-3.5 h-3.5 text-[#2a14b4] animate-spin shrink-0" />
+                          ) : (
+                            <span className="w-3.5 h-3.5 rounded-full border border-[#d4d0e8] shrink-0" />
+                          )}
+                          <span
+                            className={`${
+                              isCompleted
+                                ? "text-[#5c5378]/60 line-through"
+                                : isRunning
+                                ? "text-[#2a14b4] font-semibold"
+                                : "text-[#5c5378]/50"
+                            }`}
+                          >
+                            {label}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center py-2">
+                    <LoaderCircle className="w-5 h-5 text-[#2a14b4]/40 animate-spin mb-2" />
+                    <p className="text-xs text-[#5c5378]/70">Taak wordt gestart…</p>
+                  </div>
+                )}
+
+                <p className="text-[11px] text-[#5c5378]/60 leading-5 text-center mt-4">
+                  De les wordt aangepast op basis van jouw feedback.
+                </p>
+              </div>
+            ) : hasFeedback ? (
+              <div className="max-h-72 overflow-y-auto p-3.5 space-y-2.5">
+                {items.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="group relative rounded-xl border border-[#e8eeff] bg-[#f8f9ff] px-3.5 py-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="inline-flex items-center rounded-full bg-[#eff4ff] text-[#2a14b4] px-2 py-0.5 text-[10px] font-semibold shrink-0">
+                        {item.sectionLabel}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => onRemove(item.id)}
+                        className="opacity-0 group-hover:opacity-100 text-[#5c5378]/40 hover:text-red-500 transition-all"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <p className="mt-1.5 text-xs text-[#464554] leading-5">{item.message}</p>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-5 py-6 flex flex-col items-center">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#eff4ff] mb-3">
+                  <Bot className="w-5 h-5 text-[#2a14b4]/40" />
+                </div>
+                <p className="text-sm text-[#5c5378] font-medium mb-3">Geen aanpassingen</p>
+                <div className="w-full rounded-xl bg-[#f8f9ff] border border-[#e8eeff] px-4 py-3 space-y-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-[#eff4ff] text-[#2a14b4] text-[10px] font-bold flex items-center justify-center mt-0.5">1</span>
+                    <p className="text-xs text-[#5c5378]/70 leading-5">
+                      Klik op het <Bot className="w-3 h-3 inline -mt-0.5 text-[#2a14b4]/50" /> icoon bij een sectie om aan te geven wat de AI moet aanpassen
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-[#eff4ff] text-[#2a14b4] text-[10px] font-bold flex items-center justify-center mt-0.5">2</span>
+                    <p className="text-xs text-[#5c5378]/70 leading-5">
+                      De AI past de les aan op basis van jouw instructies
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!isGenerating && (
+              <div className="border-t border-[#e8eeff] px-3.5 py-3">
+                <button
+                  type="button"
+                  onClick={onProcessFeedback}
+                  disabled={!hasFeedback || isProcessing}
+                  className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-[#2a14b4] bg-[#eff4ff] hover:bg-[#e4ebff] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isProcessing ? (
+                    <LoaderCircle className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5" />
+                  )}
+                  {isProcessing ? "Verwerken…" : "Feedback verwerken"}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }

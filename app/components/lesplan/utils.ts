@@ -204,6 +204,7 @@ export const TASK_STEP_LABELS: Record<string, string> = {
   "Generating lessons": "Lessen genereren",
   "Generating preparation": "Voorbereiding genereren",
   "Persisting lessons": "Lessen opslaan",
+  "Reconciling preparation": "Voorbereidingstaken bijwerken",
 }
 
 export function translateStep(step: string | null): string | null {

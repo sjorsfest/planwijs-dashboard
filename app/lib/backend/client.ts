@@ -366,6 +366,14 @@ class ApiClient {
     })
   }
 
+  async submitLessonFeedback(lessonId: string, data: FeedbackRequest): Promise<TaskSubmittedResponse> {
+    return this.requestJson<TaskSubmittedResponse>(`${API_URL}/lesplan/lessons/${lessonId}/feedback`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify(data),
+    })
+  }
+
   async approveLesplan(requestId: string): Promise<TaskSubmittedResponse> {
     return this.requestJson<TaskSubmittedResponse>(`${API_URL}/lesplan/${requestId}/approve`, {
       method: "POST",

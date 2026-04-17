@@ -40,6 +40,7 @@ export const STATUS_COPY: Record<LesplanPageState["status"], { label: string; co
   generating_overview: { label: "Overzicht wordt opgebouwd…", color: "bg-blue-100 text-blue-800" },
   overview_ready: { label: "Klaar voor review", color: "bg-emerald-100 text-emerald-800" },
   revising_overview: { label: "Wordt aangepast…", color: "bg-[#eff4ff] text-[#2a14b4]" },
+  revising_lesson: { label: "Les wordt aangepast…", color: "bg-[#eff4ff] text-[#2a14b4]" },
   generating_lessons: { label: "Lessen worden uitgewerkt…", color: "bg-blue-100 text-blue-800" },
   completed: { label: "Lesplan compleet", color: "bg-emerald-100 text-emerald-800" },
   failed: { label: "Genereren mislukt", color: "bg-red-100 text-red-800" },
